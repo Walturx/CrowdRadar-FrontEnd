@@ -8,9 +8,11 @@ import 'editar_perfil_state.dart';
 
 import '../../../core/models/user_model.dart';
 
+import '../../../core/widgets/boton_principal.dart';
+import '../../../core/widgets/cargando.dart';
 import '../data/perfil_repository.dart';
 
-import '../../../theme/app_colors.dart';
+import '../../../core/utils/validadores.dart';
 
 class EditProfilePage extends StatelessWidget {
   final UserModel? user;
@@ -72,23 +74,6 @@ class _EditProfileViewState extends State<_EditProfileView> {
     }
   }
 
-  String? _requerido(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Este campo es obligatorio';
-    }
-    return null;
-  }
-
-  String? _nombreApellido(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Este campo es obligatorio';
-    }
-    if (value.trim().length < 2) {
-      return 'Mínimo 2 caracteres';
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<EditarPerfilCubit, EditarPerfilState>(
@@ -107,9 +92,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
       builder: (context, state) {
         if (state is EditarPerfilGuardando) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
+            body: Cargando(),
           );
         }
 
@@ -124,13 +107,13 @@ class _EditProfileViewState extends State<_EditProfileView> {
                   TextFormField(
                     controller: _nombreCtrl,
                     decoration: const InputDecoration(labelText: 'Nombre'),
-                    validator: _nombreApellido,
+                    validator: Validadores.nombreApellido,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _apellidoCtrl,
                     decoration: const InputDecoration(labelText: 'Apellido'),
-                    validator: _nombreApellido,
+                    validator: Validadores.nombreApellido,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -148,19 +131,16 @@ class _EditProfileViewState extends State<_EditProfileView> {
                       labelText: 'Teléfono',
                       counterText: '',
                     ),
-                    validator: _requerido,
+                    validator: Validadores.requerido,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _distritoCtrl,
                     decoration: const InputDecoration(labelText: 'Distrito'),
-                    validator: _requerido,
+                    validator: Validadores.requerido,
                   ),
                   const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () => _onGuardar(context),
-                    child: const Text('Guardar cambios'),
-                  ),
+                  BotonPrincipal(texto: 'Guardar cambios', onPressed: () => _onGuardar(context)),
                 ],
               ),
             ),
