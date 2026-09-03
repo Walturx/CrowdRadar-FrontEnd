@@ -4,8 +4,14 @@ import 'package:go_router/go_router.dart';
 
 import '../core/map/mapa_adapter.dart';
 import '../core/session/sesion_cubit.dart';
+import '../features/analitica/data/analitica_repository.dart';
 import '../features/auth/data/auth_repository.dart';
+import '../features/favoritos/data/favorito_repository.dart';
+import '../features/lugares/data/lugar_repository.dart';
+import '../features/moderacion/data/moderacion_repository.dart';
 import '../features/perfil/data/perfil_repository.dart';
+import '../features/reportes/data/reporte_repository.dart';
+import '../features/validacion/data/validacion_repository.dart';
 import '../theme/app_theme.dart';
 import 'app_router.dart';
 import 'dependencias.dart';
@@ -49,6 +55,22 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
           value: deps.perfilRepository,
         ),
         RepositoryProvider<MapaAdapter>.value(value: deps.mapaAdapter),
+        RepositoryProvider<LugarRepository>.value(value: deps.lugarRepository),
+        RepositoryProvider<ReporteRepository>.value(
+          value: deps.reporteRepository,
+        ),
+        RepositoryProvider<AnaliticaRepository>.value(
+          value: deps.analiticaRepository,
+        ),
+        RepositoryProvider<ValidacionRepository>.value(
+          value: deps.validacionRepository,
+        ),
+        RepositoryProvider<FavoritoRepository>.value(
+          value: deps.favoritoRepository,
+        ),
+        RepositoryProvider<ModeracionRepository>.value(
+          value: deps.moderacionRepository,
+        ),
       ],
       child: MultiBlocProvider(
         providers: [BlocProvider<SesionCubit>.value(value: _sesion)],
