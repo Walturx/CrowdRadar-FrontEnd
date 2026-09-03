@@ -1,0 +1,265 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:crowdradar/core/config/entorno.dart';
+import 'package:crowdradar/core/network/api_client.dart';
+import 'package:crowdradar/core/network/api_exception.dart';
+import 'package:crowdradar/core/network/interceptores/auth_interceptor.dart';
+import 'package:crowdradar/core/network/interceptores/interceptor_api.dart';
+import 'package:crowdradar/core/network/interceptores/sesion_expirada_interceptor.dart';
+import 'package:crowdradar/core/session/motivo_cierre.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+
+const _entorno = Entorno(apiUrl: 'http://api.test');
+
+http.Response _json(int status, Object? body) => http.Response.bytes(
+      utf8.encode(jsonEncode(body)),
+      status,
+      headers: {'content-type': 'application/json; charset=utf-8'},
+    );
+
+ApiClient _cliente(
+  MockClientHandler handler, {
+  List<InterceptorApi> interceptores = const [],
+  Duration timeout = const Duration(seconds: 15),
+}) =>
+    ApiClient(
+      MockClient(handler),
+      _entorno,
+      interceptores: interceptores,
+      timeout: timeout,
+    );
+
+Object? _identidad(Object? d) => d;
+
+Future<ApiException> _capturar(Future<Object?> Function() accion) async {
+  try {
+    await accion();
+  } catch (e) {
+    expect(e, isA<ApiException>());
+    return e as ApiException;
+  }
+  fail('expected ApiException');
+}
+
+void main() {
+  group('ApiClient success', () {
+    test('S3.1 200 {message,data} yields typed RespuestaApi', () async {
+      final api = _cliente((r) async {
+        expect(r.url.toString(), 'http://api.test/api/ping');
+        expect(r.headers['Content-Type'], contains('application/json'));
+        return _json(200, {
+          'message': 'ok',
+          'data': {'n': 7},
+        });
+      });
+
+      final res = await api.get<int>(
+        '/api/ping',
+        parser: (d) => (d as Map<String, dynamic>)['n'] as int,
+      );
+
+      expect(res.mensaje, 'ok');
+      expect(res.datos, 7);
+    });
+
+    test('S2.2 uses the configured apiUrl for post with JSON body', () async {
+      late http.Request visto;
+      final api = _cliente((r) async {
+        visto = r;
+        return _json(201, {
+          'message': 'creado',
+          'data': {'id': 1},
+        });
+      });
+
+      final res = await api.post<Object?>(
+        '/api/x',
+        body: {'a': 1},
+        parser: _identidad,
+      );
+
+      expect(visto.method, 'POST');
+      expect(visto.url.host, 'api.test');
+      expect(jsonDecode(visto.body), {'a': 1});
+      expect(res.mensaje, 'creado');
+    });
+
+    test('put sends PUT and empty 2xx body yields null datos', () async {
+      late String metodo;
+      final api = _cliente((r) async {
+        metodo = r.method;
+        return http.Response('', 204);
+      });
+
+      final res =
+          await api.put<Object?>('/api/x', body: {}, parser: _identidad);
+
+      expect(metodo, 'PUT');
+      expect(res.datos, isNull);
+      expect(res.mensaje, '');
+    });
+  });
+
+  group('ApiClient errors', () {
+    test('S3.2 422 body becomes ApiException with code and errors', () async {
+      final api = _cliente((_) async => _json(422, {
+            'message': 'Datos inválidos.',
+            'code': 'VALIDACION_FALLIDA',
+            'errors': [
+              {'campo': 'email', 'mensaje': 'Email inválido'},
+            ],
+          }));
+
+      final e = await _capturar(
+          () => api.get<Object?>('/api/x', parser: _identidad));
+
+      expect(e.status, 422);
+      expect(e.message, 'Datos inválidos.');
+      expect(e.code, 'VALIDACION_FALLIDA');
+      expect(e.errors.single.campo, 'email');
+      expect(e.errors.single.mensaje, 'Email inválido');
+    });
+
+    test('S3.6 non-JSON failure falls back to the provided message', () async {
+      final api = _cliente((_) async => http.Response('<html>', 500));
+
+      final e = await _capturar(() => api.post<Object?>('/api/x',
+          parser: _identidad, mensajeError: 'Error al registrar usuario'));
+
+      expect(e.status, 500);
+      expect(e.message, 'Error al registrar usuario');
+      expect(e.code, isNull);
+      expect(e.errors, isEmpty);
+    });
+
+    test('S3.6 JSON lacking message uses default message', () async {
+      final api = _cliente((_) async => _json(400, {'otro': 1}));
+
+      final e = await _capturar(
+          () => api.get<Object?>('/api/x', parser: _identidad));
+
+      expect(e.message, ApiException.mensajePorDefecto);
+      expect(e.code, isNull);
+    });
+
+    test('S3.6 2xx with malformed JSON throws ApiException', () async {
+      final api = _cliente((_) async => http.Response('{no', 200));
+
+      final e = await _capturar(
+          () => api.get<Object?>('/api/x', parser: _identidad));
+
+      expect(e.status, 200);
+    });
+
+    test('S3.5 SocketException maps to sinConexion', () async {
+      final api = _cliente((_) async => throw const SocketException('down'));
+
+      final e = await _capturar(
+          () => api.get<Object?>('/api/x', parser: _identidad));
+
+      expect(e.esSinConexion, isTrue);
+      expect(e.message, ApiException.mensajeSinConexion);
+    });
+
+    test('S3.5 timeout maps to sinConexion', () async {
+      final api = _cliente(
+        (_) => Future.delayed(
+            const Duration(milliseconds: 300), () => _json(200, {})),
+        timeout: const Duration(milliseconds: 20),
+      );
+
+      final e = await _capturar(
+          () => api.get<Object?>('/api/x', parser: _identidad));
+
+      expect(e.esSinConexion, isTrue);
+    });
+
+    test('S3.5 http.ClientException maps to sinConexion', () async {
+      final api = _cliente((_) async => throw http.ClientException('boom'));
+
+      final e = await _capturar(
+          () => api.get<Object?>('/api/x', parser: _identidad));
+
+      expect(e.esSinConexion, isTrue);
+    });
+  });
+
+  group('Interceptors', () {
+    test('S3.7 Bearer header present with token, absent without', () async {
+      final headers = <Map<String, String>>[];
+      String? token = 'abc';
+      final api = _cliente(
+        (r) async {
+          headers.add(r.headers);
+          return _json(200, {'message': '', 'data': null});
+        },
+        interceptores: [AuthInterceptor(() => token)],
+      );
+
+      await api.get<Object?>('/api/x', parser: _identidad);
+      token = null;
+      await api.get<Object?>('/api/x', parser: _identidad);
+
+      expect(headers[0]['Authorization'], 'Bearer abc');
+      expect(headers[1].containsKey('Authorization'), isFalse);
+    });
+
+    test('S3.3 401 outside /api/auth/ expires the session once', () async {
+      final motivos = <MotivoCierre>[];
+      final api = _cliente(
+        (_) async => _json(401, {'message': 'No autenticado'}),
+        interceptores: [SesionExpiradaInterceptor(motivos.add)],
+      );
+
+      final e = await _capturar(
+          () => api.get<Object?>('/api/users/profile', parser: _identidad));
+
+      expect(e.status, 401);
+      expect(motivos, [MotivoCierre.sesionExpirada]);
+    });
+
+    test('S3.4 401 on /api/auth/login does not expire the session', () async {
+      final motivos = <MotivoCierre>[];
+      final api = _cliente(
+        (_) async => _json(401, {'message': 'Credenciales inválidas'}),
+        interceptores: [SesionExpiradaInterceptor(motivos.add)],
+      );
+
+      final e = await _capturar(() => api.post<Object?>('/api/auth/login',
+          body: {}, parser: _identidad));
+
+      expect(e.status, 401);
+      expect(motivos, isEmpty);
+    });
+
+    test('CUENTA_SUSPENDIDA expires with cuentaSuspendida', () async {
+      final motivos = <MotivoCierre>[];
+      final api = _cliente(
+        (_) async => _json(
+            403, {'message': 'Suspendida', 'code': 'CUENTA_SUSPENDIDA'}),
+        interceptores: [SesionExpiradaInterceptor(motivos.add)],
+      );
+
+      await _capturar(
+          () => api.get<Object?>('/api/users/profile', parser: _identidad));
+
+      expect(motivos, [MotivoCierre.cuentaSuspendida]);
+    });
+
+    test('other errors do not expire the session', () async {
+      final motivos = <MotivoCierre>[];
+      final api = _cliente(
+        (_) async => _json(500, {'message': 'x'}),
+        interceptores: [SesionExpiradaInterceptor(motivos.add)],
+      );
+
+      await _capturar(
+          () => api.get<Object?>('/api/users/profile', parser: _identidad));
+
+      expect(motivos, isEmpty);
+    });
+  });
+}
