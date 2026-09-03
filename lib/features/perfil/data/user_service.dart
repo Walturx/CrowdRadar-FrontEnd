@@ -8,10 +8,11 @@ import '../../../core/network/generic_response.dart';
 import '../../../core/models/user_model.dart';
 
 import '../../../core/session/session_service.dart';
+import '../../../core/session/usuario_sesion.dart';
 
 class UserService {
   Future<GenericResponse<UserModel>> getProfile() async {
-    final token = SessionService.token;
+    final token = SessionService.instance.token;
     if (token == null) {
       return const GenericResponse<UserModel>(
         success: false,
@@ -42,7 +43,7 @@ class UserService {
   }
 
   Future<GenericResponse<UserModel>> updateProfile(Map<String, dynamic> cambios) async {
-    final token = SessionService.token;
+    final token = SessionService.instance.token;
     if (token == null) {
       return const GenericResponse<UserModel>(
         success: false,
@@ -61,7 +62,8 @@ class UserService {
     if (res.statusCode >= 200 && res.statusCode < 300) {
       final user = UserModel.fromJson(body['data'] as Map<String, dynamic>? ?? {});
 
-      SessionService.currentUser = user;
+      await SessionService.instance
+          .actualizarUsuario(UsuarioSesion.desdeUserModel(user));
 
       return GenericResponse<UserModel>(
         success: true,

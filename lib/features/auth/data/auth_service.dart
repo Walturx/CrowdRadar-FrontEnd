@@ -8,6 +8,7 @@ import '../../../core/network/generic_response.dart';
 import '../../../core/models/user_model.dart';
 
 import '../../../core/session/session_service.dart';
+import '../../../core/session/usuario_sesion.dart';
 
 class AuthService {
   Future<GenericResponse<UserModel>> login(String email, String password) async {
@@ -24,8 +25,8 @@ class AuthService {
       final token = data['token'] as String?;
       final user = UserModel.fromJson(data['user'] as Map<String, dynamic>? ?? {});
 
-      SessionService.token = token;
-      SessionService.currentUser = user;
+      await SessionService.instance
+          .iniciar(token ?? '', UsuarioSesion.desdeUserModel(user));
 
       return GenericResponse<UserModel>(
         success: true,

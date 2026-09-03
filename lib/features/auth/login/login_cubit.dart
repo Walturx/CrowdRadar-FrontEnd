@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'login_state.dart';
 
 import '../data/auth_service.dart';
+import '../../../core/session/motivo_cierre.dart';
 import '../../../core/session/session_service.dart';
 
 class AuthCubit extends Cubit<AuthState> {
@@ -17,7 +20,7 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       final res = await _authService.login(email, password);
       if (res.success && res.data != null) {
-        emit(AuthLoggedIn(token: SessionService.token ?? '', user: res.data!));
+        emit(AuthLoggedIn(token: SessionService.instance.token ?? '', user: res.data!));
       } else {
         emit(AuthError(error: res.message));
       }
@@ -55,8 +58,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   void logout() {
-    SessionService.token = null;
-    SessionService.currentUser = null;
+    unawaited(SessionService.instance.cerrar(MotivoCierre.usuario));
     emit(AuthLoggedOut());
   }
 }
