@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'login_cubit.dart';
 import 'login_state.dart';
 
+import '../../../app/rutas.dart';
 import '../../../theme/app_colors.dart';
 
 class LoginPage extends StatelessWidget {
@@ -46,7 +47,7 @@ class _LoginViewState extends State<_LoginView> {
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthLoggedIn) {
-          context.go('/map');
+          context.go(Rutas.mapa);
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.error)),
@@ -127,7 +128,7 @@ class _LoginViewState extends State<_LoginView> {
                   const SizedBox(height: 4),
                   Center(
                     child: TextButton(
-                      onPressed: () => context.push('/register'),
+                      onPressed: () => context.push(Rutas.registro),
                       child: Text.rich(
                         TextSpan(
                           text: '¿No tienes cuenta? ',

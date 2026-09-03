@@ -1,11 +1,16 @@
+import 'package:crowdradar/app/app.dart';
+import 'package:crowdradar/app/dependencias.dart';
+import 'package:crowdradar/core/config/entorno.dart';
+import 'package:crowdradar/core/session/session_service.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:crowdradar/main.dart';
 
 void main() {
   testWidgets('Smoke test: la app arranca en la pantalla de login', (WidgetTester tester) async {
-    await tester.pumpWidget(const CrowdRadarApp());
-    await tester.pump();
+    final sesion = SessionService.instance..reiniciar();
+    await tester.pumpWidget(CrowdRadarApp(
+      dependencias: Dependencias.crear(const Entorno(), sesion),
+    ));
+    await tester.pumpAndSettle();
 
     expect(find.text('Iniciar sesión'), findsWidgets);
   });

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../../layout/cr_bottom_nav.dart';
-
 import '../../../theme/app_colors.dart';
 
 class MapPage extends StatelessWidget {
@@ -76,7 +74,6 @@ class MapPage extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: const CrBottomNav(currentIndex: 0),
     );
   }
 }

@@ -20,7 +20,7 @@ class EditProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => ProfileCubit(UserService()),
+      create: (_) => ProfileCubit(context.read<UserService>()),
       child: _EditProfileView(user: user),
     );
   }
