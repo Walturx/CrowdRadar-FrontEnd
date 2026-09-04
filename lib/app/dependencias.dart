@@ -24,11 +24,19 @@ import '../features/reportes/data/reporte_repository.dart';
 import '../features/reportes/data/reporte_repository_http.dart';
 import '../features/validacion/data/validacion_repository.dart';
 import '../features/validacion/data/validacion_repository_http.dart';
+import 'fakes/fake_analitica_repository.dart';
+import 'fakes/fake_auth_repository.dart';
+import 'fakes/fake_favorito_repository.dart';
+import 'fakes/fake_lugar_repository.dart';
+import 'fakes/fake_moderacion_repository.dart';
+import 'fakes/fake_perfil_repository.dart';
+import 'fakes/fake_reporte_repository.dart';
+import 'fakes/fake_validacion_repository.dart';
 
 /// Composition root: builds the object graph once.
 ///
-/// A stream that finishes its `<x>_repository_http.dart` changes nothing here;
-/// only the constructor call below already points at its class.
+/// `USAR_FAKES=true` swaps every repository for its in-memory `Fake*`.
+/// A stream that finishes its `<x>_repository_http.dart` changes nothing here.
 class Dependencias {
   final Entorno entorno;
   final SessionService sesion;
@@ -66,20 +74,29 @@ class Dependencias {
       entorno,
       interceptores: interceptoresDeSesion(sesion),
     );
+    final fakes = entorno.usarFakes;
     return Dependencias._(
       entorno: entorno,
       sesion: sesion,
       apiClient: api,
       mapaAdapter: FlutterMapAdapter(),
       receptorPush: ReceptorPushNulo(),
-      authRepository: AuthRepositoryHttp(api, sesion),
-      perfilRepository: PerfilRepositoryHttp(api, sesion),
-      lugarRepository: LugarRepositoryHttp(api),
-      reporteRepository: ReporteRepositoryHttp(api),
-      analiticaRepository: AnaliticaRepositoryHttp(api),
-      validacionRepository: ValidacionRepositoryHttp(api),
-      favoritoRepository: FavoritoRepositoryHttp(api),
-      moderacionRepository: ModeracionRepositoryHttp(api),
+      authRepository:
+          fakes ? FakeAuthRepository(sesion) : AuthRepositoryHttp(api, sesion),
+      perfilRepository: fakes
+          ? FakePerfilRepository(sesion)
+          : PerfilRepositoryHttp(api, sesion),
+      lugarRepository: fakes ? FakeLugarRepository() : LugarRepositoryHttp(api),
+      reporteRepository:
+          fakes ? FakeReporteRepository() : ReporteRepositoryHttp(api),
+      analiticaRepository:
+          fakes ? FakeAnaliticaRepository() : AnaliticaRepositoryHttp(api),
+      validacionRepository:
+          fakes ? FakeValidacionRepository() : ValidacionRepositoryHttp(api),
+      favoritoRepository:
+          fakes ? FakeFavoritoRepository() : FavoritoRepositoryHttp(api),
+      moderacionRepository:
+          fakes ? FakeModeracionRepository() : ModeracionRepositoryHttp(api),
     );
   }
 }
