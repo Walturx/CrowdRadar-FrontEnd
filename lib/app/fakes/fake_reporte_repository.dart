@@ -2,9 +2,16 @@ import '../../core/models/nivel_saturacion.dart';
 import '../../core/models/reporte_saturacion.dart';
 import '../../core/network/respuesta_api.dart';
 import '../../features/reportes/data/reporte_repository.dart';
+import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 
 class FakeReporteRepository implements ReporteRepository {
+  final ComportamientoFake _comportamiento;
+
+  FakeReporteRepository({
+    ComportamientoFake comportamiento = const ComportamientoFake(),
+  }) : _comportamiento = comportamiento;
+
   static const int _karmaPorReporte = 10;
 
   final List<ReporteSaturacion> _mios = [];
@@ -12,6 +19,7 @@ class FakeReporteRepository implements ReporteRepository {
 
   @override
   Future<ReporteCreado> reportar(int lugarId, NivelSaturacion nivel) async {
+    await _comportamiento.aplicar();
     if (_mios.any((r) => r.lugarId == lugarId)) {
       throw errorFake(
         422,
@@ -38,5 +46,8 @@ class FakeReporteRepository implements ReporteRepository {
   Future<Pagina<ReporteSaturacion>> listarMios({
     int page = 1,
     int size = 20,
-  }) async => paginar(_mios, page, size);
+  }) async {
+    await _comportamiento.aplicar();
+    return paginar(_mios, page, size);
+  }
 }

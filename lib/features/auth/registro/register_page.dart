@@ -86,6 +86,9 @@ class _RegisterViewState extends State<_RegisterView> {
           );
         }
 
+        final errores =
+            state is RegistroFallido ? state.erroresPorCampo : const <String, String>{};
+
         return Scaffold(
           appBar: AppBar(title: const Text('Crear cuenta')),
           body: SingleChildScrollView(
@@ -108,21 +111,33 @@ class _RegisterViewState extends State<_RegisterView> {
                   ),
                   const SizedBox(height: 20),
                   TextFormField(
+                    key: const Key('campo-nombre'),
                     controller: _nombreCtrl,
-                    decoration: const InputDecoration(labelText: 'Nombre'),
+                    decoration: InputDecoration(
+                      labelText: 'Nombre',
+                      errorText: errores['nombre'],
+                    ),
                     validator: Validadores.nombreApellido,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
+                    key: const Key('campo-apellido'),
                     controller: _apellidoCtrl,
-                    decoration: const InputDecoration(labelText: 'Apellido'),
+                    decoration: InputDecoration(
+                      labelText: 'Apellido',
+                      errorText: errores['apellido'],
+                    ),
                     validator: Validadores.nombreApellido,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
+                    key: const Key('campo-email'),
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(labelText: 'Correo electrónico'),
+                    decoration: InputDecoration(
+                      labelText: 'Correo electrónico',
+                      errorText: errores['email'],
+                    ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Este campo es obligatorio';
@@ -135,9 +150,13 @@ class _RegisterViewState extends State<_RegisterView> {
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
+                    key: const Key('campo-password'),
                     controller: _passwordCtrl,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Contraseña'),
+                    decoration: InputDecoration(
+                      labelText: 'Contraseña',
+                      errorText: errores['password'],
+                    ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Este campo es obligatorio';
@@ -150,20 +169,26 @@ class _RegisterViewState extends State<_RegisterView> {
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
+                    key: const Key('campo-telefono'),
                     controller: _telefonoCtrl,
                     keyboardType: TextInputType.phone,
                     maxLength: 9,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Teléfono',
                       counterText: '',
+                      errorText: errores['telefono'],
                     ),
                     validator: Validadores.requerido,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
+                    key: const Key('campo-distrito'),
                     controller: _distritoCtrl,
-                    decoration: const InputDecoration(labelText: 'Distrito'),
+                    decoration: InputDecoration(
+                      labelText: 'Distrito',
+                      errorText: errores['distrito'],
+                    ),
                     validator: Validadores.requerido,
                   ),
                   const SizedBox(height: 24),

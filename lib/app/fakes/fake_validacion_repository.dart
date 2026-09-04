@@ -2,9 +2,16 @@ import '../../core/models/nivel_saturacion.dart';
 import '../../core/models/validacion.dart';
 import '../../core/network/respuesta_api.dart';
 import '../../features/validacion/data/validacion_repository.dart';
+import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 
 class FakeValidacionRepository implements ValidacionRepository {
+  final ComportamientoFake _comportamiento;
+
+  FakeValidacionRepository({
+    ComportamientoFake comportamiento = const ComportamientoFake(),
+  }) : _comportamiento = comportamiento;
+
   final List<ReportePendiente> _pendientes = [
     ReportePendiente(
       id: 101,
@@ -34,17 +41,24 @@ class FakeValidacionRepository implements ValidacionRepository {
     int horas = 3,
     int page = 1,
     int size = 20,
-  }) async => paginar(_pendientes, page, size);
+  }) async {
+    await _comportamiento.aplicar();
+    return paginar(_pendientes, page, size);
+  }
 
   @override
-  Future<DetalleReporte> obtenerReporte(int reporteId) async => DetalleReporte(
-    reporte: _buscar(reporteId),
-    miValidacion: _validaciones[reporteId],
-    yaDenunciado: _denunciados.contains(reporteId),
-  );
+  Future<DetalleReporte> obtenerReporte(int reporteId) async {
+    await _comportamiento.aplicar();
+    return DetalleReporte(
+      reporte: _buscar(reporteId),
+      miValidacion: _validaciones[reporteId],
+      yaDenunciado: _denunciados.contains(reporteId),
+    );
+  }
 
   @override
   Future<void> validar(int reporteId, TipoAccionValidacion accion) async {
+    await _comportamiento.aplicar();
     _buscar(reporteId);
     if (_validaciones.containsKey(reporteId)) {
       throw errorFake(409, 'VALIDACION_DUPLICADA', 'Ya validaste este reporte');
@@ -53,14 +67,17 @@ class FakeValidacionRepository implements ValidacionRepository {
   }
 
   @override
-  Future<List<EstadoReporteValidacion>> estadoMisReportes() async => const [
-    EstadoReporteValidacion(
-      reporteId: 1,
-      estado: EstadoValidacion.enValidacion,
-      confirmaciones: 2,
-      rechazos: 1,
-    ),
-  ];
+  Future<List<EstadoReporteValidacion>> estadoMisReportes() async {
+    await _comportamiento.aplicar();
+    return const [
+      EstadoReporteValidacion(
+        reporteId: 1,
+        estado: EstadoValidacion.enValidacion,
+        confirmaciones: 2,
+        rechazos: 1,
+      ),
+    ];
+  }
 
   @override
   Future<void> denunciar(
@@ -68,6 +85,7 @@ class FakeValidacionRepository implements ValidacionRepository {
     MotivoDenuncia motivo, {
     String? detalle,
   }) async {
+    await _comportamiento.aplicar();
     _buscar(reporteId);
     if (motivo == MotivoDenuncia.otro && (detalle ?? '').trim().isEmpty) {
       throw errorFake(400, 'VALIDACION_FALLIDA', 'Datos inválidos.');

@@ -9,36 +9,45 @@ Iterable<File> _fuentes() => Directory('lib')
 
 String _ruta(File f) => f.path.replaceAll('\\', '/');
 
+/// Source files outside [carpeta] whose text matches [patron].
+List<String> _infractores(RegExp patron, {required String fueraDe}) => _fuentes()
+    .where((f) => !_ruta(f).startsWith(fueraDe))
+    .where((f) => patron.hasMatch(f.readAsStringSync()))
+    .map(_ruta)
+    .toList();
+
 void main() {
-  test('AC4 only core/map imports flutter_map or latlong2', () {
-    final infractores = _fuentes()
-        .where((f) => !_ruta(f).startsWith('lib/core/map/'))
-        .where((f) {
-          final texto = f.readAsStringSync();
-          return texto.contains('package:flutter_map/') ||
-              texto.contains('package:latlong2/');
-        })
-        .map(_ruta);
+  test(
+    'only lib/core/map may import flutter_map or latlong2 (AC4)',
+    () {
+      final infractores = _infractores(
+        RegExp(r'''import\s+['"]package:(flutter_map|latlong2)/'''),
+        fueraDe: 'lib/core/map/',
+      );
 
-    expect(infractores, isEmpty);
-  });
+      expect(
+        infractores,
+        isEmpty,
+        reason: 'No import of package:flutter_map or package:latlong2 anywhere '
+            'under lib/ except lib/core/map/ (Adapter boundary).',
+      );
+    },
+  );
 
-  test('AC5 no direct http calls outside core/network', () {
-    final llamada = RegExp(r'\bhttp\.(post|get|put|patch|delete|head)\(');
-    final infractores = _fuentes()
-        .where((f) => !_ruta(f).startsWith('lib/core/network/'))
-        .where((f) => llamada.hasMatch(f.readAsStringSync()))
-        .map(_ruta);
+  test(
+    'only lib/core/network may import package:http (AC5)',
+    () {
+      final infractores = _infractores(
+        RegExp(r'''import\s+['"]package:http/'''),
+        fueraDe: 'lib/core/network/',
+      );
 
-    expect(infractores, isEmpty);
-  });
-
-  test('features never import package:http', () {
-    final infractores = _fuentes()
-        .where((f) => _ruta(f).startsWith('lib/features/'))
-        .where((f) => f.readAsStringSync().contains('package:http/'))
-        .map(_ruta);
-
-    expect(infractores, isEmpty);
-  });
+      expect(
+        infractores,
+        isEmpty,
+        reason: "No import 'package:http/...' anywhere under lib/ except "
+            'lib/core/network/ (features and app talk through ApiClient).',
+      );
+    },
+  );
 }

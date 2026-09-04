@@ -2,16 +2,23 @@ import '../../core/models/user_model.dart';
 import '../../core/session/session_service.dart';
 import '../../core/session/usuario_sesion.dart';
 import '../../features/auth/data/auth_repository.dart';
+import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 
 class FakeAuthRepository implements AuthRepository {
   final SessionService _sesion;
   final Set<String> _emails = {emailFake};
 
-  FakeAuthRepository(this._sesion);
+  final ComportamientoFake _comportamiento;
+
+  FakeAuthRepository(
+    this._sesion, {
+    ComportamientoFake comportamiento = const ComportamientoFake(),
+  }) : _comportamiento = comportamiento;
 
   @override
   Future<UserModel> iniciarSesion(String email, String password) async {
+    await _comportamiento.aplicar();
     if (email != emailFake || password != passwordFake) {
       throw errorFake(401, 'CREDENCIALES_INVALIDAS', 'Credenciales inválidas');
     }
@@ -31,6 +38,7 @@ class FakeAuthRepository implements AuthRepository {
     required String telefono,
     required String distrito,
   }) async {
+    await _comportamiento.aplicar();
     if (!_emails.add(email)) {
       throw errorFake(409, 'EMAIL_DUPLICADO', 'El email ya está registrado');
     }
@@ -47,5 +55,7 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> solicitarRecuperacion(String email) async {}
+  Future<void> solicitarRecuperacion(String email) async {
+    await _comportamiento.aplicar();
+  }
 }

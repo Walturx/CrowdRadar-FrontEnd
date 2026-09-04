@@ -2,9 +2,16 @@ import '../../core/models/moderacion.dart';
 import '../../core/models/nivel_saturacion.dart';
 import '../../core/network/respuesta_api.dart';
 import '../../features/moderacion/data/moderacion_repository.dart';
+import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 
 class FakeModeracionRepository implements ModeracionRepository {
+  final ComportamientoFake _comportamiento;
+
+  FakeModeracionRepository({
+    ComportamientoFake comportamiento = const ComportamientoFake(),
+  }) : _comportamiento = comportamiento;
+
   final Map<int, ReporteDenunciado> _denunciados = {
     201: const ReporteDenunciado(
       reporteId: 201,
@@ -54,11 +61,16 @@ class FakeModeracionRepository implements ModeracionRepository {
   Future<Pagina<ReporteDenunciado>> reportesDenunciados({
     int page = 1,
     int size = 20,
-  }) async => paginar(_denunciados.values.toList(), page, size);
+  }) async {
+    await _comportamiento.aplicar();
+    return paginar(_denunciados.values.toList(), page, size);
+  }
 
   @override
-  Future<ReporteDenunciado> reporteDenunciado(int reporteId) async =>
-      _denunciados[reporteId] ?? (throw _reporteNoEncontrado());
+  Future<ReporteDenunciado> reporteDenunciado(int reporteId) async {
+    await _comportamiento.aplicar();
+    return _denunciados[reporteId] ?? (throw _reporteNoEncontrado());
+  }
 
   @override
   Future<void> resolver(
@@ -66,6 +78,7 @@ class FakeModeracionRepository implements ModeracionRepository {
     DecisionModeracion decision, {
     String? comentario,
   }) async {
+    await _comportamiento.aplicar();
     if (_denunciados.remove(reporteId) != null) {
       _resueltos.add(reporteId);
     } else if (_resueltos.contains(reporteId)) {
@@ -87,6 +100,7 @@ class FakeModeracionRepository implements ModeracionRepository {
     int page = 1,
     int size = 20,
   }) async {
+    await _comportamiento.aplicar();
     final texto = q?.trim().toLowerCase();
     final filtrados = [
       for (final u in _usuarios.values)
@@ -101,9 +115,15 @@ class FakeModeracionRepository implements ModeracionRepository {
   }
 
   @override
-  Future<UsuarioAdmin> usuario(int usuarioId) async =>
-      _usuarios[usuarioId] ??
-      (throw errorFake(404, 'USUARIO_NO_ENCONTRADO', 'Usuario no encontrado'));
+  Future<UsuarioAdmin> usuario(int usuarioId) async {
+    await _comportamiento.aplicar();
+    return _usuarios[usuarioId] ??
+        (throw errorFake(
+          404,
+          'USUARIO_NO_ENCONTRADO',
+          'Usuario no encontrado',
+        ));
+  }
 
   @override
   Future<void> suspender(
@@ -111,6 +131,7 @@ class FakeModeracionRepository implements ModeracionRepository {
     required int dias,
     required String motivo,
   }) async {
+    await _comportamiento.aplicar();
     final u = await usuario(usuarioId);
     if (u.estaSuspendido) {
       throw errorFake(
@@ -124,6 +145,7 @@ class FakeModeracionRepository implements ModeracionRepository {
 
   @override
   Future<void> reactivar(int usuarioId) async {
+    await _comportamiento.aplicar();
     final u = await usuario(usuarioId);
     if (!u.estaSuspendido) {
       throw errorFake(
