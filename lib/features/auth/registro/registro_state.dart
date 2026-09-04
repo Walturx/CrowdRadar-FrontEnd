@@ -22,9 +22,16 @@ class RegistroExitoso extends RegistroState {
 class RegistroFallido extends RegistroState {
   final String mensaje;
   final Map<String, String> erroresPorCampo;
+  final String? codigo;
+  final bool esSinConexion;
 
-  const RegistroFallido(this.mensaje, {this.erroresPorCampo = const {}});
+  const RegistroFallido(
+    this.mensaje, {
+    this.erroresPorCampo = const {},
+    this.codigo,
+    this.esSinConexion = false,
+  });
 
   @override
-  List<Object?> get props => [mensaje, erroresPorCampo];
+  List<Object?> get props => [mensaje, erroresPorCampo, codigo, esSinConexion];
 }

@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/utils/http_error_util.dart';
+import '../../../core/utils/mensaje_error.dart';
 import '../data/perfil_repository.dart';
 import 'perfil_state.dart';
 
@@ -14,7 +14,11 @@ class PerfilCubit extends Cubit<PerfilState> {
     try {
       emit(PerfilCargado(await _repositorio.obtener()));
     } catch (e) {
-      emit(PerfilError(mensajeDeError(e)));
+      emit(PerfilError(
+        mensajeDeError(e),
+        codigo: codigoDeError(e),
+        esSinConexion: esErrorSinConexion(e),
+      ));
     }
   }
 }

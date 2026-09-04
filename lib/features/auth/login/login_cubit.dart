@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/network/api_exception.dart';
-import '../../../core/utils/http_error_util.dart';
+import '../../../core/utils/mensaje_error.dart';
 import '../data/auth_repository.dart';
 import 'login_state.dart';
 
@@ -17,7 +16,8 @@ class LoginCubit extends Cubit<LoginState> {
     } catch (e) {
       emit(LoginFallido(
         mensajeDeError(e),
-        codigo: e is ApiException ? e.code : null,
+        codigo: codigoDeError(e),
+        esSinConexion: esErrorSinConexion(e),
       ));
     }
   }

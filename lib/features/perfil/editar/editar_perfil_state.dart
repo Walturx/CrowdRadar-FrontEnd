@@ -28,9 +28,15 @@ class EditarPerfilGuardado extends EditarPerfilState {
 
 class EditarPerfilFallido extends EditarPerfilState {
   final String mensaje;
+  final String? codigo;
+  final bool esSinConexion;
 
-  const EditarPerfilFallido(this.mensaje);
+  const EditarPerfilFallido(
+    this.mensaje, {
+    this.codigo,
+    this.esSinConexion = false,
+  });
 
   @override
-  List<Object?> get props => [mensaje];
+  List<Object?> get props => [mensaje, codigo, esSinConexion];
 }

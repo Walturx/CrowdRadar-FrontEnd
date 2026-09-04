@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/utils/http_error_util.dart';
+import '../../../core/utils/mensaje_error.dart';
 import '../data/auth_repository.dart';
 import 'registro_state.dart';
 
@@ -32,6 +32,8 @@ class RegistroCubit extends Cubit<RegistroState> {
       emit(RegistroFallido(
         mensajeDeError(e),
         erroresPorCampo: erroresPorCampo(e),
+        codigo: codigoDeError(e),
+        esSinConexion: esErrorSinConexion(e),
       ));
     }
   }
