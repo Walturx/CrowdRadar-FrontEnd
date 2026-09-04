@@ -1,5 +1,5 @@
 import 'package:crowdradar/app/app.dart';
-import 'package:crowdradar/app/app_router.dart';
+import 'package:crowdradar/app/guards.dart';
 import 'package:crowdradar/app/dependencias.dart';
 import 'package:crowdradar/app/rutas.dart';
 import 'package:crowdradar/core/config/entorno.dart';
@@ -43,6 +43,20 @@ void main() {
     test('S5.3 USUARIO on /admin/* goes to /mapa', () {
       expect(redirigirPorSesion(_usuario, '/admin/reportes'), Rutas.mapa);
       expect(redirigirPorSesion(_usuario, '/admin/usuarios/4'), Rutas.mapa);
+    });
+
+    test('R3-005 public routes match exactly, ignoring a trailing slash', () {
+      expect(redirigirPorSesion(_anonimo, '/login/'), isNull);
+      expect(redirigirPorSesion(_anonimo, '/loginx'), Rutas.login);
+      expect(redirigirPorSesion(_usuario, '/login/'), Rutas.mapa);
+    });
+
+    test('R3-005 admin check respects the segment boundary', () {
+      expect(redirigirPorSesion(_usuario, '/administrador'), isNull);
+      expect(redirigirPorSesion(_usuario, '/admin'), Rutas.mapa);
+      expect(redirigirPorSesion(_usuario, '/admin/'), Rutas.mapa);
+      expect(redirigirPorSesion(_usuario, '/admin/reportes'), Rutas.mapa);
+      expect(redirigirPorSesion(_admin, '/admin/reportes'), isNull);
     });
 
     test('authorized access is left untouched', () {

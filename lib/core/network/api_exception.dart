@@ -12,6 +12,9 @@ class ApiException implements Exception {
   static const String mensajeSinConexion =
       'No se pudo conectar con el servidor';
 
+  static const String codigoInterceptor = 'INTERCEPTOR';
+  static const String codigoRespuestaInvalida = 'RESPUESTA_INVALIDA';
+
   final int status;
   final String message;
   final String? code;

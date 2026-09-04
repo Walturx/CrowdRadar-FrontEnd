@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../api_exception.dart';
 
 /// Mutable outgoing request seen by interceptors.
@@ -15,8 +17,9 @@ class SolicitudApi {
   });
 }
 
+/// Strategy / chain of responsibility: each link inspects or mutates traffic.
 abstract class InterceptorApi {
   void antesDeEnviar(SolicitudApi solicitud) {}
 
-  void alRecibirError(ApiException error, SolicitudApi solicitud) {}
+  FutureOr<void> alRecibirError(ApiException error, SolicitudApi solicitud) {}
 }

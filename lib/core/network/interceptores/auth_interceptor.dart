@@ -1,6 +1,6 @@
 import 'interceptor_api.dart';
 
-/// Adds `Authorization: Bearer <token>` when a session token exists.
+/// Interceptor strategy: adds `Authorization: Bearer <token>` when a session token exists.
 class AuthInterceptor extends InterceptorApi {
   final String? Function() _leerToken;
 
