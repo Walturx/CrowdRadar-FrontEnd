@@ -158,6 +158,26 @@ void main() {
       expect(registro.registros, hasLength(1));
     });
 
+    test('R3-F01 a late storage result after the timeout is discarded',
+        () async {
+      final lento = StorageLento();
+      await lento.guardar(tokenVigente, usuarioPrueba);
+      sesion.configurar(lento,
+          reloj: () => ahora,
+          registro: RegistroFalso(),
+          timeoutRestaurar: const Duration(milliseconds: 20));
+      final eventos = <EventoSesion>[];
+      final sub = sesion.eventos.listen(eventos.add);
+
+      await sesion.restaurar();
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      await sub.cancel();
+
+      expect(sesion.token, isNull);
+      expect(sesion.usuario, isNull);
+      expect(eventos, isEmpty);
+    });
+
     test('R4-004 storage failure on restore is reported', () async {
       final registro = RegistroFalso();
       sesion.configurar(StorageQueFalla(), reloj: () => ahora, registro: registro);

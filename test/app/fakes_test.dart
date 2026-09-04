@@ -1,5 +1,6 @@
 // S9.2: each in-memory fake implements its frozen interface and behaves like
 // the API contract for its main success and failure paths.
+import 'package:crowdradar/app/fakes/datos_fake.dart';
 import 'package:crowdradar/app/fakes/fake_analitica_repository.dart';
 import 'package:crowdradar/app/fakes/fake_auth_repository.dart';
 import 'package:crowdradar/app/fakes/fake_favorito_repository.dart';
@@ -360,4 +361,39 @@ void main() {
       },
     );
   });
+
+  group('R3-105 paginar', () {
+    final datos = [1, 2, 3, 4, 5];
+
+    test('returns the requested 1-based page', () {
+      final p = paginar(datos, 2, 2);
+
+      expect(p.items, [3, 4]);
+      expect(p.total, 5);
+      expect(p.totalPaginas, 3);
+    });
+
+    test('a page past the end is empty, not an error', () {
+      final p = paginar(datos, 9, 2);
+
+      expect(p.items, isEmpty);
+      expect(p.page, 9);
+    });
+
+    test('page <= 0 is a 400 PAGINACION_INVALIDA', () {
+      expect(() => paginar(datos, 0, 2), _lanza400());
+      expect(() => paginar(datos, -1, 2), _lanza400());
+    });
+
+    test('size <= 0 is a 400 PAGINACION_INVALIDA', () {
+      expect(() => paginar(datos, 1, 0), _lanza400());
+      expect(() => paginar(datos, 1, -5), _lanza400());
+    });
+  });
 }
+
+Matcher _lanza400() => throwsA(
+  isA<ApiException>()
+      .having((e) => e.status, 'status', 400)
+      .having((e) => e.code, 'code', 'PAGINACION_INVALIDA'),
+);

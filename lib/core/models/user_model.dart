@@ -1,4 +1,7 @@
-class UserModel {
+import 'package:equatable/equatable.dart';
+
+/// Value object: equality is by every field so states holding it compare by value.
+class UserModel extends Equatable {
   final int? id;
   final String? nombre;
   final String? apellido;
@@ -48,6 +51,20 @@ class UserModel {
         'createdAt': createdAt,
         'updatedAt': updatedAt,
       };
+
+  @override
+  List<Object?> get props => [
+        id,
+        nombre,
+        apellido,
+        email,
+        telefono,
+        rol,
+        distrito,
+        status,
+        createdAt,
+        updatedAt,
+      ];
 
   UserModel copyWith({
     int? id,

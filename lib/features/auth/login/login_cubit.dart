@@ -9,7 +9,12 @@ class LoginCubit extends Cubit<LoginState> {
 
   LoginCubit(this._repositorio) : super(const LoginInicial());
 
+  /// A submit while another is in flight is ignored.
+  bool _enVuelo = false;
+
   Future<void> iniciarSesion(String email, String password) async {
+    if (_enVuelo) return;
+    _enVuelo = true;
     emit(const LoginEnviando());
     try {
       emit(LoginExitoso(await _repositorio.iniciarSesion(email, password)));
@@ -19,6 +24,8 @@ class LoginCubit extends Cubit<LoginState> {
         codigo: codigoDeError(e),
         esSinConexion: esErrorSinConexion(e),
       ));
+    } finally {
+      _enVuelo = false;
     }
   }
 }

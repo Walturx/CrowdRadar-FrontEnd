@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../errors/excepcion_con_mensaje.dart';
 import '../logging/registro_errores.dart';
 import '../storage/memoria_token_storage.dart';
 import '../storage/token_storage.dart';
@@ -26,13 +27,16 @@ class SesionCerrada extends EventoSesion {
 }
 
 /// The session could not be persisted, so it was not started.
-class ErrorAlmacenamientoSesion implements Exception {
+class ErrorAlmacenamientoSesion implements ExcepcionConMensaje {
   final Object causa;
 
   const ErrorAlmacenamientoSesion(this.causa);
 
   @override
-  String toString() => 'No se pudo guardar la sesión en el dispositivo';
+  String get mensajeUsuario => 'No se pudo guardar la sesión en el dispositivo';
+
+  @override
+  String toString() => mensajeUsuario;
 }
 
 /// Singleton + Observer subject: owns the active session (token + user), its
@@ -50,6 +54,8 @@ class SessionService {
   Duration _timeoutRestaurar = timeoutRestaurarPorDefecto;
   DateTime Function() _reloj = DateTime.now;
   StreamController<EventoSesion> _eventos = StreamController.broadcast();
+  /// Bumped by every restore; a read that finishes under an older value is stale.
+  int _generacionRestauracion = 0;
   String? _token;
   UsuarioSesion? _usuario;
 
@@ -74,18 +80,22 @@ class SessionService {
   /// Loads the persisted session; invalid or expired data is wiped.
   /// Any failure or timeout means "no session" (reported, never thrown).
   Future<void> restaurar() async {
+    final generacion = ++_generacionRestauracion;
     try {
-      await _leerPersistida().timeout(_timeoutRestaurar);
+      await _leerPersistida(generacion).timeout(_timeoutRestaurar);
     } catch (e, pila) {
+      // Invalidate the read still running: its late result must be discarded.
+      _generacionRestauracion++;
       _registro.registrar('SessionService.restaurar', e, pila);
       _token = null;
       _usuario = null;
     }
   }
 
-  Future<void> _leerPersistida() async {
+  Future<void> _leerPersistida(int generacion) async {
     final token = await _storage.leerToken();
     final usuario = await _storage.leerUsuario();
+    if (generacion != _generacionRestauracion) return;
     if (token == null ||
         usuario == null ||
         JwtUtil.estaExpirado(token, ahora: _reloj())) {
@@ -139,6 +149,7 @@ class SessionService {
 
   @visibleForTesting
   void reiniciar() {
+    _generacionRestauracion++;
     _token = null;
     _usuario = null;
     _storage = MemoriaTokenStorage();

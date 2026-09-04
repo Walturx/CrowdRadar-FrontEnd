@@ -9,7 +9,12 @@ class PerfilCubit extends Cubit<PerfilState> {
 
   PerfilCubit(this._repositorio) : super(const PerfilCargando());
 
+  /// A submit while another is in flight is ignored.
+  bool _enVuelo = false;
+
   Future<void> cargar() async {
+    if (_enVuelo) return;
+    _enVuelo = true;
     emit(const PerfilCargando());
     try {
       emit(PerfilCargado(await _repositorio.obtener()));
@@ -19,6 +24,8 @@ class PerfilCubit extends Cubit<PerfilState> {
         codigo: codigoDeError(e),
         esSinConexion: esErrorSinConexion(e),
       ));
+    } finally {
+      _enVuelo = false;
     }
   }
 }
