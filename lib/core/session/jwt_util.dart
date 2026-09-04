@@ -15,6 +15,7 @@ class JwtUtil {
       return DateTime.fromMillisecondsSinceEpoch(exp.toInt() * 1000,
           isUtc: true);
     } catch (_) {
+      // Any malformed token (bad base64, bad JSON) is simply "no expiry".
       return null;
     }
   }

@@ -1,4 +1,4 @@
-/// Frozen route table.
+/// Frozen route table: the only place route path literals live.
 class Rutas {
   Rutas._();
 
@@ -11,12 +11,17 @@ class Rutas {
   // Main shell
   static const String mapa = '/mapa';
   static const String explorar = '/mapa/explorar';
-  static String lugar(int id) => '/mapa/lugares/$id';
-  static String historial(int id) => '${lugar(id)}/historial';
-  static String comparar(int id) => '${lugar(id)}/comparar';
-  static String mejorHorario(int id) => '${lugar(id)}/mejor-horario';
+  static const String lugarPlantilla = '/mapa/lugares/:id';
+  static const String historialPlantilla = '$lugarPlantilla/historial';
+  static const String compararPlantilla = '$lugarPlantilla/comparar';
+  static const String mejorHorarioPlantilla = '$lugarPlantilla/mejor-horario';
+  static String lugar(int id) => _con(lugarPlantilla, id);
+  static String historial(int id) => _con(historialPlantilla, id);
+  static String comparar(int id) => _con(compararPlantilla, id);
+  static String mejorHorario(int id) => _con(mejorHorarioPlantilla, id);
   static const String validar = '/validar';
-  static String reporteValidar(int id) => '/validar/reportes/$id';
+  static const String reporteValidarPlantilla = '/validar/reportes/:id';
+  static String reporteValidar(int id) => _con(reporteValidarPlantilla, id);
   static const String favoritos = '/favoritos';
   static const String alertas = '/favoritos/alertas';
   static const String perfil = '/perfil';
@@ -28,7 +33,16 @@ class Rutas {
   // Admin shell
   static const String admin = '/admin';
   static const String adminReportes = '/admin/reportes';
-  static String adminReporte(int id) => '/admin/reportes/$id';
+  static const String adminReportePlantilla = '/admin/reportes/:id';
+  static String adminReporte(int id) => _con(adminReportePlantilla, id);
   static const String adminUsuarios = '/admin/usuarios';
-  static String adminUsuario(int id) => '/admin/usuarios/$id';
+  static const String adminUsuarioPlantilla = '/admin/usuarios/:id';
+  static String adminUsuario(int id) => _con(adminUsuarioPlantilla, id);
+
+  static String _con(String plantilla, int id) =>
+      plantilla.replaceFirst(':id', '$id');
+
+  /// Segment of [completa] below [padre], as nested `GoRoute`s expect.
+  static String relativa(String completa, String padre) =>
+      completa.substring(padre.length + 1);
 }

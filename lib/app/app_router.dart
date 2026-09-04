@@ -48,6 +48,8 @@ class _RefrescoPorSesion extends ChangeNotifier {
   }
 }
 
+String _hija(String completa, String padre) => Rutas.relativa(completa, padre);
+
 /// Path parameter `:id` as an int (0 when absent or malformed).
 int _id(GoRouterState state) =>
     int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
@@ -77,15 +79,15 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
               path: Rutas.mapa,
               builder: (_, _) => const MapPage(),
               routes: [
-                _pagina('explorar', (_) => const ExplorarPage()),
+                _pagina(_hija(Rutas.explorar, Rutas.mapa), (_) => const ExplorarPage()),
                 _pagina(
-                  'lugares/:id',
+                  _hija(Rutas.lugarPlantilla, Rutas.mapa),
                   (s) => DetalleLugarPage(lugarId: _id(s)),
                   routes: [
-                    _pagina('historial', (s) => HistorialPage(lugarId: _id(s))),
-                    _pagina('comparar', (s) => CompararPage(lugarId: _id(s))),
+                    _pagina(_hija(Rutas.historialPlantilla, Rutas.lugarPlantilla), (s) => HistorialPage(lugarId: _id(s))),
+                    _pagina(_hija(Rutas.compararPlantilla, Rutas.lugarPlantilla), (s) => CompararPage(lugarId: _id(s))),
                     _pagina(
-                      'mejor-horario',
+                      _hija(Rutas.mejorHorarioPlantilla, Rutas.lugarPlantilla),
                       (s) => MejorHorarioPage(lugarId: _id(s)),
                     ),
                   ],
@@ -99,7 +101,7 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
               builder: (_, _) => const ValidarPage(),
               routes: [
                 _pagina(
-                  'reportes/:id',
+                  _hija(Rutas.reporteValidarPlantilla, Rutas.validar),
                   (s) => DetalleReportePage(reporteId: _id(s)),
                 ),
               ],
@@ -109,7 +111,7 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
             GoRoute(
               path: Rutas.favoritos,
               builder: (_, _) => const FavoritosPage(),
-              routes: [_pagina('alertas', (_) => const AlertasPage())],
+              routes: [_pagina(_hija(Rutas.alertas, Rutas.favoritos), (_) => const AlertasPage())],
             ),
           ]),
           StatefulShellBranch(routes: [
@@ -118,7 +120,7 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
               builder: (_, _) => const ProfilePage(),
               routes: [
                 GoRoute(
-                  path: 'editar',
+                  path: _hija(Rutas.perfilEditar, Rutas.perfil),
                   builder: (_, state) {
                     final extra = state.extra as Map<String, dynamic>?;
                     return EditProfilePage(
@@ -126,9 +128,9 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
                     );
                   },
                 ),
-                _pagina('password', (_) => const CambiarPasswordPage()),
-                _pagina('reportes', (_) => const MisReportesPage()),
-                _pagina('validaciones', (_) => const EstadoValidacionPage()),
+                _pagina(_hija(Rutas.perfilPassword, Rutas.perfil), (_) => const CambiarPasswordPage()),
+                _pagina(_hija(Rutas.perfilReportes, Rutas.perfil), (_) => const MisReportesPage()),
+                _pagina(_hija(Rutas.perfilValidaciones, Rutas.perfil), (_) => const EstadoValidacionPage()),
               ],
             ),
           ]),
@@ -142,7 +144,7 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
               Rutas.adminReportes,
               (_) => const ReportesDenunciadosPage(),
               routes: [
-                _pagina(':id', (s) => RevisionReportePage(reporteId: _id(s))),
+                _pagina(_hija(Rutas.adminReportePlantilla, Rutas.adminReportes), (s) => RevisionReportePage(reporteId: _id(s))),
               ],
             ),
           ]),
@@ -152,7 +154,7 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
               (_) => const UsuariosAdminPage(),
               routes: [
                 _pagina(
-                  ':id',
+                  _hija(Rutas.adminUsuarioPlantilla, Rutas.adminUsuarios),
                   (s) => UsuarioAdminDetallePage(usuarioId: _id(s)),
                 ),
               ],

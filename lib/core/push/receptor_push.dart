@@ -1,4 +1,4 @@
-/// Frozen port for push notifications (FCM implementation arrives in M3).
+/// Adapter pattern: frozen port for push notifications (FCM implementation arrives in M3).
 abstract class ReceptorPush {
   Future<void> inicializar();
 

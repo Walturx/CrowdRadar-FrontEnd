@@ -34,7 +34,7 @@ import 'fakes/fake_perfil_repository.dart';
 import 'fakes/fake_reporte_repository.dart';
 import 'fakes/fake_validacion_repository.dart';
 
-/// Composition root: builds the object graph once.
+/// Composition root (manual dependency injection): builds the object graph once.
 ///
 /// `USAR_FAKES=true` swaps every repository for its in-memory `Fake*`.
 /// A stream that finishes its `<x>_repository_http.dart` changes nothing here.
