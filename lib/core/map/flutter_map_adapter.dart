@@ -6,13 +6,15 @@ import '../widgets/pin_saturacion.dart';
 import 'mapa_adapter.dart';
 import 'tipos_mapa.dart';
 
-/// Adapter pattern: OpenStreetMap tiles through `flutter_map`; the only file allowed to import it.
+/// Adapter pattern: implements the [MapaAdapter] port with OpenStreetMap tiles
+/// through `flutter_map`; the only file allowed to import it.
 class FlutterMapAdapter implements MapaAdapter {
   static const String urlTiles =
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   static const String userAgent = 'com.crowdradar.app';
   /// TextSourceAttribution prepends the copyright sign itself.
   static const String atribucion = 'OpenStreetMap contributors';
+  static const double zoomPorDefecto = 13;
   static const double _tamanoMarcador = 40;
 
   /// Injectable so tests never hit the network.
@@ -24,7 +26,7 @@ class FlutterMapAdapter implements MapaAdapter {
   @override
   Widget construirMapa({
     required PuntoGeografico centro,
-    double zoom = 13,
+    double zoom = zoomPorDefecto,
     List<MarcadorLugar> marcadores = const [],
     required void Function(int lugarId) alTocarMarcador,
     void Function(LimitesMapa limites)? alMoverCamara,

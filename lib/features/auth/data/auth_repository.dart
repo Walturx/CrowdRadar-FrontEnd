@@ -1,11 +1,11 @@
-import '../../../core/models/user_model.dart';
+import '../../../core/models/usuario.dart';
 
 /// Account access. Failures are thrown as `ApiException`.
 abstract class AuthRepository {
   /// Logs in and starts the session; returns the authenticated user.
-  Future<UserModel> iniciarSesion(String email, String password);
+  Future<Usuario> iniciarSesion(String email, String password);
 
-  Future<UserModel> registrar({
+  Future<Usuario> registrar({
     required String nombre,
     required String apellido,
     required String email,

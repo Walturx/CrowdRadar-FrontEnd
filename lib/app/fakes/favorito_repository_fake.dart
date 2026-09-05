@@ -4,10 +4,10 @@ import '../../features/favoritos/data/favorito_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 
-class FakeFavoritoRepository implements FavoritoRepository {
+class FavoritoRepositoryFake implements FavoritoRepository {
   final ComportamientoFake _comportamiento;
 
-  FakeFavoritoRepository({
+  FavoritoRepositoryFake({
     ComportamientoFake comportamiento = const ComportamientoFake(),
   }) : _comportamiento = comportamiento;
 

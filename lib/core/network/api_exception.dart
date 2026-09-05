@@ -1,3 +1,5 @@
+import '../utils/lectura_json.dart';
+
 /// Field-level validation error from the backend envelope.
 class ErrorCampo {
   final String campo;
@@ -40,7 +42,7 @@ class ApiException implements Exception {
     Object? json, {
     String? mensajePorDefecto,
   }) {
-    final mapa = json is Map<String, dynamic> ? json : const <String, dynamic>{};
+    final mapa = aMapa(json);
     final message = mapa['message'];
     final code = mapa['code'];
     final errors = mapa['errors'];

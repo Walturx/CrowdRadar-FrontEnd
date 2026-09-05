@@ -1,11 +1,11 @@
-import '../../../core/models/user_model.dart';
+import '../../../core/models/usuario.dart';
 
 /// Profile of the authenticated user. Failures are thrown as `ApiException`.
 abstract class PerfilRepository {
-  Future<UserModel> obtener();
+  Future<Usuario> obtener();
 
   /// Partial update; also refreshes the session user.
-  Future<UserModel> actualizar(Map<String, dynamic> cambios);
+  Future<Usuario> actualizar(Map<String, dynamic> cambios);
 
   Future<void> cambiarPassword({
     required String actual,

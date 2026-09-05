@@ -1,13 +1,13 @@
-// S6.1: USAR_FAKES=true makes every repository resolve to its Fake*.
+// S6.1: USAR_FAKES=true makes every repository resolve to its *RepositoryFake.
 import 'package:crowdradar/app/dependencias.dart';
-import 'package:crowdradar/app/fakes/fake_analitica_repository.dart';
-import 'package:crowdradar/app/fakes/fake_auth_repository.dart';
-import 'package:crowdradar/app/fakes/fake_favorito_repository.dart';
-import 'package:crowdradar/app/fakes/fake_lugar_repository.dart';
-import 'package:crowdradar/app/fakes/fake_moderacion_repository.dart';
-import 'package:crowdradar/app/fakes/fake_perfil_repository.dart';
-import 'package:crowdradar/app/fakes/fake_reporte_repository.dart';
-import 'package:crowdradar/app/fakes/fake_validacion_repository.dart';
+import 'package:crowdradar/app/fakes/analitica_repository_fake.dart';
+import 'package:crowdradar/app/fakes/auth_repository_fake.dart';
+import 'package:crowdradar/app/fakes/favorito_repository_fake.dart';
+import 'package:crowdradar/app/fakes/lugar_repository_fake.dart';
+import 'package:crowdradar/app/fakes/moderacion_repository_fake.dart';
+import 'package:crowdradar/app/fakes/perfil_repository_fake.dart';
+import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
+import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
 import 'package:crowdradar/core/config/entorno.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/features/auth/data/auth_repository_http.dart';
@@ -17,20 +17,20 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   tearDown(() => SessionService.instance.reiniciar());
 
-  test('S6.1 usarFakes=true injects every Fake*', () {
+  test('S6.1 usarFakes=true injects every *RepositoryFake', () {
     final d = Dependencias.crear(
       const Entorno(usarFakes: true),
       SessionService.instance,
     );
 
-    expect(d.authRepository, isA<FakeAuthRepository>());
-    expect(d.perfilRepository, isA<FakePerfilRepository>());
-    expect(d.lugarRepository, isA<FakeLugarRepository>());
-    expect(d.reporteRepository, isA<FakeReporteRepository>());
-    expect(d.analiticaRepository, isA<FakeAnaliticaRepository>());
-    expect(d.validacionRepository, isA<FakeValidacionRepository>());
-    expect(d.favoritoRepository, isA<FakeFavoritoRepository>());
-    expect(d.moderacionRepository, isA<FakeModeracionRepository>());
+    expect(d.authRepository, isA<AuthRepositoryFake>());
+    expect(d.perfilRepository, isA<PerfilRepositoryFake>());
+    expect(d.lugarRepository, isA<LugarRepositoryFake>());
+    expect(d.reporteRepository, isA<ReporteRepositoryFake>());
+    expect(d.analiticaRepository, isA<AnaliticaRepositoryFake>());
+    expect(d.validacionRepository, isA<ValidacionRepositoryFake>());
+    expect(d.favoritoRepository, isA<FavoritoRepositoryFake>());
+    expect(d.moderacionRepository, isA<ModeracionRepositoryFake>());
   });
 
   test('S6.1 usarFakes=false keeps the http implementations', () {
@@ -62,7 +62,7 @@ void main() {
     expect(
       Dependencias.crear(const Entorno(usarFakes: true),
           SessionService.instance, esRelease: false).authRepository,
-      isA<FakeAuthRepository>(),
+      isA<AuthRepositoryFake>(),
     );
   });
 }

@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'editar_perfil_cubit.dart';
 import 'editar_perfil_state.dart';
 
-import '../../../core/models/user_model.dart';
+import '../../../core/models/usuario.dart';
 
 import '../../../core/widgets/boton_principal.dart';
 import '../../../core/widgets/cargando.dart';
@@ -15,7 +15,7 @@ import '../data/perfil_repository.dart';
 import '../../../core/utils/validadores.dart';
 
 class EditProfilePage extends StatelessWidget {
-  final UserModel? user;
+  final Usuario? user;
 
   const EditProfilePage({super.key, this.user});
 
@@ -29,7 +29,7 @@ class EditProfilePage extends StatelessWidget {
 }
 
 class _EditProfileView extends StatefulWidget {
-  final UserModel? user;
+  final Usuario? user;
 
   const _EditProfileView({this.user});
 

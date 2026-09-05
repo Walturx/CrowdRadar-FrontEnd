@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../models/user_model.dart';
+import '../models/usuario.dart';
 
 /// Minimal user data kept for the active session.
 class UsuarioSesion extends Equatable {
@@ -22,7 +22,7 @@ class UsuarioSesion extends Equatable {
     this.status,
   });
 
-  factory UsuarioSesion.desdeUserModel(UserModel u) => UsuarioSesion(
+  factory UsuarioSesion.desdeUsuario(Usuario u) => UsuarioSesion(
         id: u.id,
         nombre: u.nombre,
         apellido: u.apellido,

@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../core/models/user_model.dart';
+import '../../../core/models/usuario.dart';
 
 sealed class EditarPerfilState extends Equatable {
   const EditarPerfilState();
@@ -18,7 +18,7 @@ class EditarPerfilGuardando extends EditarPerfilState {
 }
 
 class EditarPerfilGuardado extends EditarPerfilState {
-  final UserModel usuario;
+  final Usuario usuario;
 
   const EditarPerfilGuardado(this.usuario);
 

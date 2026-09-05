@@ -1,31 +1,31 @@
-import '../../core/models/user_model.dart';
+import '../../core/models/usuario.dart';
 import '../../core/session/session_service.dart';
 import '../../core/session/usuario_sesion.dart';
 import '../../features/perfil/data/perfil_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 
-class FakePerfilRepository implements PerfilRepository {
+class PerfilRepositoryFake implements PerfilRepository {
   final SessionService _sesion;
-  UserModel _perfil = usuarioFake;
+  Usuario _perfil = usuarioFake;
   String _password = passwordFake;
 
   final ComportamientoFake _comportamiento;
 
-  FakePerfilRepository(
+  PerfilRepositoryFake(
     this._sesion, {
     ComportamientoFake comportamiento = const ComportamientoFake(),
   }) : _comportamiento = comportamiento;
 
   @override
-  Future<UserModel> obtener() async {
+  Future<Usuario> obtener() async {
     await _comportamiento.aplicar();
     _exigirSesion();
     return _perfil;
   }
 
   @override
-  Future<UserModel> actualizar(Map<String, dynamic> cambios) async {
+  Future<Usuario> actualizar(Map<String, dynamic> cambios) async {
     await _comportamiento.aplicar();
     _exigirSesion();
     _perfil = _perfil.copyWith(
@@ -34,7 +34,7 @@ class FakePerfilRepository implements PerfilRepository {
       telefono: cambios['telefono'] as String?,
       distrito: cambios['distrito'] as String?,
     );
-    await _sesion.actualizarUsuario(UsuarioSesion.desdeUserModel(_perfil));
+    await _sesion.actualizarUsuario(UsuarioSesion.desdeUsuario(_perfil));
     return _perfil;
   }
 

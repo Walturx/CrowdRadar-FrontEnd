@@ -5,10 +5,10 @@ import '../../features/moderacion/data/moderacion_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 
-class FakeModeracionRepository implements ModeracionRepository {
+class ModeracionRepositoryFake implements ModeracionRepository {
   final ComportamientoFake _comportamiento;
 
-  FakeModeracionRepository({
+  ModeracionRepositoryFake({
     ComportamientoFake comportamiento = const ComportamientoFake(),
   }) : _comportamiento = comportamiento;
 

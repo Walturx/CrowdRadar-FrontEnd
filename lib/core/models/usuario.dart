@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// Value object: equality is by every field so states holding it compare by value.
-class UserModel extends Equatable {
+class Usuario extends Equatable {
   final int? id;
   final String? nombre;
   final String? apellido;
@@ -13,7 +13,7 @@ class UserModel extends Equatable {
   final String? createdAt;
   final String? updatedAt;
 
-  const UserModel({
+  const Usuario({
     this.id,
     this.nombre,
     this.apellido,
@@ -26,7 +26,7 @@ class UserModel extends Equatable {
     this.updatedAt,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
+  factory Usuario.fromJson(Map<String, dynamic> json) => Usuario(
         id: json['id'] as int?,
         nombre: json['nombre'] as String?,
         apellido: json['apellido'] as String?,
@@ -66,7 +66,7 @@ class UserModel extends Equatable {
         updatedAt,
       ];
 
-  UserModel copyWith({
+  Usuario copyWith({
     int? id,
     String? nombre,
     String? apellido,
@@ -78,7 +78,7 @@ class UserModel extends Equatable {
     String? createdAt,
     String? updatedAt,
   }) {
-    return UserModel(
+    return Usuario(
       id: id ?? this.id,
       nombre: nombre ?? this.nombre,
       apellido: apellido ?? this.apellido,

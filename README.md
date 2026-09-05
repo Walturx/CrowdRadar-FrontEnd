@@ -14,7 +14,7 @@ flutter run --dart-define=USAR_FAKES=true                      # in-memory fakes
 | Define | Default | Meaning |
 |---|---|---|
 | `API_URL` | `http://10.0.2.2:3000` | Backend base URL (Android emulator host). |
-| `USAR_FAKES` | `false` | Every repository resolves to its in-memory `Fake*`. Refused in release builds (`Dependencias.crear` throws). |
+| `USAR_FAKES` | `false` | Every repository resolves to its in-memory `*RepositoryFake`. Refused in release builds (`Dependencias.crear` throws). |
 
 Fake login: see `lib/app/fakes/datos_fake.dart`. Cleartext HTTP is allowed in
 the Android **debug** manifest only.
@@ -63,11 +63,19 @@ would ripple through every stream.
 | Strategy / chain of responsibility | `InterceptorApi` and its implementations in `core/network/interceptores/` |
 | Observer | `SesionCubit` listens to the `SessionService.eventos` stream |
 | Adapter | `MapaAdapter` (`FlutterMapAdapter`), `ReceptorPush` (`ReceptorPushNulo`) |
-| Repository + fakes | `<X>Repository` interfaces, `*_repository_http.dart`, `app/fakes/Fake*` |
+| Repository + fakes | `<X>Repository` ports, `<x>_repository_http.dart`, `app/fakes/<x>_repository_fake.dart` (`<X>RepositoryFake`) |
+| Factory Method | `ClienteHttpFactory` builds the `http.Client` inside `core/network` |
+| Null Object (stub) | `RepositorioNoImplementado` mixin: a repository port satisfied by a 501 stub until its stream implements it |
+| Strategy-style selection | `Dependencias` picks the HTTP or the fake repository set from `USAR_FAKES` |
 | Singleton | `Entorno` (config), `SessionService.instance` (read only in `main.dart`) |
 | Facade | `ApiClient` over `http` |
 
 ## Conventions for streams
+
+- Naming is Spanish for the domain (`Usuario`, `Lugar`, `Rutas`) and English for
+  technical roles (`Repository`, `Adapter`, `Factory`, `Fake`, `Http`); types
+  sort as `<X>Repository`, `<X>RepositoryHttp`, `<X>RepositoryFake`.
+- Shared JSON readers (`aMapa`, `aInt`, ...) live in `core/utils/lectura_json.dart`.
 
 - Cubits receive repositories and `SessionService` by constructor; nothing
   outside `main.dart`/`Dependencias` reads `SessionService.instance`.

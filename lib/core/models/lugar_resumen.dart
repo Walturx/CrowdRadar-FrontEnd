@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import 'categoria_lugar.dart';
 import 'enum_api.dart';
-import 'lectura_json.dart';
+import '../utils/lectura_json.dart';
 import 'nivel_saturacion.dart';
 
 /// Place as listed on the map and in search/explore results.

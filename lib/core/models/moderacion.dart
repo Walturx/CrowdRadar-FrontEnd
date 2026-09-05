@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import 'lectura_json.dart';
+import '../utils/lectura_json.dart';
 import 'nivel_saturacion.dart';
 
 enum DecisionModeracion { eliminar, desestimar }

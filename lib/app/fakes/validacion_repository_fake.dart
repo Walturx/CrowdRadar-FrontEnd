@@ -5,10 +5,10 @@ import '../../features/validacion/data/validacion_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 
-class FakeValidacionRepository implements ValidacionRepository {
+class ValidacionRepositoryFake implements ValidacionRepository {
   final ComportamientoFake _comportamiento;
 
-  FakeValidacionRepository({
+  ValidacionRepositoryFake({
     ComportamientoFake comportamiento = const ComportamientoFake(),
   }) : _comportamiento = comportamiento;
 

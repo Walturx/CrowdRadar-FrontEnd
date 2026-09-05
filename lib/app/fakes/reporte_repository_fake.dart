@@ -5,10 +5,10 @@ import '../../features/reportes/data/reporte_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 
-class FakeReporteRepository implements ReporteRepository {
+class ReporteRepositoryFake implements ReporteRepository {
   final ComportamientoFake _comportamiento;
 
-  FakeReporteRepository({
+  ReporteRepositoryFake({
     ComportamientoFake comportamiento = const ComportamientoFake(),
   }) : _comportamiento = comportamiento;
 

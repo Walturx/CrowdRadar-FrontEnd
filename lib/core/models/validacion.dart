@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import 'enum_api.dart';
-import 'lectura_json.dart';
+import '../utils/lectura_json.dart';
 import 'nivel_saturacion.dart';
 
 enum TipoAccionValidacion { confirmar, rechazar }

@@ -25,18 +25,19 @@ import '../features/reportes/data/reporte_repository.dart';
 import '../features/reportes/data/reporte_repository_http.dart';
 import '../features/validacion/data/validacion_repository.dart';
 import '../features/validacion/data/validacion_repository_http.dart';
-import 'fakes/fake_analitica_repository.dart';
-import 'fakes/fake_auth_repository.dart';
-import 'fakes/fake_favorito_repository.dart';
-import 'fakes/fake_lugar_repository.dart';
-import 'fakes/fake_moderacion_repository.dart';
-import 'fakes/fake_perfil_repository.dart';
-import 'fakes/fake_reporte_repository.dart';
-import 'fakes/fake_validacion_repository.dart';
+import 'fakes/analitica_repository_fake.dart';
+import 'fakes/comportamiento_fake.dart';
+import 'fakes/auth_repository_fake.dart';
+import 'fakes/favorito_repository_fake.dart';
+import 'fakes/lugar_repository_fake.dart';
+import 'fakes/moderacion_repository_fake.dart';
+import 'fakes/perfil_repository_fake.dart';
+import 'fakes/reporte_repository_fake.dart';
+import 'fakes/validacion_repository_fake.dart';
 
 /// Composition root (manual dependency injection): builds the object graph once.
 ///
-/// `USAR_FAKES=true` swaps every repository for its in-memory `Fake*`.
+/// `USAR_FAKES=true` swaps every repository for its in-memory `*RepositoryFake`.
 /// A stream that finishes its `<x>_repository_http.dart` changes nothing here.
 class Dependencias {
   final Entorno entorno;
@@ -89,29 +90,65 @@ class Dependencias {
       entorno,
       interceptores: interceptoresDeSesion(sesion),
     );
-    final fakes = entorno.usarFakes;
+    final repos = entorno.usarFakes
+        ? _repositoriosFake(sesion, const ComportamientoFake())
+        : _repositoriosHttp(api, sesion);
     return Dependencias._(
       entorno: entorno,
       sesion: sesion,
       apiClient: api,
       mapaAdapter: mapaAdapter ?? FlutterMapAdapter(),
       receptorPush: receptorPush ?? ReceptorPushNulo(),
-      authRepository:
-          fakes ? FakeAuthRepository(sesion) : AuthRepositoryHttp(api, sesion),
-      perfilRepository: fakes
-          ? FakePerfilRepository(sesion)
-          : PerfilRepositoryHttp(api, sesion),
-      lugarRepository: fakes ? FakeLugarRepository() : LugarRepositoryHttp(api),
-      reporteRepository:
-          fakes ? FakeReporteRepository() : ReporteRepositoryHttp(api),
-      analiticaRepository:
-          fakes ? FakeAnaliticaRepository() : AnaliticaRepositoryHttp(api),
-      validacionRepository:
-          fakes ? FakeValidacionRepository() : ValidacionRepositoryHttp(api),
-      favoritoRepository:
-          fakes ? FakeFavoritoRepository() : FavoritoRepositoryHttp(api),
-      moderacionRepository:
-          fakes ? FakeModeracionRepository() : ModeracionRepositoryHttp(api),
+      authRepository: repos.auth,
+      perfilRepository: repos.perfil,
+      lugarRepository: repos.lugar,
+      reporteRepository: repos.reporte,
+      analiticaRepository: repos.analitica,
+      validacionRepository: repos.validacion,
+      favoritoRepository: repos.favorito,
+      moderacionRepository: repos.moderacion,
     );
   }
+
+  // Strategy-style selection of the repository implementation set: both
+  // builders return the same shape, so callers never know which one ran.
+
+  static _Repositorios _repositoriosHttp(
+    ApiClient api,
+    SessionService sesion,
+  ) => (
+    auth: AuthRepositoryHttp(api, sesion),
+    perfil: PerfilRepositoryHttp(api, sesion),
+    lugar: LugarRepositoryHttp(api),
+    reporte: ReporteRepositoryHttp(api),
+    analitica: AnaliticaRepositoryHttp(api),
+    validacion: ValidacionRepositoryHttp(api),
+    favorito: FavoritoRepositoryHttp(api),
+    moderacion: ModeracionRepositoryHttp(api),
+  );
+
+  static _Repositorios _repositoriosFake(
+    SessionService sesion,
+    ComportamientoFake comportamiento,
+  ) => (
+    auth: AuthRepositoryFake(sesion, comportamiento: comportamiento),
+    perfil: PerfilRepositoryFake(sesion, comportamiento: comportamiento),
+    lugar: LugarRepositoryFake(comportamiento: comportamiento),
+    reporte: ReporteRepositoryFake(comportamiento: comportamiento),
+    analitica: AnaliticaRepositoryFake(comportamiento: comportamiento),
+    validacion: ValidacionRepositoryFake(comportamiento: comportamiento),
+    favorito: FavoritoRepositoryFake(comportamiento: comportamiento),
+    moderacion: ModeracionRepositoryFake(comportamiento: comportamiento),
+  );
 }
+
+typedef _Repositorios = ({
+  AuthRepository auth,
+  PerfilRepository perfil,
+  LugarRepository lugar,
+  ReporteRepository reporte,
+  AnaliticaRepository analitica,
+  ValidacionRepository validacion,
+  FavoritoRepository favorito,
+  ModeracionRepository moderacion,
+});
