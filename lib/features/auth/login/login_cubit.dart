@@ -1,64 +1,24 @@
-import 'dart:async';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/network/api_exception.dart';
+import '../../../core/utils/http_error_util.dart';
+import '../data/auth_repository.dart';
 import 'login_state.dart';
 
-import '../data/auth_service.dart';
-import '../../../core/session/motivo_cierre.dart';
-import '../../../core/session/session_service.dart';
+class LoginCubit extends Cubit<LoginState> {
+  final AuthRepository _repositorio;
 
-class AuthCubit extends Cubit<AuthState> {
-  final AuthService _authService;
+  LoginCubit(this._repositorio) : super(const LoginInicial());
 
-  AuthCubit(this._authService) : super(AuthInitial());
-
-  bool get isLoading => state is AuthLoading;
-
-  Future<void> login(String email, String password) async {
-    emit(AuthLoading());
+  Future<void> iniciarSesion(String email, String password) async {
+    emit(const LoginEnviando());
     try {
-      final res = await _authService.login(email, password);
-      if (res.success && res.data != null) {
-        emit(AuthLoggedIn(token: SessionService.instance.token ?? '', user: res.data!));
-      } else {
-        emit(AuthError(error: res.message));
-      }
+      emit(LoginExitoso(await _repositorio.iniciarSesion(email, password)));
     } catch (e) {
-      emit(AuthError(error: e.toString()));
+      emit(LoginFallido(
+        mensajeDeError(e),
+        codigo: e is ApiException ? e.code : null,
+      ));
     }
-  }
-
-  Future<void> register({
-    required String nombre,
-    required String apellido,
-    required String email,
-    required String password,
-    required String telefono,
-    required String distrito,
-  }) async {
-    emit(AuthLoading());
-    try {
-      final res = await _authService.register(
-        nombre: nombre,
-        apellido: apellido,
-        email: email,
-        password: password,
-        telefono: telefono,
-        distrito: distrito,
-      );
-      if (res.success) {
-        emit(AuthRegistered());
-      } else {
-        emit(AuthError(error: res.message));
-      }
-    } catch (e) {
-      emit(AuthError(error: e.toString()));
-    }
-  }
-
-  void logout() {
-    unawaited(SessionService.instance.cerrar(MotivoCierre.usuario));
-    emit(AuthLoggedOut());
   }
 }

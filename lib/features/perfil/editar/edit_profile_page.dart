@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../ver/profile_cubit.dart';
-import '../ver/profile_state.dart';
+import 'editar_perfil_cubit.dart';
+import 'editar_perfil_state.dart';
 
 import '../../../core/models/user_model.dart';
 
-import '../data/user_service.dart';
+import '../data/perfil_repository.dart';
 
 import '../../../theme/app_colors.dart';
 
@@ -20,7 +20,7 @@ class EditProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => ProfileCubit(context.read<UserService>()),
+      create: (_) => EditarPerfilCubit(context.read<PerfilRepository>()),
       child: _EditProfileView(user: user),
     );
   }
@@ -68,7 +68,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
         'telefono': _telefonoCtrl.text.trim(),
         'distrito': _distritoCtrl.text.trim(),
       };
-      context.read<ProfileCubit>().updateProfile(cambios);
+      context.read<EditarPerfilCubit>().guardar(cambios);
     }
   }
 
@@ -91,21 +91,21 @@ class _EditProfileViewState extends State<_EditProfileView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<ProfileCubit, ProfileState>(
+    return BlocConsumer<EditarPerfilCubit, EditarPerfilState>(
       listener: (context, state) {
-        if (state is ProfileLoaded) {
+        if (state is EditarPerfilGuardado) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Perfil actualizado correctamente')),
           );
           context.pop();
-        } else if (state is ProfileError) {
+        } else if (state is EditarPerfilFallido) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
+            SnackBar(content: Text(state.mensaje)),
           );
         }
       },
       builder: (context, state) {
-        if (state is ProfileLoading) {
+        if (state is EditarPerfilGuardando) {
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(color: AppColors.primary),
