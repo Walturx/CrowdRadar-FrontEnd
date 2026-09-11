@@ -81,4 +81,53 @@ void main() {
     expect(find.text('RUTA /inicio'), findsOneWidget);
     expect(find.text('Perfil actualizado correctamente'), findsOneWidget);
   });
+
+  group('same field rules as the registration form', () {
+    Future<void> escribir(WidgetTester tester, String label, String texto) =>
+        tester.enterText(find.widgetWithText(TextFormField, label), texto);
+
+    testWidgets('a phone that is not 9 digits starting with 9 is rejected', (
+      tester,
+    ) async {
+      await abrir(tester);
+
+      await escribir(tester, 'Teléfono', '812345678');
+      await guardar(tester);
+
+      expect(
+        find.text('Ingresá un celular de 9 dígitos que empiece en 9'),
+        findsOneWidget,
+      );
+      verifyNever(() => repo.actualizar(any()));
+    });
+
+    testWidgets('a one-letter district is rejected', (tester) async {
+      await abrir(tester);
+
+      await escribir(tester, 'Distrito', 'M');
+      await guardar(tester);
+
+      expect(find.text('Ingresá tu distrito'), findsOneWidget);
+      verifyNever(() => repo.actualizar(any()));
+    });
+
+    testWidgets('an empty phone is allowed and sent empty to clear it', (
+      tester,
+    ) async {
+      when(() => repo.actualizar(any())).thenAnswer((_) async => _usuario);
+      await abrir(tester);
+
+      await escribir(tester, 'Teléfono', '');
+      await guardar(tester);
+
+      verify(
+        () => repo.actualizar({
+          'nombre': 'Ana',
+          'apellido': 'Paz',
+          'telefono': '',
+          'distrito': 'Miraflores',
+        }),
+      ).called(1);
+    });
+  });
 }
