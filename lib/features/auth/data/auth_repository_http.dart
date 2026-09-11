@@ -62,11 +62,12 @@ class AuthRepositoryHttp implements AuthRepository {
       },
       mensajeError: 'Error al registrar usuario',
       parser: (d) {
-        final data = aMapa(d);
-        if (data.isEmpty) {
+        // `data` is {token, expiraEn, user}; signing in stays a separate step.
+        final user = aMapa(d)['user'];
+        if (user is! Map<String, dynamic> || user.isEmpty) {
           throw const FormatException('Register response lacks the user');
         }
-        return Usuario.fromJson(data);
+        return Usuario.fromJson(user);
       },
     );
     return res.datos;
