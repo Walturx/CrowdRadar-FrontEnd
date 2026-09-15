@@ -124,7 +124,14 @@ class _LoginViewState extends State<_LoginView> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 24),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => context.push(Rutas.recuperar),
+                      child: const Text('¿Olvidaste tu contraseña?'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   BotonPrincipal(texto: 'Iniciar sesión', onPressed: () => _onLogin(context)),
                   const SizedBox(height: 4),
                   Center(
