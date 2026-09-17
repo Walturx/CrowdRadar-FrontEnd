@@ -38,13 +38,19 @@ class SesionCubit extends Cubit<SesionState> {
     return SesionAutenticada(usuario: usuario, esAdmin: usuario.esAdmin);
   }
 
-  Future<void> cerrarSesion() async {
-    try {
-      await _antesDeCerrar?.call().timeout(plazoAntesDeCerrar);
-    } catch (_) {
-      // Best effort: signing out must never depend on it.
+  /// Ends the session. The [antesDeCerrar] hook only runs for a plain user
+  /// sign out: any other [motivo] means the token is already unusable.
+  Future<void> cerrarSesion({
+    MotivoCierre motivo = MotivoCierre.usuario,
+  }) async {
+    if (motivo == MotivoCierre.usuario) {
+      try {
+        await _antesDeCerrar?.call().timeout(plazoAntesDeCerrar);
+      } catch (_) {
+        // Best effort: signing out must never depend on it.
+      }
     }
-    await _sesion.cerrar(MotivoCierre.usuario);
+    await _sesion.cerrar(motivo);
   }
 
   @override

@@ -194,6 +194,7 @@ class _ProfileViewState extends State<_ProfileView> {
                   ),
                 ),
               ),
+              const _FilaCambiarPassword(),
               eyebrow('INFORMACIÓN'),
               _TarjetaInfo(Icons.phone, 'Teléfono', user.telefono ?? '-'),
               _TarjetaInfo(
@@ -348,6 +349,30 @@ class _FilaMisReportes extends StatelessWidget {
             title: const Text('Mis reportes'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(Rutas.perfilReportes),
+          ),
+        ),
+      );
+}
+
+/// HU 2.3: entry to the change password screen.
+class _FilaCambiarPassword extends StatelessWidget {
+  const _FilaCambiarPassword();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        child: Material(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          child: ListTile(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: AppColors.border),
+            ),
+            leading: const Icon(Icons.lock_outline, color: AppColors.primary),
+            title: const Text('Cambiar contraseña'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(Rutas.perfilPassword),
           ),
         ),
       );
