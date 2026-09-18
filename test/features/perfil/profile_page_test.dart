@@ -97,15 +97,52 @@ void main() {
     expect(find.text('Reintentar'), findsNothing);
   });
 
-  testWidgets('Cerrar sesión calls SesionCubit.cerrarSesion', (tester) async {
+  group('Cerrar sesión (HU 2.4)', () {
+    Future<void> tocarCerrar(WidgetTester tester) async {
+      when(() => repo.obtener()).thenAnswer((_) async => _usuario);
+      await abrir(tester);
+      await tester.ensureVisible(find.text('Cerrar sesión'));
+      await tester.tap(find.text('Cerrar sesión'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('asks for confirmation before signing out', (tester) async {
+      await tocarCerrar(tester);
+
+      expect(find.text('¿Cerrar sesión?'), findsOneWidget);
+      expect(find.text('Cancelar'), findsOneWidget);
+      verifyNever(() => sesion.cerrarSesion());
+    });
+
+    testWidgets('Cancelar keeps the session', (tester) async {
+      await tocarCerrar(tester);
+
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('¿Cerrar sesión?'), findsNothing);
+      verifyNever(() => sesion.cerrarSesion());
+    });
+
+    testWidgets('confirming calls SesionCubit.cerrarSesion', (tester) async {
+      await tocarCerrar(tester);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
+      await tester.pumpAndSettle();
+
+      verify(() => sesion.cerrarSesion()).called(1);
+    });
+  });
+
+  testWidgets('Acerca de opens /perfil/acerca (R8)', (tester) async {
     when(() => repo.obtener()).thenAnswer((_) async => _usuario);
-    await abrir(tester);
+    await abrir(tester, otras: const ['/perfil/acerca']);
 
-    await tester.ensureVisible(find.text('Cerrar sesión'));
-    await tester.tap(find.text('Cerrar sesión'));
-    await tester.pump();
+    await tester.ensureVisible(find.text('Acerca de'));
+    await tester.tap(find.text('Acerca de'));
+    await tester.pumpAndSettle();
 
-    verify(() => sesion.cerrarSesion()).called(1);
+    expect(find.text('RUTA /perfil/acerca'), findsOneWidget);
   });
 
   group('karma and reports (HU 4.2 / 4.3)', () {

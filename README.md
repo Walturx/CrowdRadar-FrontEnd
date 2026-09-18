@@ -144,6 +144,32 @@ part of this build: `ReceptorPushNulo` is the default and `ReceptorPushConsola`
 (fake token, `simularApertura`) is used with `USAR_FAKES`; the in-app alert
 list is the guaranteed channel.
 
+## Account security (M1)
+
+- **Recover password** (`/recuperar`, `RecuperarCubit`): always shows the
+  neutral "Si el correo está registrado..." text. Only a backend with
+  `POLITICA_MENSAJES_AUTH=DETALLADA` answers 404 `CUENTA_NO_EXISTE`, which the
+  screen shows as "Ese correo no está registrado" (HU 2.1 c3). The reset form
+  itself is a page served by the backend (`/recuperar/restablecer?token=`).
+- **Change password** (`/perfil/password`, `CambiarPasswordCubit`): checks the
+  match and the policy (8-64 characters, an uppercase, a digit; see
+  `requisitos_password.dart`) before calling the API. On success the session
+  ends with `MotivoCierre.passwordCambiada` (the old token is stale on the
+  server) and the login shows the notice.
+- **Login messages** (`mensajeDeLogin`): by `code`, `CREDENCIALES_INVALIDAS`,
+  `CUENTA_NO_EXISTE` (DETALLADA only), `CUENTA_SUSPENDIDA` and the 429 codes
+  (`DEMASIADOS_INTENTOS`, `DEMASIADAS_SOLICITUDES`), which read `Retry-After`
+  (`ApiException.reintentarEnSegundos`).
+- **Sign out** asks for confirmation; an expired session shows "Tu sesión
+  terminó" on the login.
+- **Acerca de** (`/perfil/acerca`): name, version (`Entorno.version`, kept equal
+  to `pubspec.yaml` by a test), the "© OpenStreetMap contributors" attribution
+  (ODbL) and the course line.
+- **Demo without a backend**: `flutter run --dart-define=USAR_FAKES=true`;
+  recovery answers the neutral text and the password change uses the fake
+  password in `lib/app/fakes/datos_fake.dart`. With the real backend use
+  `CORREO_PROVEEDOR=consola` to read the recovery link in the server console.
+
 ## Naming convention
 
 Domain vocabulary is Spanish (`Lugar`, `Reporte`, `SesionCubit`,

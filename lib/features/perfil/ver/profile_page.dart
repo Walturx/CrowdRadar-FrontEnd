@@ -25,6 +25,29 @@ class ProfilePage extends StatelessWidget {
   }
 }
 
+/// HU 2.4: confirms before ending the session.
+Future<void> _confirmarCerrarSesion(BuildContext context) async {
+  final sesion = context.read<SesionCubit>();
+  final confirmado = await showDialog<bool>(
+    context: context,
+    builder: (dialogo) => AlertDialog(
+      title: const Text('¿Cerrar sesión?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogo, false),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(dialogo, true),
+          child: const Text('Cerrar sesión'),
+        ),
+      ],
+    ),
+  );
+  // The router redirects to /login on SesionNoAutenticada.
+  if (confirmado ?? false) await sesion.cerrarSesion();
+}
+
 class _ProfileView extends StatefulWidget {
   const _ProfileView();
 
@@ -195,6 +218,7 @@ class _ProfileViewState extends State<_ProfileView> {
                 ),
               ),
               const _FilaCambiarPassword(),
+              const _FilaAcerca(),
               eyebrow('INFORMACIÓN'),
               _TarjetaInfo(Icons.phone, 'Teléfono', user.telefono ?? '-'),
               _TarjetaInfo(
@@ -212,7 +236,7 @@ class _ProfileViewState extends State<_ProfileView> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
                     // The router redirects to /login on SesionNoAutenticada.
-                    onTap: () => context.read<SesionCubit>().cerrarSesion(),
+                    onTap: () => _confirmarCerrarSesion(context),
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
@@ -373,6 +397,30 @@ class _FilaCambiarPassword extends StatelessWidget {
             title: const Text('Cambiar contraseña'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(Rutas.perfilPassword),
+          ),
+        ),
+      );
+}
+
+/// R8: entry to the About screen.
+class _FilaAcerca extends StatelessWidget {
+  const _FilaAcerca();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        child: Material(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          child: ListTile(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: AppColors.border),
+            ),
+            leading: const Icon(Icons.info_outline, color: AppColors.primary),
+            title: const Text('Acerca de'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(Rutas.perfilAcerca),
           ),
         ),
       );

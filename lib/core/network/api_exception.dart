@@ -22,11 +22,15 @@ class ApiException implements Exception {
   final String? code;
   final List<ErrorCampo> errors;
 
+  /// Seconds the server asks to wait (`Retry-After`), when it sent them.
+  final int? reintentarEnSegundos;
+
   const ApiException({
     required this.status,
     required this.message,
     this.code,
     this.errors = const [],
+    this.reintentarEnSegundos,
   });
 
   /// Network failure or timeout (no HTTP status).
@@ -34,13 +38,15 @@ class ApiException implements Exception {
       : status = 0,
         message = mensajeSinConexion,
         code = null,
-        errors = const [];
+        errors = const [],
+        reintentarEnSegundos = null;
 
   /// Builds from a decoded error body; tolerant to missing or odd shapes.
   factory ApiException.desdeJson(
     int status,
     Object? json, {
     String? mensajePorDefecto,
+    int? reintentarEnSegundos,
   }) {
     final mapa = aMapa(json);
     final message = mapa['message'];
@@ -62,6 +68,7 @@ class ApiException implements Exception {
                   ),
             ]
           : const [],
+      reintentarEnSegundos: reintentarEnSegundos,
     );
   }
 

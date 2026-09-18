@@ -25,6 +25,7 @@ import '../features/moderacion/reportes_denunciados/reportes_denunciados_page.da
 import '../features/moderacion/revision_reporte/revision_reporte_page.dart';
 import '../features/moderacion/usuario_detalle/usuario_admin_detalle_page.dart';
 import '../features/moderacion/usuarios/usuarios_admin_page.dart';
+import '../features/perfil/acerca/acerca_page.dart';
 import '../features/perfil/cambiar_password/cambiar_password_page.dart';
 import '../features/reportes/mis_reportes/mis_reportes_page.dart';
 import '../features/validacion/detalle_reporte/detalle_reporte_page.dart';
@@ -142,6 +143,7 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
                   },
                 ),
                 _pagina(_hija(Rutas.perfilPassword, Rutas.perfil), (_) => const CambiarPasswordPage()),
+                _pagina(_hija(Rutas.perfilAcerca, Rutas.perfil), (_) => const AcercaPage()),
                 _pagina(_hija(Rutas.perfilReportes, Rutas.perfil), (_) => const MisReportesPage()),
                 _pagina(_hija(Rutas.perfilValidaciones, Rutas.perfil), (_) => const EstadoValidacionPage()),
               ],

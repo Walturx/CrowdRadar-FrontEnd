@@ -45,7 +45,7 @@ void main() {
       act: (c) => c.iniciarSesion('a@b.c', 'x'),
       expect: () => [
         const LoginEnviando(),
-        const LoginFallido('Credenciales inválidas',
+        const LoginFallido('Correo o contraseña incorrectos',
             codigo: 'CREDENCIALES_INVALIDAS'),
       ],
     );
