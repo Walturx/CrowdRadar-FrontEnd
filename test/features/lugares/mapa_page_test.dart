@@ -45,6 +45,7 @@ class _MapaFalso implements MapaAdapter {
   List<MarcadorLugar> marcadores = const [];
   late void Function(int) alTocar;
   void Function(LimitesMapa)? alCamaraQuieta;
+  VoidCallback? alErrorTile;
 
   @override
   Widget construirMapa({
@@ -54,11 +55,13 @@ class _MapaFalso implements MapaAdapter {
     required void Function(int lugarId) alTocarMarcador,
     void Function(LimitesMapa limites)? alMoverCamara,
     void Function(LimitesMapa limites)? alCamaraQuieta,
+    VoidCallback? alErrorTile,
     PuntoGeografico? ubicacionUsuario,
   }) {
     this.marcadores = marcadores;
     alTocar = alTocarMarcador;
     this.alCamaraQuieta = alCamaraQuieta;
+    this.alErrorTile = alErrorTile;
     return Column(
       children: [
         for (final m in marcadores)
@@ -262,6 +265,44 @@ void main() {
       final centro = extraDetalle as PuntoGeografico;
       expect(centro.latitud, closeTo(-12.12, 1e-9));
       expect(centro.longitud, closeTo(-77.03, 1e-9));
+    });
+  });
+
+  group('tile errors (R4-104)', () {
+    testWidgets('the first tile error shows the banner and keeps the markers', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      await abrir(tester);
+      await alCamaraQuieta(tester);
+      expect(find.text('Sin conexión al mapa'), findsNothing);
+
+      mapa.alErrorTile!();
+      await tester.pump();
+
+      expect(find.text('Sin conexión al mapa'), findsOneWidget);
+      expect(find.byType(PinSaturacion), findsOneWidget);
+    });
+
+    testWidgets('once dismissed it is not shown again in the session', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      await abrir(tester);
+      await alCamaraQuieta(tester);
+
+      mapa.alErrorTile!();
+      mapa.alErrorTile!();
+      await tester.pump();
+      expect(find.text('Sin conexión al mapa'), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pump();
+      expect(find.text('Sin conexión al mapa'), findsNothing);
+
+      mapa.alErrorTile!();
+      await tester.pump();
+      expect(find.text('Sin conexión al mapa'), findsNothing);
     });
   });
 }

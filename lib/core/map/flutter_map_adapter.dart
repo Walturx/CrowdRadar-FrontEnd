@@ -32,6 +32,7 @@ class FlutterMapAdapter implements MapaAdapter {
     required void Function(int lugarId) alTocarMarcador,
     void Function(LimitesMapa limites)? alMoverCamara,
     void Function(LimitesMapa limites)? alCamaraQuieta,
+    VoidCallback? alErrorTile,
     PuntoGeografico? ubicacionUsuario,
   }) {
     return FlutterMap(
@@ -54,6 +55,9 @@ class FlutterMapAdapter implements MapaAdapter {
           urlTemplate: urlTiles,
           userAgentPackageName: userAgent,
           tileProvider: _tileProvider,
+          errorTileCallback: alErrorTile == null
+              ? null
+              : (_, _, _) => alErrorTile(),
         ),
         MarkerLayer(
           markers: [
