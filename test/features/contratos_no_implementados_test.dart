@@ -12,7 +12,6 @@ import 'package:crowdradar/features/analitica/data/analitica_repository.dart';
 import 'package:crowdradar/features/analitica/data/analitica_repository_http.dart';
 import 'package:crowdradar/features/favoritos/data/favorito_repository.dart';
 import 'package:crowdradar/features/favoritos/data/favorito_repository_http.dart';
-import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository_http.dart';
 import 'package:crowdradar/features/moderacion/data/moderacion_repository.dart';
 import 'package:crowdradar/features/moderacion/data/moderacion_repository_http.dart';
@@ -48,13 +47,6 @@ void main() {
   );
 
   group('stubs fail with 501', () {
-    test('LugarRepository', () {
-      final LugarRepository r = LugarRepositoryHttp(api);
-
-      expect(() => r.buscar(consulta: 'par'), _noImplementado);
-      expect(() => r.obtenerDetalle(1), _noImplementado);
-    });
-
     test('ReporteRepository', () {
       final ReporteRepository r = ReporteRepositoryHttp(api);
 

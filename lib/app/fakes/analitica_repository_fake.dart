@@ -2,7 +2,7 @@ import '../../core/models/analitica.dart';
 import '../../core/models/nivel_saturacion.dart';
 import '../../features/analitica/data/analitica_repository.dart';
 import 'comportamiento_fake.dart';
-import 'datos_fake.dart';
+import 'datos_lugares_fake.dart';
 
 class AnaliticaRepositoryFake implements AnaliticaRepository {
   final ComportamientoFake _comportamiento;

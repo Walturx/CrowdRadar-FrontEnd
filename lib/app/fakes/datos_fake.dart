@@ -1,6 +1,3 @@
-import '../../core/models/categoria_lugar.dart';
-import '../../core/models/lugar_resumen.dart';
-import '../../core/models/nivel_saturacion.dart';
 import '../../core/models/usuario.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/network/respuesta_api.dart';
@@ -18,33 +15,6 @@ const Usuario usuarioFake = Usuario(
   distrito: 'Miraflores',
   status: 'ACTIVO',
 );
-
-const List<LugarResumen> lugaresFake = [
-  LugarResumen(
-    id: 1,
-    nombre: 'Parque Kennedy',
-    categoria: CategoriaLugar.parque,
-    latitud: -12.1219,
-    longitud: -77.0297,
-    saturacion: NivelSaturacion.tranquilo,
-  ),
-  LugarResumen(
-    id: 2,
-    nombre: 'Mercado de Surquillo',
-    categoria: CategoriaLugar.mercado,
-    latitud: -12.1114,
-    longitud: -77.0156,
-    saturacion: NivelSaturacion.saturado,
-  ),
-  LugarResumen(
-    id: 3,
-    nombre: 'Playa Costa Verde',
-    categoria: CategoriaLugar.playa,
-    latitud: -12.1500,
-    longitud: -77.0300,
-    saturacion: NivelSaturacion.moderado,
-  ),
-];
 
 ApiException errorFake(int status, String code, String message) =>
     ApiException(status: status, message: message, code: code);
