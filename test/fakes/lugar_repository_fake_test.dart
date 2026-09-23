@@ -7,8 +7,18 @@ import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-const _lima = LimitesMapa(norte: -11.85, sur: -12.25, este: -76.85, oeste: -77.20);
-const _miraflores = LimitesMapa(norte: -12.11, sur: -12.13, este: -77.02, oeste: -77.04);
+const _lima = LimitesMapa(
+  norte: -11.85,
+  sur: -12.25,
+  este: -76.85,
+  oeste: -77.20,
+);
+const _miraflores = LimitesMapa(
+  norte: -12.11,
+  sur: -12.13,
+  este: -77.02,
+  oeste: -77.04,
+);
 final _ahora = DateTime.utc(2026, 10, 4, 15);
 
 Matcher _falla(int status, String code) => throwsA(
@@ -64,10 +74,16 @@ void main() {
       expect(res.items.length, lessThan(45));
       for (final l in res.items) {
         expect(l.latitud, inInclusiveRange(_miraflores.sur, _miraflores.norte));
-        expect(l.longitud, inInclusiveRange(_miraflores.oeste, _miraflores.este));
+        expect(
+          l.longitud,
+          inInclusiveRange(_miraflores.oeste, _miraflores.este),
+        );
       }
       expect(res.items.map((l) => l.nombre), contains('Parque Kennedy'));
-      expect(res.items.map((l) => l.nombre), isNot(contains('Mercado de Surquillo')));
+      expect(
+        res.items.map((l) => l.nombre),
+        isNot(contains('Mercado de Surquillo')),
+      );
     });
 
     test('q ignores case and accents', () async {
@@ -78,29 +94,47 @@ void main() {
       expect(base.items.length, greaterThan(1));
       expect(mayus.items, base.items);
       expect(tilde.items, base.items);
-      expect(base.items.every((l) => l.nombre.toLowerCase().contains('parque')), isTrue);
+      expect(
+        base.items.every((l) => l.nombre.toLowerCase().contains('parque')),
+        isTrue,
+      );
     });
 
-    test('q matches an accented name with an unaccented query and vice versa', () async {
-      final sin = await repo.buscar(q: 'exposicion');
-      final con = await repo.buscar(q: 'exposición');
+    test(
+      'q matches an accented name with an unaccented query and vice versa',
+      () async {
+        final sin = await repo.buscar(q: 'exposicion');
+        final con = await repo.buscar(q: 'exposición');
 
-      expect(sin.items.single.nombre, 'Parque de la Exposición');
-      expect(con.items, sin.items);
-    });
+        expect(sin.items.single.nombre, 'Parque de la Exposición');
+        expect(con.items, sin.items);
+      },
+    );
 
     test('categoria narrows the result', () async {
-      final res = await repo.buscar(bbox: _lima, categoria: CategoriaLugar.playa);
+      final res = await repo.buscar(
+        bbox: _lima,
+        categoria: CategoriaLugar.playa,
+      );
 
       expect(res.items, isNotEmpty);
-      expect(res.items.every((l) => l.categoria == CategoriaLugar.playa), isTrue);
+      expect(
+        res.items.every((l) => l.categoria == CategoriaLugar.playa),
+        isTrue,
+      );
     });
 
     test('nivel narrows the result', () async {
-      final res = await repo.buscar(bbox: _lima, nivel: NivelSaturacion.sinInformacion);
+      final res = await repo.buscar(
+        bbox: _lima,
+        nivel: NivelSaturacion.sinInformacion,
+      );
 
       expect(res.items, isNotEmpty);
-      expect(res.items.every((l) => l.saturacion == NivelSaturacion.sinInformacion), isTrue);
+      expect(
+        res.items.every((l) => l.saturacion == NivelSaturacion.sinInformacion),
+        isTrue,
+      );
     });
 
     test('filters combine with AND', () async {
@@ -115,10 +149,12 @@ void main() {
       expect(res.items, isNotEmpty);
       expect(res.items.length, lessThan(soloQ.items.length));
       expect(
-        res.items.every((l) =>
-            l.nombre.toLowerCase().contains('plaza') &&
-            l.categoria == CategoriaLugar.plaza &&
-            l.saturacion == NivelSaturacion.tranquilo),
+        res.items.every(
+          (l) =>
+              l.nombre.toLowerCase().contains('plaza') &&
+              l.categoria == CategoriaLugar.plaza &&
+              l.saturacion == NivelSaturacion.tranquilo,
+        ),
         isTrue,
       );
     });
@@ -136,7 +172,10 @@ void main() {
       final res = await repo.buscar(q: 'Zoológico');
 
       expect(res.estaVacia, isTrue);
-      expect(res.mensaje, 'No encontramos lugares para “Zoológico”. Prueba con otro nombre.');
+      expect(
+        res.mensaje,
+        'No encontramos lugares para “Zoológico”. Prueba con otro nombre.',
+      );
     });
 
     test('no match without q explains the zone is empty', () async {
@@ -154,7 +193,10 @@ void main() {
 
     test('q shorter than 2 chars is a 400', () async {
       await expectLater(repo.buscar(q: 'a'), _falla(400, 'VALIDACION_FALLIDA'));
-      await expectLater(repo.buscar(q: ' a '), _falla(400, 'VALIDACION_FALLIDA'));
+      await expectLater(
+        repo.buscar(q: ' a '),
+        _falla(400, 'VALIDACION_FALLIDA'),
+      );
     });
 
     test('neither q nor bbox is a 400', () async {
@@ -163,12 +205,16 @@ void main() {
 
     test('a configured failure is thrown', () async {
       final caido = LugarRepositoryFake(
-        comportamiento: const ComportamientoFake(fallo: ApiException.sinConexion()),
+        comportamiento: const ComportamientoFake(
+          fallo: ApiException.sinConexion(),
+        ),
       );
 
       await expectLater(
         caido.buscar(bbox: _lima),
-        throwsA(isA<ApiException>().having((e) => e.esSinConexion, 'offline', true)),
+        throwsA(
+          isA<ApiException>().having((e) => e.esSinConexion, 'offline', true),
+        ),
       );
     });
   });
@@ -187,7 +233,10 @@ void main() {
 
       expect(d.saturacion.nivel, NivelSaturacion.tranquilo);
       expect(d.saturacion.actualizadoEn, isNotNull);
-      expect(_ahora.difference(d.saturacion.actualizadoEn!).inMinutes, inInclusiveRange(1, 59));
+      expect(
+        _ahora.difference(d.saturacion.actualizadoEn!).inMinutes,
+        inInclusiveRange(1, 59),
+      );
       expect(d.saturacion.reportesRecientes, greaterThan(0));
     });
 

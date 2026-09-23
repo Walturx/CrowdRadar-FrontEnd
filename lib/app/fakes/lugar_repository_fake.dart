@@ -37,10 +37,18 @@ class LugarRepositoryFake implements LugarRepository {
     await _comportamiento.aplicar();
     final texto = q?.trim();
     if ((texto == null || texto.isEmpty) && bbox == null) {
-      throw errorFake(400, 'VALIDACION_FALLIDA', 'Indica un texto o el área del mapa');
+      throw errorFake(
+        400,
+        'VALIDACION_FALLIDA',
+        'Indica un texto o el área del mapa',
+      );
     }
     if (texto != null && texto.length < _qMinimo) {
-      throw errorFake(400, 'VALIDACION_FALLIDA', 'La búsqueda requiere al menos 2 caracteres');
+      throw errorFake(
+        400,
+        'VALIDACION_FALLIDA',
+        'La búsqueda requiere al menos 2 caracteres',
+      );
     }
     final buscado = texto == null ? null : _normalizar(texto);
     final items = [
@@ -75,14 +83,20 @@ class LugarRepositoryFake implements LugarRepository {
         saturacion: SaturacionLugar(
           nivel: l.nivel,
           actualizadoEn: conInformacion
-              ? _reloj().subtract(Duration(minutes: l.minutosDesdeActualizacion))
+              ? _reloj().subtract(
+                  Duration(minutes: l.minutosDesdeActualizacion),
+                )
               : null,
           reportesRecientes: l.reportesRecientes,
           mensaje: conInformacion ? null : _mensajeSinInformacion,
         ),
       );
     }
-    throw errorFake(404, 'LUGAR_NO_ENCONTRADO', 'No se pudo obtener la información del lugar.');
+    throw errorFake(
+      404,
+      'LUGAR_NO_ENCONTRADO',
+      'No se pudo obtener la información del lugar.',
+    );
   }
 
   static String _mensajeVacio(String? q) => q == null || q.isEmpty

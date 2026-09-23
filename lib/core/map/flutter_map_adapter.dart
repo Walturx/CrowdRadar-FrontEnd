@@ -12,6 +12,7 @@ class FlutterMapAdapter implements MapaAdapter {
   static const String urlTiles =
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   static const String userAgent = 'com.crowdradar.app';
+
   /// TextSourceAttribution prepends the copyright sign itself.
   static const String atribucion = 'OpenStreetMap contributors';
   static const double zoomPorDefecto = 13;
@@ -30,6 +31,7 @@ class FlutterMapAdapter implements MapaAdapter {
     List<MarcadorLugar> marcadores = const [],
     required void Function(int lugarId) alTocarMarcador,
     void Function(LimitesMapa limites)? alMoverCamara,
+    void Function(LimitesMapa limites)? alCamaraQuieta,
     PuntoGeografico? ubicacionUsuario,
   }) {
     return FlutterMap(
@@ -38,16 +40,13 @@ class FlutterMapAdapter implements MapaAdapter {
         initialZoom: zoom,
         onPositionChanged: alMoverCamara == null
             ? null
-            : (camara, _) {
-                final b = camara.visibleBounds;
-                alMoverCamara(
-                  LimitesMapa(
-                    norte: b.north,
-                    sur: b.south,
-                    este: b.east,
-                    oeste: b.west,
-                  ),
-                );
+            : (camara, _) => alMoverCamara(_limitesDe(camara)),
+        onMapEvent: alCamaraQuieta == null
+            ? null
+            : (evento) {
+                if (_terminaGesto(evento)) {
+                  alCamaraQuieta(_limitesDe(evento.camera));
+                }
               },
       ),
       children: [
@@ -90,7 +89,49 @@ class FlutterMapAdapter implements MapaAdapter {
         const RichAttributionWidget(
           attributions: [TextSourceAttribution(atribucion)],
         ),
+        if (alCamaraQuieta != null) _AvisoMapaListo(alCamaraQuieta),
       ],
     );
   }
+
+  static LimitesMapa _limitesDe(MapCamera camara) {
+    final b = camara.visibleBounds;
+    return LimitesMapa(
+      norte: b.north,
+      sur: b.south,
+      este: b.east,
+      oeste: b.west,
+    );
+  }
+
+  static bool _terminaGesto(MapEvent e) =>
+      e is MapEventMoveEnd ||
+      e is MapEventFlingAnimationEnd ||
+      e is MapEventDoubleTapZoomEnd ||
+      e is MapEventScrollWheelZoom;
+}
+
+/// Reports the initial bounds once, right after the first frame of the map.
+class _AvisoMapaListo extends StatefulWidget {
+  final void Function(LimitesMapa limites) alListo;
+
+  const _AvisoMapaListo(this.alListo);
+
+  @override
+  State<_AvisoMapaListo> createState() => _AvisoMapaListoState();
+}
+
+class _AvisoMapaListoState extends State<_AvisoMapaListo> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        widget.alListo(FlutterMapAdapter._limitesDe(MapCamera.of(context)));
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }

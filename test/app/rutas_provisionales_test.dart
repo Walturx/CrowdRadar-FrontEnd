@@ -19,6 +19,7 @@ class _MapaVacio implements MapaAdapter {
     List<MarcadorLugar> marcadores = const [],
     required void Function(int lugarId) alTocarMarcador,
     void Function(LimitesMapa limites)? alMoverCamara,
+    void Function(LimitesMapa limites)? alCamaraQuieta,
     PuntoGeografico? ubicacionUsuario,
   }) => const SizedBox.expand();
 }
