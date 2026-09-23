@@ -53,7 +53,6 @@ void main() {
   // (route, title, detail fragment)
   const usuario = [
     ('/mapa/explorar', 'Explorar lugares', _pendiente),
-    ('/mapa/lugares/7', 'Detalle del lugar', 'Lugar #7'),
     ('/mapa/lugares/9/historial', 'Historial de aforo', 'Lugar #9'),
     ('/mapa/lugares/3/comparar', 'Comparar periodos', 'Lugar #3'),
     ('/mapa/lugares/4/mejor-horario', 'Mejor horario', 'Lugar #4'),
