@@ -8,6 +8,7 @@ import '../../../core/map/tipos_mapa.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
 import '../../../theme/app_colors.dart';
+import '../buscar/buscar_lugar_page.dart';
 import '../data/lugar_repository.dart';
 import 'leyenda_saturacion.dart';
 import 'mapa_cubit.dart';
@@ -54,6 +55,19 @@ class _MapViewState extends State<_MapView> {
     }
   }
 
+  /// Opens the search; a chosen place opens its detail from the current map centre.
+  Future<void> _abrirBusqueda() async {
+    final cubit = context.read<MapaCubit>();
+    final id = await Navigator.of(context).push<int>(
+      MaterialPageRoute(
+        builder: (_) => BuscarLugarPage(centroMapa: cubit.centro),
+      ),
+    );
+    if (id != null && mounted) {
+      context.push(Rutas.lugar(id), extra: cubit.centro);
+    }
+  }
+
   void _alErrorTile() {
     if (_avisoMostrado || !mounted) return;
     setState(() {
@@ -71,15 +85,15 @@ class _MapViewState extends State<_MapView> {
           Container(
             width: double.infinity,
             color: AppColors.primary,
-            child: const SafeArea(
+            child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
+                    const Text(
                       'Tu zona',
                       style: TextStyle(
                         color: AppColors.onPrimaryMuted,
@@ -87,8 +101,8 @@ class _MapViewState extends State<_MapView> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    SizedBox(height: 2),
-                    Text(
+                    const SizedBox(height: 2),
+                    const Text(
                       'Lima, Perú',
                       style: TextStyle(
                         color: Colors.white,
@@ -96,6 +110,8 @@ class _MapViewState extends State<_MapView> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    _CampoBusqueda(onTap: _abrirBusqueda),
                   ],
                 ),
               ),
@@ -211,6 +227,37 @@ class _AvisoSinConexion extends StatelessWidget {
               onPressed: onCerrar,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CampoBusqueda extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _CampoBusqueda({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          child: Row(
+            children: [
+              Icon(Icons.search, color: AppColors.textMuted),
+              SizedBox(width: 8),
+              Text(
+                'Buscar lugares',
+                style: TextStyle(color: AppColors.textMuted),
+              ),
+            ],
+          ),
         ),
       ),
     );
