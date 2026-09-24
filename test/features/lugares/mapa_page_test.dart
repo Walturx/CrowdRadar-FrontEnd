@@ -1,3 +1,4 @@
+import 'package:crowdradar/app/fakes/exploracion_repository_fake.dart';
 import 'package:crowdradar/app/rutas.dart';
 import 'package:crowdradar/core/map/mapa_adapter.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
@@ -6,8 +7,10 @@ import 'package:crowdradar/core/models/lugar_resumen.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/widgets/pin_saturacion.dart';
+import 'package:crowdradar/features/exploracion/data/exploracion_repository.dart';
 import 'package:crowdradar/features/lugares/buscar/buscar_lugar_page.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
+import 'package:crowdradar/features/lugares/mapa/leyenda_saturacion.dart';
 import 'package:crowdradar/features/lugares/mapa/map_page.dart';
 import 'package:crowdradar/features/lugares/mapa/marcadores.dart';
 import 'package:crowdradar/theme/app_colors.dart';
@@ -111,7 +114,10 @@ void main() {
         value: mapa,
         child: RepositoryProvider<LugarRepository>.value(
           value: repo,
-          child: MaterialApp.router(routerConfig: router),
+          child: RepositoryProvider<ExploracionRepository>.value(
+            value: ExploracionRepositoryFake(),
+            child: MaterialApp.router(routerConfig: router),
+          ),
         ),
       ),
     );
@@ -200,6 +206,104 @@ void main() {
       await tester.pump(const Duration(milliseconds: 250));
       await tester.pump();
       expect(repo.pedidos.map((p) => p.bbox), [_bbox, otro]);
+    });
+  });
+
+  group('filters (HU 3.5, 3.6)', () {
+    testWidgets('a category chip reloads the markers with that category', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(
+        alBuscar: (p) => resultado(
+          p.categoria == CategoriaLugar.mercado ? [_mercado] : [_kennedy, _mercado],
+        ),
+      );
+      await abrir(tester);
+      await alCamaraQuieta(tester);
+      expect(find.byType(PinSaturacion), findsNWidgets(2));
+
+      await tester.tap(find.text('Mercados'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(repo.pedidos.last.categoria, CategoriaLugar.mercado);
+      expect(repo.pedidos.last.bbox, _bbox);
+      expect(mapa.marcadores.map((m) => m.lugarId), [2]);
+      expect(find.byType(PinSaturacion), findsOneWidget);
+    });
+
+    testWidgets('choosing another category replaces the previous filter', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      await abrir(tester);
+      await alCamaraQuieta(tester);
+
+      await tester.tap(find.text('Mercados'));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.text('Parques'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(repo.pedidos.last.categoria, CategoriaLugar.parque);
+    });
+
+    testWidgets('the level control filters and combines with the category', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      await abrir(tester);
+      await alCamaraQuieta(tester);
+
+      await tester.tap(find.byKey(const Key('nivel-saturado')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(repo.pedidos.last.nivel, NivelSaturacion.saturado);
+      expect(repo.pedidos.last.categoria, isNull);
+    });
+
+    testWidgets('no result explains it with the category message', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(
+        alBuscar: (p) => resultado(p.categoria == null ? [_kennedy] : const []),
+      );
+      await abrir(tester);
+      await alCamaraQuieta(tester);
+
+      await tester.tap(find.text('Mercados'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        find.text('No hay lugares cercanos disponibles para esa categoría.'),
+        findsOneWidget,
+      );
+      expect(find.byType(PinSaturacion), findsNothing);
+    });
+
+    testWidgets('moving the map keeps the filter', (tester) async {
+      repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      await abrir(tester);
+      await alCamaraQuieta(tester);
+      await tester.tap(find.text('Parques'));
+      await tester.pump();
+      await tester.pump();
+      const otro = LimitesMapa(
+        norte: -12.0,
+        sur: -12.04,
+        este: -77.0,
+        oeste: -77.06,
+      );
+
+      mapa.alCamaraQuieta(otro);
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump();
+
+      expect(repo.pedidos.last.bbox, otro);
+      expect(repo.pedidos.last.categoria, CategoriaLugar.parque);
     });
   });
 
@@ -293,9 +397,13 @@ void main() {
       repo = RepoLugarFalso();
       await abrir(tester);
 
-      expect(find.text('Tranquilo'), findsOneWidget);
-      expect(find.text('Moderado'), findsOneWidget);
-      expect(find.text('Saturado'), findsOneWidget);
+      final leyenda = find.byType(LeyendaSaturacion);
+      for (final nivel in ['Tranquilo', 'Moderado', 'Saturado']) {
+        expect(
+          find.descendant(of: leyenda, matching: find.text(nivel)),
+          findsOneWidget,
+        );
+      }
     });
   });
 

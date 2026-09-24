@@ -8,6 +8,7 @@ import '../../../core/map/tipos_mapa.dart';
 import '../../../core/widgets/tarjeta_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
 import '../../../theme/app_colors.dart';
+import '../../exploracion/explorar/filtros_mapa.dart';
 import '../data/lugar_repository.dart';
 import 'leyenda_saturacion.dart';
 import 'mapa_cubit.dart';
@@ -122,6 +123,10 @@ class _MapViewState extends State<_MapView> {
                 ),
               ),
             ),
+          ),
+          FiltrosMapa(
+            alCambiar: (categoria, nivel) =>
+                cubit.aplicarFiltros(categoria: categoria, nivel: nivel),
           ),
           Expanded(
             child: BlocConsumer<MapaCubit, MapaState>(

@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../core/map/mapa_adapter.dart';
 import '../core/session/sesion_cubit.dart';
+import '../features/alertas/data/alerta_repository.dart';
 import '../features/analitica/data/analitica_repository.dart';
 import '../features/auth/data/auth_repository.dart';
+import '../features/exploracion/data/exploracion_repository.dart';
 import '../features/favoritos/data/favorito_repository.dart';
 import '../features/lugares/data/lugar_repository.dart';
 import '../features/moderacion/data/moderacion_repository.dart';
@@ -67,6 +69,12 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
         ),
         RepositoryProvider<FavoritoRepository>.value(
           value: deps.favoritoRepository,
+        ),
+        RepositoryProvider<AlertaRepository>.value(
+          value: deps.alertaRepository,
+        ),
+        RepositoryProvider<ExploracionRepository>.value(
+          value: deps.exploracionRepository,
         ),
         RepositoryProvider<ModeracionRepository>.value(
           value: deps.moderacionRepository,

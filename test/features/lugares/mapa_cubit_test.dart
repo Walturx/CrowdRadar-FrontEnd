@@ -180,6 +180,157 @@ void main() {
     );
   });
 
+  group('aplicarFiltros', () {
+    test('reloads the current area with the category and level', () async {
+      final repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      final cubit = MapaCubit(repo);
+      await cubit.cargar(_b1);
+
+      await cubit.aplicarFiltros(
+        categoria: CategoriaLugar.parque,
+        nivel: NivelSaturacion.saturado,
+      );
+
+      expect(repo.pedidos, hasLength(2));
+      expect(repo.pedidos.last.bbox, _b1);
+      expect(repo.pedidos.last.categoria, CategoriaLugar.parque);
+      expect(repo.pedidos.last.nivel, NivelSaturacion.saturado);
+      expect(repo.pedidos.first.categoria, isNull);
+      await cubit.close();
+    });
+
+    test('drops the previous markers while the filtered ones load', () async {
+      final repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      final cubit = MapaCubit(repo);
+      await cubit.cargar(_b1);
+      final estados = <MapaState>[];
+      cubit.stream.listen(estados.add);
+
+      await cubit.aplicarFiltros(categoria: CategoriaLugar.mercado);
+      await pumpEventQueue();
+
+      expect(estados.first, const MapaCargando());
+      await cubit.close();
+    });
+
+    test('panning keeps the filters', () {
+      fakeAsync((reloj) {
+        final repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+        final cubit = MapaCubit(repo);
+        cubit.cargar(_b1);
+        reloj.flushMicrotasks();
+        cubit.aplicarFiltros(categoria: CategoriaLugar.playa);
+        reloj.flushMicrotasks();
+
+        cubit.alMoverCamara(_b2);
+        reloj.elapse(const Duration(milliseconds: 600));
+
+        expect(repo.pedidos.last.bbox, _b2);
+        expect(repo.pedidos.last.categoria, CategoriaLugar.playa);
+        cubit.close();
+      });
+    });
+
+    test('a retry keeps the filters too', () async {
+      var falla = true;
+      final repo = RepoLugarFalso(
+        alBuscar: (_) async {
+          if (falla) throw const ApiException.sinConexion();
+          return ResultadoLista(mensaje: '', items: [_kennedy]);
+        },
+      );
+      final cubit = MapaCubit(repo);
+      await cubit.aplicarFiltros(nivel: NivelSaturacion.tranquilo);
+      await cubit.cargar(_b1);
+      falla = false;
+
+      await cubit.reintentar();
+
+      expect(repo.pedidos.last.nivel, NivelSaturacion.tranquilo);
+      expect(cubit.state, const MapaCargado([_kennedy]));
+      await cubit.close();
+    });
+
+    test('before any area it only stores them for the first load', () async {
+      final repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      final cubit = MapaCubit(repo);
+
+      await cubit.aplicarFiltros(categoria: CategoriaLugar.parque);
+      expect(repo.pedidos, isEmpty);
+      await cubit.cargar(_b1);
+
+      expect(repo.pedidos.single.categoria, CategoriaLugar.parque);
+      await cubit.close();
+    });
+
+    test('clearing both filters goes back to unfiltered places', () async {
+      final repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      final cubit = MapaCubit(repo);
+      await cubit.cargar(_b1);
+      await cubit.aplicarFiltros(categoria: CategoriaLugar.parque);
+
+      await cubit.aplicarFiltros();
+
+      expect(repo.pedidos.last.categoria, isNull);
+      expect(repo.pedidos.last.nivel, isNull);
+      expect(cubit.hayFiltros, isFalse);
+      await cubit.close();
+    });
+
+    test('an empty filtered result explains the filters (HU 3.5/3.6 c3)', () async {
+      final cubit = MapaCubit(RepoLugarFalso(alBuscar: (_) => resultado([])));
+      await cubit.cargar(_b1);
+
+      await cubit.aplicarFiltros(categoria: CategoriaLugar.playa);
+      expect(
+        cubit.state,
+        const MapaCargado(
+          [],
+          mensajeVacio: MapaCubit.mensajeSinCategoria,
+        ),
+      );
+
+      await cubit.aplicarFiltros(nivel: NivelSaturacion.saturado);
+      expect(
+        cubit.state,
+        const MapaCargado([], mensajeVacio: MapaCubit.mensajeSinNivel),
+      );
+
+      await cubit.aplicarFiltros(
+        categoria: CategoriaLugar.playa,
+        nivel: NivelSaturacion.saturado,
+      );
+      expect(
+        cubit.state,
+        const MapaCargado([], mensajeVacio: MapaCubit.mensajeSinFiltros),
+      );
+
+      await cubit.aplicarFiltros();
+      expect(
+        cubit.state,
+        const MapaCargado([], mensajeVacio: MapaCubit.mensajeZonaVacia),
+      );
+      await cubit.close();
+    });
+
+    test('a slow answer of the old filters is discarded', () async {
+      final lenta = Completer<ResultadoLista<LugarResumen>>();
+      final repo = RepoLugarFalso(
+        alBuscar: (p) =>
+            p.categoria == null ? lenta.future : resultado([_mercado]),
+      );
+      final cubit = MapaCubit(repo);
+
+      final primera = cubit.cargar(_b1);
+      await cubit.aplicarFiltros(categoria: CategoriaLugar.mercado);
+      lenta.complete(ResultadoLista(mensaje: '', items: [_kennedy]));
+      await primera;
+
+      expect(cubit.state, const MapaCargado([_mercado]));
+      await cubit.close();
+    });
+  });
+
   group('reintentar', () {
     test('reloads the last bbox after a failure', () async {
       var falla = true;
