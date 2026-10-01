@@ -30,6 +30,7 @@ class AnaliticaRepositoryFake implements AnaliticaRepository {
     int lugarId, {
     DateTime? desde,
     DateTime? hasta,
+    AgrupacionHistorial? agrupacion,
   }) async {
     await _comportamiento.aplicar();
     return _tieneDatos(lugarId) ? _serie : _sinDatos;

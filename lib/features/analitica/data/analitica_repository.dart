@@ -7,6 +7,7 @@ abstract class AnaliticaRepository {
     int lugarId, {
     DateTime? desde,
     DateTime? hasta,
+    AgrupacionHistorial? agrupacion,
   });
 
   /// `GET /api/lugares/:id/comparar`.
