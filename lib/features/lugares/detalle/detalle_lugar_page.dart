@@ -11,6 +11,7 @@ import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/etiqueta_seccion.dart';
 import '../../../theme/app_colors.dart';
 import '../../favoritos/data/favorito_repository.dart';
+import '../../reportes/reportar/reportar_sheet.dart';
 import '../categoria_presentacion.dart';
 import '../data/lugar_repository.dart';
 import 'detalle_lugar_cubit.dart';
@@ -91,18 +92,34 @@ class _DetalleView extends StatelessWidget {
                 ? null
                 : context.read<DetalleLugarCubit>().cargar,
           ),
-          DetalleCargado() => _Contenido(state.detalle, centroMapa),
+          DetalleCargado() => _Contenido(
+            state.detalle,
+            centroMapa,
+            () => _reportar(context, state.detalle),
+          ),
         },
       ),
     );
+  }
+
+  /// Opens the report sheet; a sent report refreshes the shown saturation.
+  Future<void> _reportar(BuildContext context, LugarDetalle detalle) async {
+    final cubit = context.read<DetalleLugarCubit>();
+    final enviado = await mostrarReportarSheet(
+      context,
+      lugarId: detalle.id,
+      lugarNombre: detalle.nombre,
+    );
+    if (enviado == true) await cubit.cargar();
   }
 }
 
 class _Contenido extends StatelessWidget {
   final LugarDetalle detalle;
   final PuntoGeografico? centroMapa;
+  final VoidCallback onReportar;
 
-  const _Contenido(this.detalle, this.centroMapa);
+  const _Contenido(this.detalle, this.centroMapa, this.onReportar);
 
   @override
   Widget build(BuildContext context) {
@@ -143,6 +160,12 @@ class _Contenido extends StatelessWidget {
         ),
         const EtiquetaSeccion('SATURACIÓN AHORA'),
         _BloqueSaturacion(detalle.saturacion),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: onReportar,
+          icon: const Icon(Icons.campaign_outlined),
+          label: const Text('Reportar saturación'),
+        ),
         const EtiquetaSeccion('INFORMACIÓN'),
         if (detalle.direccion != null) _Fila('Dirección', detalle.direccion!),
         if (detalle.horarioAtencion != null)
