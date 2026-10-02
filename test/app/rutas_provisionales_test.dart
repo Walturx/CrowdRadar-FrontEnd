@@ -57,7 +57,6 @@ void main() {
     ('/validar/reportes/12', 'Detalle del reporte', 'Reporte #12'),
     ('/favoritos/alertas', 'Alertas', _pendiente),
     ('/perfil/password', 'Cambiar contraseña', _pendiente),
-    ('/perfil/reportes', 'Mis reportes', _pendiente),
     ('/perfil/validaciones', 'Estado de mis reportes', _pendiente),
   ];
   const admin = [
