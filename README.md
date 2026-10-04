@@ -70,6 +70,41 @@ Every places request sends `limite`: `MapaCubit.limiteLugares = 200` (map) and
 live camera centre (null before the first camera event; the detail then hides
 the distance).
 
+## Reports, karma and analytics (M4)
+
+`features/reportes/` has `data/` (`ReporteRepository` + HTTP; the fake lives in
+`app/fakes/reporte_repository_fake.dart`), `reportar/` and `mis_reportes/`.
+
+- **Reportar sheet**: `mostrarReportarSheet` (opened from the place detail)
+  completes with `true` once a report was accepted, however the sheet is
+  dismissed, so the detail refreshes. `ReportarCubit` guards every emit with
+  `isClosed`; a failure is `ReportarFallido` with `bloqueante` (403/404: the
+  form only offers "Cerrar") or `reintentable` (offline/5xx: "Reintentar").
+  The 422 `REPORTE_EN_ESPERA` shows the server message (minutes left).
+- **Mis reportes** (`Rutas.perfilReportes`): paginated, newest first.
+  `MisReportesCubit.cargar` over a loaded list keeps it visible; "Cargar más"
+  de-duplicates by `id` and stops on an empty page.
+- **Karma**: `Usuario.puntosKarma`, shown by the profile's karma card.
+  `KarmaFake` is the counter shared by the report and profile fakes.
+- **Refresh without blanking**: `PerfilCubit.refrescar` (profile tab
+  re-activation) and `DetalleLugarCubit.refrescar` (after a report) keep the
+  data on screen and only add a soft error (`errorActualizacion`, snackbar).
+
+`features/analitica/` has `data/` (`AnaliticaRepository` + HTTP; fake in
+`app/fakes/analitica_repository_fake.dart` with `historial_sintetico.dart`),
+and screens `historial/` (`Rutas.historial(id)`, today / 7 days), `comparar/`
+(weekdays against weekends) and `mejor_horario/`. `comun/` holds the shared
+`AnaliticaCubit<T>` / `AnaliticaState<T>` base (load/retry skeleton; "no data"
+is a 200, not an error). **Exception to the one-cubit-one-state convention:**
+the three screens share that single generic base instead of declaring their own
+state. `widgets/` has `GraficoBarras` (plain bars, no chart dependency),
+`VistaAnalitica` (loading / error / no-data / data switch) and `AvisoDemo`
+(shown when the backend flags the data `sintetico`).
+`AnaliticaParametros` names the shared windows and limits (7-day history,
+28-day / 4-week comparison, top 3 slots, opening hours, `LABORABLES` /
+`FIN_DE_SEMANA`). `NivelSaturacion.desdePromedio` is the only place the
+1.67 / 2.34 cutoffs live.
+
 ## Naming convention
 
 Domain vocabulary is Spanish (`Lugar`, `Reporte`, `SesionCubit`,

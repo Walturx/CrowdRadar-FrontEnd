@@ -93,58 +93,6 @@ class _ProfileViewState extends State<_ProfileView> {
                 ),
               );
 
-          Widget infoCard(IconData icon, String label, String value) =>
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppColors.bg,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(icon, color: AppColors.primary, size: 20),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              label,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              value,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.text,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-
           return ListView(
             padding: const EdgeInsets.only(bottom: 24),
             children: [
@@ -247,29 +195,13 @@ class _ProfileViewState extends State<_ProfileView> {
                 ),
               ),
               eyebrow('INFORMACIÓN'),
-              infoCard(Icons.phone, 'Teléfono', user.telefono ?? '-'),
-              infoCard(
+              _TarjetaInfo(Icons.phone, 'Teléfono', user.telefono ?? '-'),
+              _TarjetaInfo(
                   Icons.location_city, 'Distrito', user.distrito ?? '-'),
-              infoCard(Icons.verified_user, 'Rol', user.rol ?? '-'),
-              infoCard(Icons.info_outline, 'Estado', user.status ?? '-'),
-              infoCard(Icons.star, 'Karma', '${user.puntosKarma ?? 0}'),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                child: Material(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  child: ListTile(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: AppColors.border),
-                    ),
-                    leading: const Icon(Icons.history, color: AppColors.primary),
-                    title: const Text('Mis reportes'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push(Rutas.perfilReportes),
-                  ),
-                ),
-              ),
+              _TarjetaInfo(Icons.verified_user, 'Rol', user.rol ?? '-'),
+              _TarjetaInfo(Icons.info_outline, 'Estado', user.status ?? '-'),
+              _TarjetaKarma(user.puntosKarma ?? 0),
+              const _FilaMisReportes(),
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -322,4 +254,101 @@ class _ProfileViewState extends State<_ProfileView> {
       ),
     );
   }
+}
+
+/// Icon + label + value card of the information section.
+class _TarjetaInfo extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _TarjetaInfo(this.icon, this.label, this.value, {super.key});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.bg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.text,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+/// HU 4.2: the accumulated karma points.
+class _TarjetaKarma extends StatelessWidget {
+  static const Key clave = Key('perfil-karma');
+
+  final int puntos;
+
+  const _TarjetaKarma(this.puntos);
+
+  @override
+  Widget build(BuildContext context) =>
+      _TarjetaInfo(Icons.star, 'Karma', '$puntos', key: clave);
+}
+
+/// HU 4.3: entry to the user's own report history.
+class _FilaMisReportes extends StatelessWidget {
+  const _FilaMisReportes();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        child: Material(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          child: ListTile(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: AppColors.border),
+            ),
+            leading: const Icon(Icons.history, color: AppColors.primary),
+            title: const Text('Mis reportes'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(Rutas.perfilReportes),
+          ),
+        ),
+      );
 }

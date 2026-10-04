@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+/// Cheap integer mix (7919 and 104729 are primes, 2654435761 is Knuth's
+/// multiplicative-hash constant); only needs to look random, not be secure.
 int _hash(int seed, int hora, bool finDeSemana) =>
     ((seed * 7919 + hora * 104729 + (finDeSemana ? 31 : 0)) * 2654435761) %
     1000;
