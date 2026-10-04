@@ -328,6 +328,29 @@ void main() {
       expect(registro.registros, isNotEmpty);
     });
 
+    for (final (status, codigo) in [
+      (422, 'PASSWORD_ACTUAL_INCORRECTA'),
+      (422, 'PASSWORD_REPETIDA'),
+      (400, 'VALIDACION_FALLIDA'),
+    ]) {
+      test('R3-1208 a $status $codigo on the password change keeps the session',
+          () async {
+        final motivos = <MotivoCierre>[];
+        final api = _cliente(
+          (_) async => _json(status, {'code': codigo, 'message': 'x'}),
+          interceptores: [
+            SesionExpiradaInterceptor((m) async => motivos.add(m)),
+          ],
+        );
+
+        final e = await _capturar(
+            () => api.put<Object?>('/api/users/password', parser: _identidad));
+
+        expect(e.status, status);
+        expect(motivos, isEmpty);
+      });
+    }
+
     for (final (nombre, error) in <(String, Object)>[
       ('StateError', StateError('x')),
       ('ArgumentError', ArgumentError('x')),

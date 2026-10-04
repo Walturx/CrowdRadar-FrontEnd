@@ -61,10 +61,14 @@ void main() {
       'Nueva1234',
     );
     await tester.tap(find.widgetWithText(ElevatedButton, 'Cambiar contraseña'));
-    await tester.pumpAndSettle();
+    // Deterministic: the fake answers instantly; let the navigation and the
+    // snack bar entrance run without waiting for the notice to expire.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(sesion.token, isNull);
-    expect(find.text('Iniciar sesión'), findsWidgets);
+    expect(find.byKey(const Key('boton-iniciar-sesion')), findsOneWidget);
     expect(find.text(CambiarPasswordCubit.mensajeExito), findsOneWidget);
   });
 }

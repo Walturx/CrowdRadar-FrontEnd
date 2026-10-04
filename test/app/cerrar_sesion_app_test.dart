@@ -78,6 +78,32 @@ void main() {
     expect(find.text('Tu sesión terminó'), findsOneWidget);
   });
 
+  testWidgets('R3-1206 a suspended account lands on the login with its notice', (
+    tester,
+  ) async {
+    final sesion = await _abrir(tester, '/perfil');
+
+    await tester.runAsync(() => sesion.expirar(MotivoCierre.cuentaSuspendida));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('boton-iniciar-sesion')), findsOneWidget);
+    expect(find.text('Tu cuenta fue suspendida'), findsOneWidget);
+    expect(find.text('Tu sesión terminó'), findsNothing);
+  });
+
+  testWidgets('R3-1206 a password-change close lands on the login without the expiry notice', (
+    tester,
+  ) async {
+    final sesion = await _abrir(tester, '/perfil');
+
+    await tester.runAsync(() => sesion.cerrar(MotivoCierre.passwordCambiada));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('boton-iniciar-sesion')), findsOneWidget);
+    expect(find.text('Tu sesión terminó'), findsNothing);
+    expect(find.text('Tu cuenta fue suspendida'), findsNothing);
+  });
+
   testWidgets('a user sign out shows no session-ended notice', (tester) async {
     final sesion = await _abrir(tester, '/perfil');
 
