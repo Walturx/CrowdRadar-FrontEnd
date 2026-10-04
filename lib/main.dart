@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'cubits/login_cubit.dart';
-import 'router/app_router.dart';
+import 'features/auth/login/login_cubit.dart';
+import 'app/app_router.dart';
 import 'theme/app_theme.dart';
 
 void main() => runApp(const CrowdRadarApp());
