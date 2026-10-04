@@ -65,13 +65,14 @@ void main() {
   );
 
   blocTest<RecuperarCubit, RecuperarState>(
-    '429 -> Fallido with the server message and code',
+    '429 -> Fallido with the wait text, code and seconds to retry',
     build: () {
       when(() => repo.solicitarRecuperacion(any())).thenThrow(
         const ApiException(
           status: 429,
           message: 'Demasiadas solicitudes',
           code: 'DEMASIADAS_SOLICITUDES',
+          reintentarEnSegundos: 90,
         ),
       );
       return RecuperarCubit(repo);
@@ -80,8 +81,9 @@ void main() {
     expect: () => [
       const RecuperarEnviando(),
       const RecuperarFallido(
-        'Demasiadas solicitudes',
+        'Demasiados intentos, probá en 2 minutos',
         codigo: 'DEMASIADAS_SOLICITUDES',
+        reintentarEnSegundos: 90,
       ),
     ],
   );

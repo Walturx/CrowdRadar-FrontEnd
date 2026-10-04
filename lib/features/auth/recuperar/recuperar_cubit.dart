@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/mensaje_error.dart';
+import '../../../core/utils/mensaje_espera.dart';
 import '../data/auth_repository.dart';
 import 'recuperar_state.dart';
 
@@ -37,9 +38,14 @@ class RecuperarCubit extends Cubit<RecuperarState> {
     } catch (e) {
       final codigo = codigoDeError(e);
       _emitir(RecuperarFallido(
-        codigo == codigoCuentaNoExiste ? mensajeCuentaNoExiste : mensajeDeError(e),
+        codigo == codigoCuentaNoExiste
+            ? mensajeCuentaNoExiste
+            : esLimiteDeIntentos(e)
+                ? mensajeEspera(esperaDeError(e))
+                : mensajeDeError(e),
         codigo: codigo,
         esSinConexion: esErrorSinConexion(e),
+        reintentarEnSegundos: esperaDeError(e),
       ));
     } finally {
       _enVuelo = false;

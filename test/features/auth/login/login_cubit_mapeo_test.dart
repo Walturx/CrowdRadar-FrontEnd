@@ -17,6 +17,7 @@ void main() {
     ApiException error,
     String mensaje, {
     String? codigo,
+    int? espera,
   }) =>
       blocTest<LoginCubit, LoginState>(
         descripcion,
@@ -27,7 +28,11 @@ void main() {
         act: (c) => c.iniciarSesion('a@b.c', 'x'),
         expect: () => [
           const LoginEnviando(),
-          LoginFallido(mensaje, codigo: codigo ?? error.code),
+          LoginFallido(
+            mensaje,
+            codigo: codigo ?? error.code,
+            reintentarEnSegundos: espera,
+          ),
         ],
       );
 
@@ -66,6 +71,7 @@ void main() {
       reintentarEnSegundos: 125,
     ),
     'Demasiados intentos, probá en 3 minutos',
+    espera: 125,
   );
 
   caso(
@@ -77,6 +83,7 @@ void main() {
       reintentarEnSegundos: 60,
     ),
     'Demasiados intentos, probá en 1 minuto',
+    espera: 60,
   );
 
   caso(

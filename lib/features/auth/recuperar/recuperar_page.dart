@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/rutas.dart';
-import '../../../core/widgets/boton_principal.dart';
+import '../../../core/widgets/boton_con_espera.dart';
 import '../../../core/widgets/mostrar_aviso.dart';
 import '../../../theme/app_colors.dart';
 import '../data/auth_repository.dart';
@@ -55,6 +55,8 @@ class _RecuperarViewState extends State<_RecuperarView> {
                 : _Formulario(
                     controlador: _emailCtrl,
                     enviando: state is RecuperarEnviando,
+                    espera:
+                        state is RecuperarFallido ? state.reintentarEnSegundos : null,
                     error: state is RecuperarFallido ? state.mensaje : null,
                   ),
           ),
@@ -65,11 +67,13 @@ class _RecuperarViewState extends State<_RecuperarView> {
 class _Formulario extends StatelessWidget {
   final TextEditingController controlador;
   final bool enviando;
+  final int? espera;
   final String? error;
 
   const _Formulario({
     required this.controlador,
     required this.enviando,
+    required this.espera,
     required this.error,
   });
 
@@ -91,9 +95,10 @@ class _Formulario extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          BotonPrincipal(
+          BotonConEspera(
             texto: 'Enviar enlace',
             cargando: enviando,
+            segundos: espera,
             onPressed: () => context.read<RecuperarCubit>().enviar(controlador.text),
           ),
         ],

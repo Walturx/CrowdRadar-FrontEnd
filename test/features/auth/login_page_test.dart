@@ -53,6 +53,35 @@ void main() {
     expect(find.text('RUTA /mapa'), findsNothing);
   });
 
+  testWidgets('a 429 disables the button while the wait counts down', (
+    tester,
+  ) async {
+    when(() => repo.iniciarSesion(any(), any())).thenThrow(
+      const ApiException(
+        status: 429,
+        message: 'x',
+        code: 'DEMASIADOS_INTENTOS',
+        reintentarEnSegundos: 3,
+      ),
+    );
+    await abrir(tester);
+
+    await enviar(tester);
+
+    final boton = find.descendant(
+      of: find.byKey(const Key('boton-iniciar-sesion')),
+      matching: find.byType(ElevatedButton),
+    );
+    expect(find.text('Demasiados intentos, probá en 1 minuto'), findsOneWidget);
+    expect(find.text('Iniciar sesión (3s)'), findsOneWidget);
+    expect(tester.widget<ElevatedButton>(boton).enabled, isFalse);
+
+    await tester.pump(const Duration(seconds: 3));
+
+    expect(find.text('Iniciar sesión (3s)'), findsNothing);
+    expect(tester.widget<ElevatedButton>(boton).enabled, isTrue);
+  });
+
   testWidgets('a successful login navigates to the map', (tester) async {
     when(
       () => repo.iniciarSesion('ana@test.com', 'Secreta1'),

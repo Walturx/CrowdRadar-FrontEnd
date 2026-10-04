@@ -143,12 +143,13 @@ void main() {
   );
 
   blocTest<CambiarPasswordCubit, CambiarPasswordState>(
-    '429 -> Fallido with the server message',
+    '429 -> Fallido with the wait text and the seconds to retry',
     build: () {
       falla(const ApiException(
         status: 429,
         message: 'Demasiadas solicitudes',
         code: 'DEMASIADAS_SOLICITUDES',
+        reintentarEnSegundos: 125,
       ));
       return CambiarPasswordCubit(repo);
     },
@@ -156,14 +157,15 @@ void main() {
     expect: () => [
       const CambiarPasswordEnviando(),
       const CambiarPasswordFallido(
-        'Demasiadas solicitudes',
+        'Demasiados intentos, probá en 3 minutos',
         codigo: 'DEMASIADAS_SOLICITUDES',
+        reintentarEnSegundos: 125,
       ),
     ],
   );
 
   blocTest<CambiarPasswordCubit, CambiarPasswordState>(
-    'network failure -> Fallido(esSinConexion)',
+    'R4-1201 offline during the change -> uncertain result with its own copy',
     build: () {
       falla(const ApiException.sinConexion());
       return CambiarPasswordCubit(repo);
@@ -172,9 +174,31 @@ void main() {
     expect: () => [
       const CambiarPasswordEnviando(),
       const CambiarPasswordFallido(
-        'No se pudo conectar con el servidor',
+        CambiarPasswordCubit.mensajeResultadoIncierto,
         esSinConexion: true,
+        resultadoIncierto: true,
       ),
+    ],
+  );
+
+  test('R4-1201 the uncertain copy tells the user to try the new password', () {
+    expect(
+      CambiarPasswordCubit.mensajeResultadoIncierto,
+      'No pudimos confirmar el cambio. Si no podés entrar con la contraseña '
+      'actual, probá con la nueva.',
+    );
+  });
+
+  blocTest<CambiarPasswordCubit, CambiarPasswordState>(
+    'a server error is NOT an uncertain result',
+    build: () {
+      falla(const ApiException(status: 500, message: 'Caído'));
+      return CambiarPasswordCubit(repo);
+    },
+    act: cambiarValido,
+    expect: () => [
+      const CambiarPasswordEnviando(),
+      const CambiarPasswordFallido('Caído'),
     ],
   );
 
