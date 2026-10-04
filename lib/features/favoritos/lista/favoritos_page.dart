@@ -6,10 +6,11 @@ import '../../../app/rutas.dart';
 import '../../../core/models/favorito.dart';
 import '../../../core/widgets/cargando.dart';
 import '../../../core/widgets/chip_saturacion.dart';
+import '../../../core/widgets/confirmar_accion.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
-import '../../../core/widgets/mostrar_aviso.dart';
 import '../../../core/widgets/etiqueta_seccion.dart';
+import '../../../core/widgets/mostrar_aviso.dart';
 import '../../../theme/app_colors.dart';
 import '../../lugares/categoria_presentacion.dart';
 import '../data/favorito_repository.dart';
@@ -274,23 +275,12 @@ class _Fila extends StatelessWidget {
   }
 
   Future<void> _confirmar(BuildContext context, FavoritosCubit cubit) async {
-    final confirmado = await showDialog<bool>(
-      context: context,
-      builder: (dialogo) => AlertDialog(
-        title: const Text('¿Eliminar de favoritos?'),
-        content: Text('Dejarás de recibir alertas de ${favorito.nombre}.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogo, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogo, true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+    final confirmado = await confirmarAccion(
+      context,
+      titulo: '¿Eliminar de favoritos?',
+      contenido: 'Dejarás de recibir alertas de ${favorito.nombre}.',
+      etiquetaConfirmar: 'Eliminar',
     );
-    if (confirmado == true) await cubit.eliminar(favorito.lugarId);
+    if (confirmado) await cubit.eliminar(favorito.lugarId);
   }
 }

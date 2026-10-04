@@ -3,9 +3,24 @@ import 'dart:io';
 import 'package:crowdradar/core/config/entorno.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Finds pubspec.yaml walking up from the working directory, so the test does
+/// not depend on where `flutter test` was launched from.
+File _pubspec() {
+  var dir = Directory.current;
+  while (true) {
+    final archivo = File('${dir.path}${Platform.pathSeparator}pubspec.yaml');
+    if (archivo.existsSync()) return archivo;
+    final padre = dir.parent;
+    if (padre.path == dir.path) {
+      throw StateError('pubspec.yaml not found above ${Directory.current}');
+    }
+    dir = padre;
+  }
+}
+
 void main() {
   test('the shown app version matches pubspec.yaml', () {
-    final pubspec = File('pubspec.yaml').readAsStringSync();
+    final pubspec = _pubspec().readAsStringSync();
     final version = RegExp(r'^version:\s*([^+\s]+)', multiLine: true)
         .firstMatch(pubspec)!
         .group(1);

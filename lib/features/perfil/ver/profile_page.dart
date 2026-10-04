@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/rutas.dart';
 import '../../../core/session/sesion_cubit.dart';
 import '../../../core/widgets/cargando.dart';
+import '../../../core/widgets/confirmar_accion.dart';
 import '../../../core/widgets/estado_error.dart';
+import '../../../theme/app_colors.dart';
+import '../data/perfil_repository.dart';
 import 'perfil_cubit.dart';
 import 'perfil_state.dart';
-
-import '../data/perfil_repository.dart';
-
-import '../../../app/rutas.dart';
-import '../../../theme/app_colors.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -28,24 +27,13 @@ class ProfilePage extends StatelessWidget {
 /// HU 2.4: confirms before ending the session.
 Future<void> _confirmarCerrarSesion(BuildContext context) async {
   final sesion = context.read<SesionCubit>();
-  final confirmado = await showDialog<bool>(
-    context: context,
-    builder: (dialogo) => AlertDialog(
-      title: const Text('¿Cerrar sesión?'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogo, false),
-          child: const Text('Cancelar'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(dialogo, true),
-          child: const Text('Cerrar sesión'),
-        ),
-      ],
-    ),
+  final confirmado = await confirmarAccion(
+    context,
+    titulo: '¿Cerrar sesión?',
+    etiquetaConfirmar: 'Cerrar sesión',
   );
   // The router redirects to /login on SesionNoAutenticada.
-  if (confirmado ?? false) await sesion.cerrarSesion();
+  if (confirmado) await sesion.cerrarSesion();
 }
 
 class _ProfileView extends StatefulWidget {
@@ -217,8 +205,16 @@ class _ProfileViewState extends State<_ProfileView> {
                   ),
                 ),
               ),
-              const _FilaCambiarPassword(),
-              const _FilaAcerca(),
+              _FilaPerfil(
+                icono: Icons.lock_outline,
+                titulo: 'Cambiar contraseña',
+                alTocar: () => context.push(Rutas.perfilPassword),
+              ),
+              _FilaPerfil(
+                icono: Icons.info_outline,
+                titulo: 'Acerca de',
+                alTocar: () => context.push(Rutas.perfilAcerca),
+              ),
               eyebrow('INFORMACIÓN'),
               _TarjetaInfo(Icons.phone, 'Teléfono', user.telefono ?? '-'),
               _TarjetaInfo(
@@ -226,7 +222,11 @@ class _ProfileViewState extends State<_ProfileView> {
               _TarjetaInfo(Icons.verified_user, 'Rol', user.rol ?? '-'),
               _TarjetaInfo(Icons.info_outline, 'Estado', user.status ?? '-'),
               _TarjetaKarma(user.puntosKarma ?? 0),
-              const _FilaMisReportes(),
+              _FilaPerfil(
+                icono: Icons.history,
+                titulo: 'Mis reportes',
+                alTocar: () => context.push(Rutas.perfilReportes),
+              ),
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -354,9 +354,17 @@ class _TarjetaKarma extends StatelessWidget {
       _TarjetaInfo(Icons.star, 'Karma', '$puntos', key: clave);
 }
 
-/// HU 4.3: entry to the user's own report history.
-class _FilaMisReportes extends StatelessWidget {
-  const _FilaMisReportes();
+/// Tappable card row that opens a profile sub-screen.
+class _FilaPerfil extends StatelessWidget {
+  final IconData icono;
+  final String titulo;
+  final VoidCallback alTocar;
+
+  const _FilaPerfil({
+    required this.icono,
+    required this.titulo,
+    required this.alTocar,
+  });
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -369,58 +377,10 @@ class _FilaMisReportes extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               side: const BorderSide(color: AppColors.border),
             ),
-            leading: const Icon(Icons.history, color: AppColors.primary),
-            title: const Text('Mis reportes'),
+            leading: Icon(icono, color: AppColors.primary),
+            title: Text(titulo),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(Rutas.perfilReportes),
-          ),
-        ),
-      );
-}
-
-/// HU 2.3: entry to the change password screen.
-class _FilaCambiarPassword extends StatelessWidget {
-  const _FilaCambiarPassword();
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-        child: Material(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          child: ListTile(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: AppColors.border),
-            ),
-            leading: const Icon(Icons.lock_outline, color: AppColors.primary),
-            title: const Text('Cambiar contraseña'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(Rutas.perfilPassword),
-          ),
-        ),
-      );
-}
-
-/// R8: entry to the About screen.
-class _FilaAcerca extends StatelessWidget {
-  const _FilaAcerca();
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-        child: Material(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          child: ListTile(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: AppColors.border),
-            ),
-            leading: const Icon(Icons.info_outline, color: AppColors.primary),
-            title: const Text('Acerca de'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(Rutas.perfilAcerca),
+            onTap: alTocar,
           ),
         ),
       );

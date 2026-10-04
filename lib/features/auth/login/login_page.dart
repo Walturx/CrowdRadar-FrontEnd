@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/rutas.dart';
+import '../../../core/utils/validadores.dart';
 import '../../../core/widgets/boton_con_espera.dart';
 import '../../../core/widgets/cargando.dart';
+import '../../../theme/app_colors.dart';
 import '../data/auth_repository.dart';
 import 'login_cubit.dart';
 import 'login_state.dart';
-
-import '../../../app/rutas.dart';
-import '../../../theme/app_colors.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -106,10 +106,7 @@ class _LoginViewState extends State<_LoginView> {
                       if (value == null || value.trim().isEmpty) {
                         return 'Ingresá tu correo';
                       }
-                      if (!value.contains('@')) {
-                        return 'Correo inválido';
-                      }
-                      return null;
+                      return Validadores.correo(value);
                     },
                   ),
                   const SizedBox(height: 16),
