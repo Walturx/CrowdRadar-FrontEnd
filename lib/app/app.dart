@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/map/mapa_adapter.dart';
 import '../core/session/sesion_cubit.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../features/perfil/data/perfil_repository.dart';
@@ -26,8 +27,10 @@ class CrowdRadarApp extends StatefulWidget {
 
 class _CrowdRadarAppState extends State<CrowdRadarApp> {
   late final SesionCubit _sesion = SesionCubit(widget.dependencias.sesion);
-  late final GoRouter _router =
-      crearRouter(_sesion, ubicacionInicial: widget.ubicacionInicial);
+  late final GoRouter _router = crearRouter(
+    _sesion,
+    ubicacionInicial: widget.ubicacionInicial,
+  );
 
   @override
   void dispose() {
@@ -42,12 +45,13 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<AuthRepository>.value(value: deps.authRepository),
-        RepositoryProvider<PerfilRepository>.value(value: deps.perfilRepository),
+        RepositoryProvider<PerfilRepository>.value(
+          value: deps.perfilRepository,
+        ),
+        RepositoryProvider<MapaAdapter>.value(value: deps.mapaAdapter),
       ],
       child: MultiBlocProvider(
-        providers: [
-          BlocProvider<SesionCubit>.value(value: _sesion),
-        ],
+        providers: [BlocProvider<SesionCubit>.value(value: _sesion)],
         child: MaterialApp.router(
           title: 'CrowdRadar',
           theme: AppTheme.lightTheme,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/boton_principal.dart';
+import '../../../core/widgets/cargando.dart';
 import '../data/auth_repository.dart';
 import 'login_cubit.dart';
 import 'login_state.dart';
@@ -62,9 +64,7 @@ class _LoginViewState extends State<_LoginView> {
         if (state is LoginEnviando) {
           return const Scaffold(
             backgroundColor: AppColors.bg,
-            body: Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
+            body: Cargando(),
           );
         }
 
@@ -125,10 +125,7 @@ class _LoginViewState extends State<_LoginView> {
                     },
                   ),
                   const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () => _onLogin(context),
-                    child: const Text('Iniciar sesión'),
-                  ),
+                  BotonPrincipal(texto: 'Iniciar sesión', onPressed: () => _onLogin(context)),
                   const SizedBox(height: 4),
                   Center(
                     child: TextButton(

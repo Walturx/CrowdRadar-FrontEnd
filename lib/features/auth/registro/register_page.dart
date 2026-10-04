@@ -3,10 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/boton_principal.dart';
+import '../../../core/widgets/cargando.dart';
 import '../data/auth_repository.dart';
 import 'registro_cubit.dart';
 import 'registro_state.dart';
 
+import '../../../core/utils/validadores.dart';
 import '../../../theme/app_colors.dart';
 
 class RegisterPage extends StatelessWidget {
@@ -61,23 +64,6 @@ class _RegisterViewState extends State<_RegisterView> {
     }
   }
 
-  String? _requerido(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Este campo es obligatorio';
-    }
-    return null;
-  }
-
-  String? _nombreApellido(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Este campo es obligatorio';
-    }
-    if (value.trim().length < 2) {
-      return 'Mínimo 2 caracteres';
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<RegistroCubit, RegistroState>(
@@ -96,9 +82,7 @@ class _RegisterViewState extends State<_RegisterView> {
       builder: (context, state) {
         if (state is RegistroEnviando) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
+            body: Cargando(),
           );
         }
 
@@ -126,13 +110,13 @@ class _RegisterViewState extends State<_RegisterView> {
                   TextFormField(
                     controller: _nombreCtrl,
                     decoration: const InputDecoration(labelText: 'Nombre'),
-                    validator: _nombreApellido,
+                    validator: Validadores.nombreApellido,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _apellidoCtrl,
                     decoration: const InputDecoration(labelText: 'Apellido'),
-                    validator: _nombreApellido,
+                    validator: Validadores.nombreApellido,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -174,19 +158,16 @@ class _RegisterViewState extends State<_RegisterView> {
                       labelText: 'Teléfono',
                       counterText: '',
                     ),
-                    validator: _requerido,
+                    validator: Validadores.requerido,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _distritoCtrl,
                     decoration: const InputDecoration(labelText: 'Distrito'),
-                    validator: _requerido,
+                    validator: Validadores.requerido,
                   ),
                   const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () => _onRegister(context),
-                    child: const Text('Registrarme'),
-                  ),
+                  BotonPrincipal(texto: 'Registrarme', onPressed: () => _onRegister(context)),
                 ],
               ),
             ),

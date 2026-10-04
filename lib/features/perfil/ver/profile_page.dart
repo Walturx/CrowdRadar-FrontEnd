@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/session/sesion_cubit.dart';
+import '../../../core/widgets/cargando.dart';
+import '../../../core/widgets/estado_error.dart';
 import 'perfil_cubit.dart';
 import 'perfil_state.dart';
 
@@ -38,23 +40,12 @@ class _ProfileViewState extends State<_ProfileView> {
       body: BlocBuilder<PerfilCubit, PerfilState>(
         builder: (context, state) {
           if (state is PerfilCargando) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            );
+            return const Cargando();
           }
           if (state is PerfilError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(state.mensaje),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => context.read<PerfilCubit>().cargar(),
-                    child: const Text('Reintentar'),
-                  ),
-                ],
-              ),
+            return EstadoError(
+              mensaje: state.mensaje,
+              onReintentar: () => context.read<PerfilCubit>().cargar(),
             );
           }
 

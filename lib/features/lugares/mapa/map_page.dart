@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/map/mapa_adapter.dart';
+import '../../../core/map/tipos_mapa.dart';
 import '../../../theme/app_colors.dart';
 
 class MapPage extends StatelessWidget {
@@ -9,7 +10,7 @@ class MapPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final centro = LatLng(-12.0464, -77.0428);
+    const centro = PuntoGeografico(-12.0464, -77.0428);
 
     return Scaffold(
       body: Column(
@@ -48,28 +49,10 @@ class MapPage extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: FlutterMap(
-              options: MapOptions(initialCenter: centro, initialZoom: 12),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.crowdradar.app',
-                ),
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: centro,
-                      width: 40,
-                      height: 40,
-                      child: const Icon(
-                        Icons.location_on,
-                        color: Colors.red,
-                        size: 40,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            child: context.read<MapaAdapter>().construirMapa(
+              centro: centro,
+              zoom: 12,
+              alTocarMarcador: (_) {},
             ),
           ),
         ],
