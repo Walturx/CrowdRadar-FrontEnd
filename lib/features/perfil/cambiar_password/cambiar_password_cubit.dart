@@ -4,7 +4,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/utils/mensaje_error.dart';
 import '../data/perfil_repository.dart';
 import 'cambiar_password_state.dart';
-import 'requisitos_password.dart';
+import '../../../core/utils/politica_password.dart';
 
 /// HU 2.3: changes the password. The client checks the match and the policy
 /// first; the server errors (400 list, 422, 429) are mapped from the API.
