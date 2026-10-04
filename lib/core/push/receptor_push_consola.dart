@@ -4,10 +4,10 @@ import 'package:flutter/foundation.dart';
 
 import 'receptor_push.dart';
 
-/// Development receiver (used with `USAR_FAKES`): hands out a fixed fake token
-/// and lets code simulate a notification tap with [simularApertura]. Real
-/// delivery (FCM) is not part of this build; the in-app alert list is the
-/// guaranteed channel.
+/// Null Object pattern, development flavor (used with `USAR_FAKES`): a
+/// [ReceptorPush] that hands out a fixed fake token and lets code simulate a
+/// notification tap with [simularApertura]. Real delivery (FCM) is not part of
+/// this build; the in-app alert list is the guaranteed channel.
 class ReceptorPushConsola implements ReceptorPush {
   static const String tokenDesarrollo = 'consola-dev-token';
 
@@ -29,6 +29,4 @@ class ReceptorPushConsola implements ReceptorPush {
     debugPrint('[ReceptorPushConsola] toque en notificación del lugar $lugarId');
     _toques.add(lugarId);
   }
-
-  Future<void> cerrar() => _toques.close();
 }

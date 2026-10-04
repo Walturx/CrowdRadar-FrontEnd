@@ -65,7 +65,7 @@ void main() {
       );
     });
 
-    testWidgets('resuming the app refreshes the count', (tester) async {
+    testWidgets('resuming right after a load keeps the count (throttled, R4-806)', (tester) async {
       await abrir(tester);
       alertas().emitir(3, NivelSaturacion.tranquilo, NivelSaturacion.saturado);
 
@@ -77,7 +77,7 @@ void main() {
         tester.widget<Text>(
           find.descendant(of: insignia(), matching: find.byType(Text)),
         ).data,
-        '2',
+        '1',
       );
     });
 

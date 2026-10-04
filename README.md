@@ -166,6 +166,7 @@ would ripple through every stream.
 | Strategy-style selection | `Dependencias` picks the HTTP or the fake repository set from `USAR_FAKES` |
 | Singleton | `Entorno` (config), `SessionService.instance` (read only in `main.dart`) |
 | Facade | `ApiClient` over `http` |
+| Template-method-style hook | `SesionCubit.antesDeCerrar`: an injected callback run (2 s bound, failures ignored) before a user sign out, used to unregister the push device |
 
 ## Conventions for streams
 

@@ -339,6 +339,65 @@ void main() {
     });
   });
 
+  group('alVolverAPrimerPlano (R4-806 / R4-808)', () {
+    late DateTime ahora;
+    late _MockRepo repo;
+    var falla = false;
+    var llamadas = 0;
+
+    AlertasCubit crear() => AlertasCubit(repo, reloj: () => ahora);
+
+    setUp(() {
+      ahora = DateTime(2026, 10, 5, 12);
+      falla = false;
+      llamadas = 0;
+      repo = _MockRepo();
+      when(() => repo.listar()).thenAnswer((_) async {
+        llamadas++;
+        if (falla) throw const ApiException.sinConexion();
+        return _pagina([_alerta(1)], 1);
+      });
+    });
+
+    test('a resume right after a load does not reload', () async {
+      final cubit = crear();
+      await cubit.cargar();
+
+      ahora = ahora.add(const Duration(seconds: 29));
+      await cubit.alVolverAPrimerPlano();
+
+      expect(llamadas, 1);
+      await cubit.close();
+    });
+
+    test('a resume after the interval refreshes', () async {
+      final cubit = crear();
+      await cubit.cargar();
+
+      ahora = ahora.add(AlertasCubit.intervaloRefresco);
+      await cubit.alVolverAPrimerPlano();
+
+      expect(llamadas, 2);
+      await cubit.close();
+    });
+
+    test('a failed first load is retried on the next resume and flagged', () async {
+      falla = true;
+      final cubit = crear();
+      await cubit.cargar();
+      expect(cubit.errorCarga, isTrue);
+      expect(cubit.noLeidas, 0);
+
+      falla = false;
+      await cubit.alVolverAPrimerPlano();
+
+      expect(llamadas, 2);
+      expect(cubit.errorCarga, isFalse);
+      expect(cubit.noLeidas, 1);
+      await cubit.close();
+    });
+  });
+
   test('against a failing fake the state is Error', () async {
     final cubit = AlertasCubit(
       AlertaRepositoryFake(

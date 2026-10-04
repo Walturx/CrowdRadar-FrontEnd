@@ -8,6 +8,7 @@ import '../../../core/widgets/cargando.dart';
 import '../../../core/widgets/chip_saturacion.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
+import '../../../core/widgets/mostrar_aviso.dart';
 import '../../../core/widgets/etiqueta_seccion.dart';
 import '../../../theme/app_colors.dart';
 import '../../lugares/categoria_presentacion.dart';
@@ -94,24 +95,20 @@ class _FavoritosViewState extends State<_FavoritosView> {
 
   void _avisar(BuildContext context, FavoritosState state) {
     final cargado = state as FavoritosCargado;
-    final mensajero = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
+    if (cargado.error != null) {
+      mostrarAviso(context, cargado.error!);
+      return;
+    }
     // The toast can outlive the page: hold the cubit, not the context.
     final cubit = context.read<FavoritosCubit>();
-    if (cargado.error != null) {
-      mensajero.showSnackBar(SnackBar(content: Text(cargado.error!)));
-    } else {
-      mensajero.showSnackBar(
-        SnackBar(
-          content: const Text(FavoritosPage.mensajeEliminado),
-          action: SnackBarAction(
-            label: 'Deshacer',
-            onPressed: () {
-              if (!cubit.isClosed) cubit.deshacerEliminar();
-            },
-          ),
-        ),
-      );
-    }
+    mostrarAviso(
+      context,
+      FavoritosPage.mensajeEliminado,
+      etiquetaAccion: 'Deshacer',
+      alAccionar: () {
+        if (!cubit.isClosed) cubit.deshacerEliminar();
+      },
+    );
   }
 }
 

@@ -68,7 +68,7 @@ class _AlVolverAlPrimerPlanoState extends State<_AlVolverAlPrimerPlano>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      context.read<AlertasCubit>().refrescar();
+      context.read<AlertasCubit>().alVolverAPrimerPlano();
     }
   }
 

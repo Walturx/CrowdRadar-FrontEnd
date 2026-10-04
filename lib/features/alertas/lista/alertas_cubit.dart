@@ -13,7 +13,20 @@ class AlertasCubit extends Cubit<AlertasState> {
 
   final AlertaRepository _repositorio;
 
-  AlertasCubit(this._repositorio) : super(const AlertasCargando());
+  /// Minimum time between the automatic refreshes on returning to the app.
+  static const Duration intervaloRefresco = Duration(seconds: 30);
+
+  final DateTime Function() _reloj;
+
+  AlertasCubit(this._repositorio, {DateTime Function()? reloj})
+    : _reloj = reloj ?? DateTime.now,
+      super(const AlertasCargando());
+
+  /// When the last load or refresh finished (whatever its result).
+  DateTime? _ultimaCarga;
+
+  /// The first load failed: there is no count to show (the badge stays empty).
+  bool get errorCarga => state is AlertasError;
 
   /// A load while another is in flight is ignored.
   bool _enVuelo = false;
@@ -50,6 +63,7 @@ class AlertasCubit extends Cubit<AlertasState> {
       );
     } finally {
       _enVuelo = false;
+      _ultimaCarga = _reloj();
     }
   }
 
@@ -75,7 +89,20 @@ class AlertasCubit extends Cubit<AlertasState> {
       emit(_conError(ahora, mensajeDeError(e)));
     } finally {
       _enVuelo = false;
+      _ultimaCarga = _reloj();
     }
+  }
+
+  /// The app returned to the foreground: refreshes unless it did so less than
+  /// [intervaloRefresco] ago. Without data (a failed first load) it retries.
+  Future<void> alVolverAPrimerPlano() {
+    final ultima = _ultimaCarga;
+    if (state is AlertasCargado &&
+        ultima != null &&
+        _reloj().difference(ultima) < intervaloRefresco) {
+      return Future.value();
+    }
+    return refrescar();
   }
 
   /// Marks one alert as read: the list and the counter change at once and are

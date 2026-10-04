@@ -9,6 +9,7 @@ import '../../../core/widgets/cargando.dart';
 import '../../../core/widgets/chip_saturacion.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
+import '../../../core/widgets/mostrar_aviso.dart';
 import '../../../theme/app_colors.dart';
 import 'alertas_cubit.dart';
 import 'alertas_state.dart';
@@ -45,11 +46,8 @@ class _AlertasPageState extends State<AlertasPage> {
             actual is AlertasCargado &&
             actual.error != null &&
             (previo is! AlertasCargado || previo.error != actual.error),
-        listener: (context, state) => ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(content: Text((state as AlertasCargado).error!)),
-          ),
+        listener: (context, state) =>
+            mostrarAviso(context, (state as AlertasCargado).error!),
         builder: (context, state) => switch (state) {
           AlertasCargando() => const Cargando(),
           AlertasError() => EstadoError(
