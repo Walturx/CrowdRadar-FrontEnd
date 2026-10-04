@@ -11,6 +11,7 @@ class Rutas {
   // Main shell
   static const String mapa = '/mapa';
   static const String explorar = '/mapa/explorar';
+  static const String buscarLugar = '/mapa/buscar';
   static const String lugarPlantilla = '/mapa/lugares/:id';
   static const String historialPlantilla = '$lugarPlantilla/historial';
   static const String compararPlantilla = '$lugarPlantilla/comparar';

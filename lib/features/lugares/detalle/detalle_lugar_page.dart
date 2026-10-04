@@ -4,11 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/map/tipos_mapa.dart';
 import '../../../core/models/lugar_detalle.dart';
 import '../../../core/models/nivel_saturacion.dart';
-import '../../../core/utils/distancia.dart';
 import '../../../core/utils/formato_fecha.dart';
 import '../../../core/widgets/cargando.dart';
 import '../../../core/widgets/chip_saturacion.dart';
 import '../../../core/widgets/estado_error.dart';
+import '../../../core/widgets/etiqueta_seccion.dart';
 import '../../../theme/app_colors.dart';
 import '../../favoritos/data/favorito_repository.dart';
 import '../categoria_presentacion.dart';
@@ -104,17 +104,6 @@ class _Contenido extends StatelessWidget {
 
   const _Contenido(this.detalle, this.centroMapa);
 
-  String get _subtitulo {
-    final categoria = etiquetaCategoria(detalle.categoria);
-    final centro = centroMapa;
-    if (centro == null) return categoria;
-    final metros = distanciaMetros(
-      centro,
-      PuntoGeografico(detalle.latitud, detalle.longitud),
-    );
-    return '$categoria · ${formatoDistancia(metros)}';
-  }
-
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -139,7 +128,12 @@ class _Contenido extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    _subtitulo,
+                    subtituloLugar(
+                      detalle.categoria,
+                      detalle.latitud,
+                      detalle.longitud,
+                      centroMapa,
+                    ),
                     style: const TextStyle(color: AppColors.textMuted),
                   ),
                 ],
@@ -147,12 +141,10 @@ class _Contenido extends StatelessWidget {
             ),
           ],
         ),
-        const _Etiqueta('SATURACIÓN AHORA'),
+        const EtiquetaSeccion('SATURACIÓN AHORA'),
         _BloqueSaturacion(detalle.saturacion),
-        const _Etiqueta('INFORMACIÓN'),
-        _Fila('Nombre', detalle.nombre),
+        const EtiquetaSeccion('INFORMACIÓN'),
         if (detalle.direccion != null) _Fila('Dirección', detalle.direccion!),
-        _Fila('Categoría', etiquetaCategoria(detalle.categoria)),
         if (detalle.horarioAtencion != null)
           _Fila('Horario', detalle.horarioAtencion!),
       ],
@@ -194,26 +186,6 @@ class _BloqueSaturacion extends StatelessWidget {
       ],
     );
   }
-}
-
-class _Etiqueta extends StatelessWidget {
-  final String texto;
-
-  const _Etiqueta(this.texto);
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 20, bottom: 8),
-    child: Text(
-      texto,
-      style: const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.6,
-        color: AppColors.textMuted,
-      ),
-    ),
-  );
 }
 
 class _Fila extends StatelessWidget {

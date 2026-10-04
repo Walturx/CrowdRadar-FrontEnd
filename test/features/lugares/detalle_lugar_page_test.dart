@@ -81,7 +81,7 @@ void main() {
       expect(find.text('Actualizado hace 5 min · 18 reportes'), findsOneWidget);
     });
 
-    testWidgets('lists name, address and category in the information block', (
+    testWidgets('the information block lists the address, not name/category', (
       tester,
     ) async {
       repo = RepoLugarFalso(alObtener: (_) async => _detalle());
@@ -89,8 +89,8 @@ void main() {
 
       expect(find.text('Dirección'), findsOneWidget);
       expect(find.text('Av. Larco 345, Miraflores'), findsOneWidget);
-      expect(find.text('Categoría'), findsOneWidget);
-      expect(find.text('Parque'), findsOneWidget);
+      expect(find.text('Nombre'), findsNothing);
+      expect(find.text('Categoría'), findsNothing);
     });
 
     testWidgets('without a known map centre the distance is omitted', (
@@ -99,7 +99,7 @@ void main() {
       repo = RepoLugarFalso(alObtener: (_) async => _detalle());
       await abrir(tester, centro: null);
 
-      expect(find.text('Parque'), findsNWidgets(2));
+      expect(find.text('Parque'), findsOneWidget);
       expect(find.textContaining('Parque ·'), findsNothing);
     });
 

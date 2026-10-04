@@ -7,6 +7,8 @@ import 'package:crowdradar/features/lugares/buscar/buscar_lugar_page.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:crowdradar/app/rutas.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../fakes/lugar_repo_falso.dart';
@@ -44,18 +46,32 @@ void main() {
     await tester.pumpWidget(
       RepositoryProvider<LugarRepository>.value(
         value: repo,
-        child: MaterialApp(
-          home: Builder(
-            builder: (context) => TextButton(
-              onPressed: () async {
-                elegido = await Navigator.of(context).push<int>(
-                  MaterialPageRoute(
-                    builder: (_) => BuscarLugarPage(centroMapa: centro),
+        child: MaterialApp.router(
+          routerConfig: GoRouter(
+            routes: [
+              GoRoute(
+                path: '/',
+                builder: (_, _) => Builder(
+                  builder: (context) => TextButton(
+                    onPressed: () async {
+                      elegido = await context.push<int>(
+                        Rutas.buscarLugar,
+                        extra: centro,
+                      );
+                    },
+                    child: const Text('Abrir'),
                   ),
-                );
-              },
-              child: const Text('Abrir'),
-            ),
+                ),
+              ),
+              GoRoute(
+                path: Rutas.buscarLugar,
+                builder: (_, s) => BuscarLugarPage(
+                  centroMapa: s.extra is PuntoGeografico
+                      ? s.extra as PuntoGeografico
+                      : null,
+                ),
+              ),
+            ],
           ),
         ),
       ),

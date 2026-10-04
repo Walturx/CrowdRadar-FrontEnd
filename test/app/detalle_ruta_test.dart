@@ -3,6 +3,7 @@ import 'package:crowdradar/app/app.dart';
 import 'package:crowdradar/app/dependencias.dart';
 import 'package:crowdradar/core/config/entorno.dart';
 import 'package:crowdradar/core/session/session_service.dart';
+import 'package:crowdradar/features/lugares/buscar/buscar_lugar_page.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../fakes/jwt_falso.dart';
@@ -30,6 +31,12 @@ void main() {
     expect(find.text('Av. Larco 345, Miraflores'), findsOneWidget);
     expect(find.text('Parque'), findsWidgets);
     expect(find.textContaining('Pantalla en construcción'), findsNothing);
+  });
+
+  testWidgets('/mapa/buscar opens the place search', (tester) async {
+    await _abrir(tester, '/mapa/buscar');
+
+    expect(find.text(BuscarLugarPage.ayuda), findsOneWidget);
   });
 
   testWidgets('/mapa/lugares/9999 shows the not-found state', (tester) async {

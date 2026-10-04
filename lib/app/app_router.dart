@@ -19,6 +19,7 @@ import '../features/analitica/historial/historial_page.dart';
 import '../features/analitica/mejor_horario/mejor_horario_page.dart';
 import '../features/auth/recuperar/recuperar_page.dart';
 import '../features/exploracion/explorar/explorar_page.dart';
+import '../features/lugares/buscar/buscar_lugar_page.dart';
 import '../features/lugares/detalle/detalle_lugar_page.dart';
 import '../features/moderacion/reportes_denunciados/reportes_denunciados_page.dart';
 import '../features/moderacion/revision_reporte/revision_reporte_page.dart';
@@ -55,6 +56,10 @@ String _hija(String completa, String padre) => Rutas.relativa(completa, padre);
 int _id(GoRouterState state) =>
     int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
 
+/// Map centre passed as `extra` by the screens that open a place or the search.
+PuntoGeografico? _centroDe(GoRouterState state) =>
+    state.extra is PuntoGeografico ? state.extra as PuntoGeografico : null;
+
 GoRoute _pagina(
   String path,
   Widget Function(GoRouterState state) pagina, {
@@ -82,10 +87,14 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
               routes: [
                 _pagina(_hija(Rutas.explorar, Rutas.mapa), (_) => const ExplorarPage()),
                 _pagina(
+                  _hija(Rutas.buscarLugar, Rutas.mapa),
+                  (s) => BuscarLugarPage(centroMapa: _centroDe(s)),
+                ),
+                _pagina(
                   _hija(Rutas.lugarPlantilla, Rutas.mapa),
                   (s) => DetalleLugarPage(
                     lugarId: _id(s),
-                    centroMapa: s.extra is PuntoGeografico ? s.extra as PuntoGeografico : null,
+                    centroMapa: _centroDe(s),
                   ),
                   routes: [
                     _pagina(_hija(Rutas.historialPlantilla, Rutas.lugarPlantilla), (s) => HistorialPage(lugarId: _id(s))),
