@@ -10,9 +10,15 @@ import 'session_service.dart';
 /// `SessionService.eventos`.
 class SesionCubit extends Cubit<SesionState> {
   final SessionService _sesion;
+
+  /// Runs while the session is still valid, right before a user-initiated
+  /// sign out (e.g. to unregister the push device). Its failure is ignored.
+  final Future<void> Function()? _antesDeCerrar;
   late final StreamSubscription<EventoSesion> _suscripcion;
 
-  SesionCubit(this._sesion) : super(_estadoInicial(_sesion)) {
+  SesionCubit(this._sesion, {Future<void> Function()? antesDeCerrar})
+    : _antesDeCerrar = antesDeCerrar,
+      super(_estadoInicial(_sesion)) {
     _suscripcion = _sesion.eventos.listen((evento) => emit(switch (evento) {
           SesionIniciada(:final usuario) =>
             SesionAutenticada(usuario: usuario, esAdmin: usuario.esAdmin),
@@ -28,8 +34,14 @@ class SesionCubit extends Cubit<SesionState> {
     return SesionAutenticada(usuario: usuario, esAdmin: usuario.esAdmin);
   }
 
-  /// Push-device cleanup is deferred to M1/M3.
-  Future<void> cerrarSesion() => _sesion.cerrar(MotivoCierre.usuario);
+  Future<void> cerrarSesion() async {
+    try {
+      await _antesDeCerrar?.call();
+    } catch (_) {
+      // Best effort: signing out must never depend on it.
+    }
+    await _sesion.cerrar(MotivoCierre.usuario);
+  }
 
   @override
   Future<void> close() {

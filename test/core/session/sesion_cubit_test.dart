@@ -87,4 +87,37 @@ void main() {
         const SesionNoAutenticada(motivo: MotivoCierre.usuario));
     await cubit.close();
   });
+  group('antesDeCerrar hook', () {
+    test('runs while the session is still valid, then closes', () async {
+      await sesion.iniciar(token, usuarioPrueba);
+      String? tokenVisto;
+      final cubit = SesionCubit(
+        sesion,
+        antesDeCerrar: () async => tokenVisto = sesion.token,
+      );
+
+      await cubit.cerrarSesion();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(tokenVisto, token);
+      expect(sesion.token, isNull);
+      expect(cubit.state, const SesionNoAutenticada(motivo: MotivoCierre.usuario));
+      await cubit.close();
+    });
+
+    test('a failing hook never keeps the user signed in', () async {
+      await sesion.iniciar(token, usuarioPrueba);
+      final cubit = SesionCubit(
+        sesion,
+        antesDeCerrar: () async => throw Exception('sin red'),
+      );
+
+      await cubit.cerrarSesion();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(sesion.token, isNull);
+      expect(cubit.state, const SesionNoAutenticada(motivo: MotivoCierre.usuario));
+      await cubit.close();
+    });
+  });
 }

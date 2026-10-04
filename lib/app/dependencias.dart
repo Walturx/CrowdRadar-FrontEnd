@@ -7,6 +7,7 @@ import '../core/network/api_client.dart';
 import '../core/network/cliente_http_factory.dart';
 import '../core/network/interceptores/interceptores_sesion.dart';
 import '../core/push/receptor_push.dart';
+import '../core/push/receptor_push_consola.dart';
 import '../core/push/receptor_push_nulo.dart';
 import '../core/session/session_service.dart';
 import '../features/alertas/data/alerta_repository.dart';
@@ -81,7 +82,9 @@ class Dependencias {
     required this.moderacionRepository,
   });
 
-  /// [mapaAdapter] and [receptorPush] can be overridden (tests, M3).
+  /// [mapaAdapter] and [receptorPush] can be overridden (tests). By default the
+  /// receiver is the development console one with fakes and the no-op one
+  /// otherwise (real push delivery is not part of this build).
   /// [esRelease] defaults to `kReleaseMode`; fakes are refused in release.
   factory Dependencias.crear(
     Entorno entorno,
@@ -109,7 +112,9 @@ class Dependencias {
       sesion: sesion,
       apiClient: api,
       mapaAdapter: mapaAdapter ?? FlutterMapAdapter(),
-      receptorPush: receptorPush ?? ReceptorPushNulo(),
+      receptorPush:
+          receptorPush ??
+          (entorno.usarFakes ? ReceptorPushConsola() : ReceptorPushNulo()),
       authRepository: repos.auth,
       perfilRepository: repos.perfil,
       lugarRepository: repos.lugar,
