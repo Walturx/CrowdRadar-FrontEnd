@@ -1,6 +1,7 @@
 import '../../core/models/nivel_saturacion.dart';
 import '../../core/models/reporte_saturacion.dart';
 import '../../core/network/respuesta_api.dart';
+import '../../core/session/session_service.dart';
 import '../../features/reportes/data/reporte_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
@@ -14,11 +15,16 @@ class ReporteRepositoryFake implements ReporteRepository {
   final KarmaFake _karma;
   final DateTime Function() _reloj;
 
+  /// When given, both calls need a signed-in session like the real backend.
+  final SessionService? _sesion;
+
   ReporteRepositoryFake({
     ComportamientoFake comportamiento = const ComportamientoFake(),
     KarmaFake? karma,
     DateTime Function()? reloj,
+    SessionService? sesion,
   }) : _comportamiento = comportamiento,
+       _sesion = sesion,
        _karma = karma ?? KarmaFake(),
        _reloj = reloj ?? DateTime.now;
 
@@ -36,6 +42,7 @@ class ReporteRepositoryFake implements ReporteRepository {
   @override
   Future<ReporteCreado> reportar(int lugarId, NivelSaturacion nivel) async {
     await _comportamiento.aplicar();
+    _exigirSesion();
     final lugar = lugaresFake.where((l) => l.id == lugarId).firstOrNull;
     if (lugar == null) {
       throw errorFake(404, 'LUGAR_NO_ENCONTRADO', 'El lugar no existe');
@@ -86,6 +93,13 @@ class ReporteRepositoryFake implements ReporteRepository {
     int size = 20,
   }) async {
     await _comportamiento.aplicar();
+    _exigirSesion();
     return paginar(_mios, page, size);
+  }
+
+  void _exigirSesion() {
+    if (_sesion != null && _sesion.token == null) {
+      throw errorFake(401, 'NO_AUTENTICADO', 'No hay sesión activa');
+    }
   }
 }

@@ -144,6 +144,7 @@ class Dependencias {
     reporte: ReporteRepositoryFake(
       comportamiento: comportamiento,
       karma: karma,
+      sesion: sesion,
     ),
     analitica: AnaliticaRepositoryFake(comportamiento: comportamiento),
     validacion: ValidacionRepositoryFake(comportamiento: comportamiento),
