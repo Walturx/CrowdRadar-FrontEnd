@@ -1,5 +1,7 @@
+import 'entorno.dart';
+
 class ApiConfig {
-  static const String baseUrl = 'http://10.0.2.2:3000';
+  static final String baseUrl = Entorno.desdeDartDefine().apiUrl;
 
   static const String register = '/api/auth/register';
   static const String login = '/api/auth/login';
