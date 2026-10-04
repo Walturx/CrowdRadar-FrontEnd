@@ -8,7 +8,6 @@ import '../../../core/map/tipos_mapa.dart';
 import '../../../core/widgets/tarjeta_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
 import '../../../theme/app_colors.dart';
-import '../buscar/buscar_lugar_page.dart';
 import '../data/lugar_repository.dart';
 import 'leyenda_saturacion.dart';
 import 'mapa_cubit.dart';
@@ -56,14 +55,11 @@ class _MapViewState extends State<_MapView> {
     }
   }
 
-  /// Opens the search; a chosen place opens its detail from the current map centre.
+  /// Opens the search route, which pops the chosen place id; that place opens
+  /// its detail from the current map centre.
   Future<void> _abrirBusqueda() async {
     final cubit = context.read<MapaCubit>();
-    final id = await Navigator.of(context).push<int>(
-      MaterialPageRoute(
-        builder: (_) => BuscarLugarPage(centroMapa: cubit.centro),
-      ),
-    );
+    final id = await context.push<int>(Rutas.buscarLugar, extra: cubit.centro);
     if (id != null && mounted) {
       context.push(Rutas.lugar(id), extra: cubit.centro);
     }

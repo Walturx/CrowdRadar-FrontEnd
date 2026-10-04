@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/map/tipos_mapa.dart';
 import '../../../core/models/lugar_resumen.dart';
-import '../../../core/utils/distancia.dart';
 import '../../../core/widgets/cargando.dart';
 import '../../../core/widgets/chip_saturacion.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
-import '../../../theme/app_colors.dart';
+import '../../../core/widgets/etiqueta_seccion.dart';
 import '../categoria_presentacion.dart';
 import '../data/lugar_repository.dart';
 import 'buscar_lugar_cubit.dart';
@@ -18,7 +18,9 @@ import 'buscar_lugar_state.dart';
 /// decides where to go. [centroMapa] enables the distance in each result.
 class BuscarLugarPage extends StatelessWidget {
   static const int maximoCaracteres = 60;
-  static const String ayuda = 'Escribe al menos 2 caracteres para buscar';
+  static const String ayuda =
+      'Escribe al menos ${BuscarLugarCubit.minimoCaracteres} caracteres para buscar';
+  static const EdgeInsets _relleno = EdgeInsets.fromLTRB(16, 12, 16, 4);
 
   final PuntoGeografico? centroMapa;
 
@@ -66,7 +68,10 @@ class _BuscarView extends StatelessWidget {
           BuscarSinResultados() => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _Cabecera('SIN RESULTADOS'),
+              const EtiquetaSeccion(
+                'SIN RESULTADOS',
+                relleno: BuscarLugarPage._relleno,
+              ),
               Expanded(
                 child: EstadoVacio(
                   icon: Icons.search_off,
@@ -92,24 +97,16 @@ class _Lista extends StatelessWidget {
 
   const _Lista(this.lugares, this.centroMapa);
 
-  String _subtitulo(LugarResumen l) {
-    final categoria = etiquetaCategoria(l.categoria);
-    final centro = centroMapa;
-    if (centro == null) return categoria;
-    final metros = distanciaMetros(
-      centro,
-      PuntoGeografico(l.latitud, l.longitud),
-    );
-    return '$categoria · ${formatoDistancia(metros)}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final n = lugares.length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Cabecera('$n ${n == 1 ? "RESULTADO" : "RESULTADOS"}'),
+        EtiquetaSeccion(
+          '$n ${n == 1 ? "RESULTADO" : "RESULTADOS"}',
+          relleno: BuscarLugarPage._relleno,
+        ),
         Expanded(
           child: ListView.builder(
             itemCount: n,
@@ -121,9 +118,16 @@ class _Lista extends StatelessWidget {
                   style: const TextStyle(fontSize: 28),
                 ),
                 title: Text(l.nombre),
-                subtitle: Text(_subtitulo(l)),
+                subtitle: Text(
+                  subtituloLugar(
+                    l.categoria,
+                    l.latitud,
+                    l.longitud,
+                    centroMapa,
+                  ),
+                ),
                 trailing: ChipSaturacion(nivel: l.saturacion),
-                onTap: () => Navigator.of(context).pop(l.id),
+                onTap: () => context.pop(l.id),
               );
             },
           ),
@@ -131,24 +135,4 @@ class _Lista extends StatelessWidget {
       ],
     );
   }
-}
-
-class _Cabecera extends StatelessWidget {
-  final String texto;
-
-  const _Cabecera(this.texto);
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-    child: Text(
-      texto,
-      style: const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.6,
-        color: AppColors.textMuted,
-      ),
-    ),
-  );
 }

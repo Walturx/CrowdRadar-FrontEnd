@@ -6,6 +6,7 @@ import 'package:crowdradar/core/models/lugar_resumen.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/widgets/pin_saturacion.dart';
+import 'package:crowdradar/features/lugares/buscar/buscar_lugar_page.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
 import 'package:crowdradar/features/lugares/mapa/map_page.dart';
 import 'package:crowdradar/features/lugares/mapa/marcadores.dart';
@@ -88,6 +89,14 @@ void main() {
       initialLocation: Rutas.mapa,
       routes: [
         GoRoute(path: Rutas.mapa, builder: (_, _) => const MapPage()),
+        GoRoute(
+          path: Rutas.buscarLugar,
+          builder: (_, s) => BuscarLugarPage(
+            centroMapa: s.extra is PuntoGeografico
+                ? s.extra as PuntoGeografico
+                : null,
+          ),
+        ),
         GoRoute(
           path: Rutas.lugarPlantilla,
           builder: (_, s) {
