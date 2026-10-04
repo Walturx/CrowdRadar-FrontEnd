@@ -1,24 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../theme/app_colors.dart';
 
 class CrBottomNav extends StatelessWidget {
   final int currentIndex;
+  final ValueChanged<int> onTap;
 
-  const CrBottomNav({super.key, required this.currentIndex});
-
-  static const List<String> _routes = [
-    '/map',
-    '/validar',
-    '/favoritos',
-    '/profile',
-  ];
-
-  void _onTap(BuildContext context, int index) {
-    if (index == currentIndex) return;
-    context.go(_routes[index]);
-  }
+  const CrBottomNav({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +44,7 @@ class CrBottomNav extends StatelessWidget {
 
     return Expanded(
       child: InkWell(
-        onTap: () => _onTap(context, index),
+        onTap: () => onTap(index),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

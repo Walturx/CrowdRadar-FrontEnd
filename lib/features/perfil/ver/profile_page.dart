@@ -8,8 +8,7 @@ import '../../auth/login/login_cubit.dart';
 
 import '../data/user_service.dart';
 
-import '../../../layout/cr_bottom_nav.dart';
-
+import '../../../app/rutas.dart';
 import '../../../theme/app_colors.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -18,7 +17,7 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => ProfileCubit(UserService())..loadProfile(),
+      create: (_) => ProfileCubit(context.read<UserService>())..loadProfile(),
       child: const _ProfileView(),
     );
   }
@@ -36,7 +35,6 @@ class _ProfileViewState extends State<_ProfileView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Perfil')),
-      bottomNavigationBar: const CrBottomNav(currentIndex: 3),
       body: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
           if (state is ProfileLoading || state is ProfileInitial) {
@@ -193,7 +191,7 @@ class _ProfileViewState extends State<_ProfileView> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
                     onTap: () async {
-                      await context.push('/profile/edit',
+                      await context.push(Rutas.perfilEditar,
                           extra: loaded.user.toJson());
                       if (context.mounted) {
                         context.read<ProfileCubit>().loadProfile();
@@ -253,7 +251,7 @@ class _ProfileViewState extends State<_ProfileView> {
                     borderRadius: BorderRadius.circular(12),
                     onTap: () {
                       context.read<AuthCubit>().logout();
-                      context.go('/login');
+                      context.go(Rutas.login);
                     },
                     child: Container(
                       decoration: BoxDecoration(

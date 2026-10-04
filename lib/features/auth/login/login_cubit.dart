@@ -9,9 +9,9 @@ import '../../../core/session/motivo_cierre.dart';
 import '../../../core/session/session_service.dart';
 
 class AuthCubit extends Cubit<AuthState> {
-  final AuthService _authService = AuthService();
+  final AuthService _authService;
 
-  AuthCubit() : super(AuthInitial());
+  AuthCubit(this._authService) : super(AuthInitial());
 
   bool get isLoading => state is AuthLoading;
 
