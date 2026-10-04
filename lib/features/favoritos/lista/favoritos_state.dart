@@ -18,7 +18,8 @@ class FavoritosCargando extends FavoritosState {
 /// [mensajeVacio] is the server explanation when there are none. [eliminado]
 /// is the favorite just removed (the screen offers to undo it). [error] is a
 /// soft failure of the last action or refresh: [favoritos] is still the last
-/// good data. [procesando] holds the places with an action in flight.
+/// good data. [copiar] carries [eliminado] forward (the undo must survive
+/// other actions) unless `limpiarEliminado` drops it. [procesando] holds the places with an action in flight.
 class FavoritosCargado extends FavoritosState {
   final List<Favorito> favoritos;
   final String mensajeVacio;
@@ -42,12 +43,13 @@ class FavoritosCargado extends FavoritosState {
     List<Favorito>? favoritos,
     String? mensajeVacio,
     Favorito? eliminado,
+    bool limpiarEliminado = false,
     String? error,
     Set<int>? procesando,
   }) => FavoritosCargado(
     favoritos ?? this.favoritos,
     mensajeVacio: mensajeVacio ?? this.mensajeVacio,
-    eliminado: eliminado,
+    eliminado: limpiarEliminado ? null : eliminado ?? this.eliminado,
     error: error,
     procesando: procesando ?? this.procesando,
   );

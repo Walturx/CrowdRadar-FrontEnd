@@ -62,23 +62,26 @@ void main() {
       await cubit.close();
     });
 
-    test('failure emits Error with code and offline flag; retry loads', () async {
-      final repo = _MockRepo();
-      var n = 0;
-      when(() => repo.listar()).thenAnswer((_) async {
-        if (n++ == 0) throw const ApiException.sinConexion();
-        return _lista([_fav(1)]);
-      });
-      final cubit = FavoritosCubit(repo);
+    test(
+      'failure emits Error with code and offline flag; retry loads',
+      () async {
+        final repo = _MockRepo();
+        var n = 0;
+        when(() => repo.listar()).thenAnswer((_) async {
+          if (n++ == 0) throw const ApiException.sinConexion();
+          return _lista([_fav(1)]);
+        });
+        final cubit = FavoritosCubit(repo);
 
-      await cubit.cargar();
-      expect(cubit.state, isA<FavoritosError>());
-      expect((cubit.state as FavoritosError).esSinConexion, isTrue);
+        await cubit.cargar();
+        expect(cubit.state, isA<FavoritosError>());
+        expect((cubit.state as FavoritosError).esSinConexion, isTrue);
 
-      await cubit.cargar();
-      expect(_cargado(cubit).favoritos, [_fav(1)]);
-      await cubit.close();
-    });
+        await cubit.cargar();
+        expect(_cargado(cubit).favoritos, [_fav(1)]);
+        await cubit.close();
+      },
+    );
 
     test('a second load while one is in flight is ignored', () async {
       final repo = _MockRepo();
@@ -228,6 +231,123 @@ void main() {
       await cubit.close();
     });
 
+    test('the removed favorite survives another action (R3-801)', () async {
+      final repo = FavoritoRepositoryFake();
+      await repo.agregar(1);
+      await repo.agregar(2);
+      final cubit = FavoritosCubit(repo);
+      await cubit.cargar();
+      await cubit.eliminar(1);
+
+      await cubit.alternarAlertas(2);
+      expect(_cargado(cubit).eliminado?.lugarId, 1);
+      await cubit.deshacerEliminar();
+
+      expect((await repo.listar()).items.map((f) => f.lugarId), contains(1));
+      expect(_cargado(cubit).favoritos.map((f) => f.lugarId), contains(1));
+      await cubit.close();
+    });
+
+    test('a double tap adds it back once (R3-802)', () async {
+      final repo = _MockRepo();
+      final agregar = Completer<void>();
+      when(() => repo.listar()).thenAnswer((_) async => _lista([_fav(1)]));
+      when(() => repo.eliminar(1)).thenAnswer((_) async {});
+      when(() => repo.agregar(1)).thenAnswer((_) => agregar.future);
+      final cubit = FavoritosCubit(repo);
+      await cubit.cargar();
+      await cubit.eliminar(1);
+
+      final a = cubit.deshacerEliminar();
+      final b = cubit.deshacerEliminar();
+      agregar.complete();
+      await Future.wait([a, b]);
+
+      verify(() => repo.agregar(1)).called(1);
+      await cubit.close();
+    });
+
+    test('a refresh in flight does not drop the restored favorite', () async {
+      final repo = _MockRepo();
+      final lentas = <Completer<ResultadoLista<Favorito>>>[];
+      var llamada = 0;
+      when(() => repo.listar()).thenAnswer((_) {
+        if (llamada++ == 0) return Future.value(_lista([_fav(1)]));
+        final c = Completer<ResultadoLista<Favorito>>();
+        lentas.add(c);
+        return c.future;
+      });
+      when(() => repo.eliminar(1)).thenAnswer((_) async {});
+      when(() => repo.agregar(1)).thenAnswer((_) async {});
+      final cubit = FavoritosCubit(repo);
+      await cubit.cargar();
+      await cubit.eliminar(1);
+
+      final refresco = cubit.refrescar(); // stale: lists without the favorite
+      await pumpEventQueue();
+      final deshacer = cubit.deshacerEliminar();
+      await pumpEventQueue();
+      lentas.last.complete(_lista([_fav(1)])); // undo's own reload
+      await deshacer;
+      lentas.first.complete(_lista(const []));
+      await refresco;
+
+      expect(_cargado(cubit).favoritos.map((f) => f.lugarId), [1]);
+      await cubit.close();
+    });
+
+    test(
+      'a failed alerts restore keeps the favorite with the server flag',
+      () async {
+        final repo = _MockRepo();
+        var n = 0;
+        when(() => repo.listar()).thenAnswer((_) async {
+          if (n++ == 0) return _lista([_fav(1, alertas: false)]);
+          return _lista([_fav(1)]);
+        });
+        when(() => repo.eliminar(1)).thenAnswer((_) async {});
+        when(() => repo.agregar(1)).thenAnswer((_) async {});
+        when(
+          () => repo.configurarAlertas(1, activadas: false),
+        ).thenThrow(const ApiException.sinConexion());
+        final cubit = FavoritosCubit(repo);
+        await cubit.cargar();
+        await cubit.eliminar(1);
+
+        await cubit.deshacerEliminar();
+
+        final estado = _cargado(cubit);
+        expect(estado.favoritos.single.alertasActivadas, isTrue);
+        expect(estado.error, isNotNull);
+        await cubit.close();
+      },
+    );
+
+    test(
+      'a failed add keeps the removed favorite so it can be retried',
+      () async {
+        final repo = _MockRepo();
+        when(() => repo.listar()).thenAnswer((_) async => _lista([_fav(1)]));
+        when(() => repo.eliminar(1)).thenAnswer((_) async {});
+        var intento = 0;
+        when(() => repo.agregar(1)).thenAnswer((_) async {
+          if (intento++ == 0) throw const ApiException.sinConexion();
+        });
+        final cubit = FavoritosCubit(repo);
+        await cubit.cargar();
+        await cubit.eliminar(1);
+
+        await cubit.deshacerEliminar();
+        expect(_cargado(cubit).error, isNotNull);
+        expect(_cargado(cubit).eliminado?.lugarId, 1);
+
+        await cubit.deshacerEliminar();
+        verify(() => repo.agregar(1)).called(2);
+        expect(_cargado(cubit).eliminado, isNull);
+        await cubit.close();
+      },
+    );
+
     test('does nothing when nothing was removed', () async {
       final repo = FavoritoRepositoryFake();
       final cubit = FavoritosCubit(repo);
@@ -241,25 +361,30 @@ void main() {
   });
 
   group('alertas', () {
-    test('alternarAlertas flips one favorite and calls the repository', () async {
-      final repo = FavoritoRepositoryFake();
-      await repo.agregar(1);
-      await repo.agregar(2);
-      final cubit = FavoritosCubit(repo);
-      await cubit.cargar();
+    test(
+      'alternarAlertas flips one favorite and calls the repository',
+      () async {
+        final repo = FavoritoRepositoryFake();
+        await repo.agregar(1);
+        await repo.agregar(2);
+        final cubit = FavoritosCubit(repo);
+        await cubit.cargar();
 
-      await cubit.alternarAlertas(1);
+        await cubit.alternarAlertas(1);
 
-      final porId = {
-        for (final f in _cargado(cubit).favoritos) f.lugarId: f.alertasActivadas,
-      };
-      expect(porId, {1: false, 2: true});
-      final servidor = {
-        for (final f in (await repo.listar()).items) f.lugarId: f.alertasActivadas,
-      };
-      expect(servidor, {1: false, 2: true});
-      await cubit.close();
-    });
+        final porId = {
+          for (final f in _cargado(cubit).favoritos)
+            f.lugarId: f.alertasActivadas,
+        };
+        expect(porId, {1: false, 2: true});
+        final servidor = {
+          for (final f in (await repo.listar()).items)
+            f.lugarId: f.alertasActivadas,
+        };
+        expect(servidor, {1: false, 2: true});
+        await cubit.close();
+      },
+    );
 
     test('a failure keeps the previous value and reports it', () async {
       final repo = _MockRepo();
@@ -278,19 +403,22 @@ void main() {
       await cubit.close();
     });
 
-    test('master switch is on only when every favorite has alerts on', () async {
-      final repo = FavoritoRepositoryFake();
-      await repo.agregar(1);
-      await repo.agregar(2);
-      final cubit = FavoritosCubit(repo);
-      await cubit.cargar();
-      expect(_cargado(cubit).todasConAlertas, isTrue);
+    test(
+      'master switch is on only when every favorite has alerts on',
+      () async {
+        final repo = FavoritoRepositoryFake();
+        await repo.agregar(1);
+        await repo.agregar(2);
+        final cubit = FavoritosCubit(repo);
+        await cubit.cargar();
+        expect(_cargado(cubit).todasConAlertas, isTrue);
 
-      await cubit.alternarAlertas(2);
+        await cubit.alternarAlertas(2);
 
-      expect(_cargado(cubit).todasConAlertas, isFalse);
-      await cubit.close();
-    });
+        expect(_cargado(cubit).todasConAlertas, isFalse);
+        await cubit.close();
+      },
+    );
 
     test('master switch is off for an empty list', () async {
       final cubit = FavoritosCubit(FavoritoRepositoryFake());
@@ -300,61 +428,68 @@ void main() {
       await cubit.close();
     });
 
-    test('toggling the master switch issues one call per differing favorite', () async {
-      final repo = _MockRepo();
-      when(
-        () => repo.listar(),
-      ).thenAnswer((_) async => _lista([_fav(1), _fav(2, alertas: false), _fav(3)]));
-      when(
-        () => repo.configurarAlertas(any(), activadas: any(named: 'activadas')),
-      ).thenAnswer((_) async {});
-      final cubit = FavoritosCubit(repo);
-      await cubit.cargar();
+    test(
+      'toggling the master switch issues one call per differing favorite',
+      () async {
+        final repo = _MockRepo();
+        when(() => repo.listar()).thenAnswer(
+          (_) async => _lista([_fav(1), _fav(2, alertas: false), _fav(3)]),
+        );
+        when(
+          () =>
+              repo.configurarAlertas(any(), activadas: any(named: 'activadas')),
+        ).thenAnswer((_) async {});
+        final cubit = FavoritosCubit(repo);
+        await cubit.cargar();
 
-      // Mixed state: the switch is off, so it turns everything on.
-      await cubit.alternarTodasLasAlertas();
+        // Mixed state: the switch is off, so it turns everything on.
+        await cubit.alternarTodasLasAlertas();
 
-      verify(() => repo.configurarAlertas(2, activadas: true)).called(1);
-      verifyNever(
-        () => repo.configurarAlertas(1, activadas: any(named: 'activadas')),
-      );
-      expect(_cargado(cubit).todasConAlertas, isTrue);
+        verify(() => repo.configurarAlertas(2, activadas: true)).called(1);
+        verifyNever(
+          () => repo.configurarAlertas(1, activadas: any(named: 'activadas')),
+        );
+        expect(_cargado(cubit).todasConAlertas, isTrue);
 
-      // All on: the switch turns everything off.
-      await cubit.alternarTodasLasAlertas();
+        // All on: the switch turns everything off.
+        await cubit.alternarTodasLasAlertas();
 
-      verify(() => repo.configurarAlertas(1, activadas: false)).called(1);
-      verify(() => repo.configurarAlertas(2, activadas: false)).called(1);
-      verify(() => repo.configurarAlertas(3, activadas: false)).called(1);
-      expect(
-        _cargado(cubit).favoritos.every((f) => !f.alertasActivadas),
-        isTrue,
-      );
-      await cubit.close();
-    });
+        verify(() => repo.configurarAlertas(1, activadas: false)).called(1);
+        verify(() => repo.configurarAlertas(2, activadas: false)).called(1);
+        verify(() => repo.configurarAlertas(3, activadas: false)).called(1);
+        expect(
+          _cargado(cubit).favoritos.every((f) => !f.alertasActivadas),
+          isTrue,
+        );
+        await cubit.close();
+      },
+    );
 
-    test('a failing master toggle reloads the real state and reports', () async {
-      final repo = _MockRepo();
-      var lecturas = 0;
-      when(() => repo.listar()).thenAnswer((_) async {
-        lecturas++;
-        return _lista([_fav(1), _fav(2)]);
-      });
-      when(
-        () => repo.configurarAlertas(1, activadas: false),
-      ).thenAnswer((_) async {});
-      when(
-        () => repo.configurarAlertas(2, activadas: false),
-      ).thenThrow(const ApiException(status: 500, message: 'Servidor caído'));
-      final cubit = FavoritosCubit(repo);
-      await cubit.cargar();
+    test(
+      'a failing master toggle reloads the real state and reports',
+      () async {
+        final repo = _MockRepo();
+        var lecturas = 0;
+        when(() => repo.listar()).thenAnswer((_) async {
+          lecturas++;
+          return _lista([_fav(1), _fav(2)]);
+        });
+        when(
+          () => repo.configurarAlertas(1, activadas: false),
+        ).thenAnswer((_) async {});
+        when(
+          () => repo.configurarAlertas(2, activadas: false),
+        ).thenThrow(const ApiException(status: 500, message: 'Servidor caído'));
+        final cubit = FavoritosCubit(repo);
+        await cubit.cargar();
 
-      await cubit.alternarTodasLasAlertas();
+        await cubit.alternarTodasLasAlertas();
 
-      expect(lecturas, 2, reason: 'reloads to show what the server holds');
-      expect(_cargado(cubit).error, 'Servidor caído');
-      await cubit.close();
-    });
+        expect(lecturas, 2, reason: 'reloads to show what the server holds');
+        expect(_cargado(cubit).error, 'Servidor caído');
+        await cubit.close();
+      },
+    );
   });
 
   test('works against a failing fake: load error then success', () async {

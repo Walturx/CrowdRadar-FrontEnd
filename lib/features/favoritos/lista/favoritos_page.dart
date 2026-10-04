@@ -18,7 +18,8 @@ import 'favoritos_state.dart';
 /// HU 8.2 / 8.3 / 8.4: saved places with their level, alert preferences and
 /// removal behind a confirmation.
 class FavoritosPage extends StatelessWidget {
-  static const String mensajeEliminado = 'Se eliminó el lugar de tus favoritos.';
+  static const String mensajeEliminado =
+      'Se eliminó el lugar de tus favoritos.';
   static const String tituloVacio = 'Sin favoritos aún';
   static const String subtituloVacio =
       'Marca lugares con el corazón para seguir su saturación de un vistazo.';
@@ -94,6 +95,8 @@ class _FavoritosViewState extends State<_FavoritosView> {
   void _avisar(BuildContext context, FavoritosState state) {
     final cargado = state as FavoritosCargado;
     final mensajero = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
+    // The toast can outlive the page: hold the cubit, not the context.
+    final cubit = context.read<FavoritosCubit>();
     if (cargado.error != null) {
       mensajero.showSnackBar(SnackBar(content: Text(cargado.error!)));
     } else {
@@ -102,7 +105,9 @@ class _FavoritosViewState extends State<_FavoritosView> {
           content: const Text(FavoritosPage.mensajeEliminado),
           action: SnackBarAction(
             label: 'Deshacer',
-            onPressed: () => context.read<FavoritosCubit>().deshacerEliminar(),
+            onPressed: () {
+              if (!cubit.isClosed) cubit.deshacerEliminar();
+            },
           ),
         ),
       );
@@ -172,7 +177,8 @@ class _AlertasMaestro extends StatelessWidget {
           Switch(
             value: estado.todasConAlertas,
             onChanged: libre
-                ? (_) => context.read<FavoritosCubit>().alternarTodasLasAlertas()
+                ? (_) =>
+                      context.read<FavoritosCubit>().alternarTodasLasAlertas()
                 : null,
           ),
         ],

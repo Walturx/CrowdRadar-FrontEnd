@@ -8,6 +8,7 @@ import 'package:crowdradar/features/favoritos/lista/favoritos_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../fakes/enrutador_falso.dart';
 
@@ -187,6 +188,25 @@ void main() {
       expect(find.text('Parque Kennedy'), findsOneWidget);
       expect(find.text('2 LUGARES GUARDADOS'), findsOneWidget);
       expect((await repo.listar()).items, hasLength(2));
+    });
+
+    testWidgets('Deshacer after the page is gone does not throw (R3-803)', (
+      tester,
+    ) async {
+      final repo = await conFavoritos([1, 2]);
+      await abrir(tester, repo);
+      await tester.tap(find.byKey(const Key('eliminar-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Eliminar'));
+      await tester.pumpAndSettle();
+
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/mapa');
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.text('Deshacer'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('removing the last one shows the empty state', (tester) async {
