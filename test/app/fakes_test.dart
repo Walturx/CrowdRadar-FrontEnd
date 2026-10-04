@@ -1,0 +1,363 @@
+// S9.2: each in-memory fake implements its frozen interface and behaves like
+// the API contract for its main success and failure paths.
+import 'package:crowdradar/app/fakes/fake_analitica_repository.dart';
+import 'package:crowdradar/app/fakes/fake_auth_repository.dart';
+import 'package:crowdradar/app/fakes/fake_favorito_repository.dart';
+import 'package:crowdradar/app/fakes/fake_lugar_repository.dart';
+import 'package:crowdradar/app/fakes/fake_moderacion_repository.dart';
+import 'package:crowdradar/app/fakes/fake_perfil_repository.dart';
+import 'package:crowdradar/app/fakes/fake_reporte_repository.dart';
+import 'package:crowdradar/app/fakes/fake_validacion_repository.dart';
+import 'package:crowdradar/core/map/tipos_mapa.dart';
+import 'package:crowdradar/core/models/moderacion.dart';
+import 'package:crowdradar/core/models/nivel_saturacion.dart';
+import 'package:crowdradar/core/models/validacion.dart';
+import 'package:crowdradar/core/network/api_exception.dart';
+import 'package:crowdradar/core/session/session_service.dart';
+import 'package:crowdradar/features/analitica/data/analitica_repository.dart';
+import 'package:crowdradar/features/auth/data/auth_repository.dart';
+import 'package:crowdradar/features/favoritos/data/favorito_repository.dart';
+import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
+import 'package:crowdradar/features/moderacion/data/moderacion_repository.dart';
+import 'package:crowdradar/features/perfil/data/perfil_repository.dart';
+import 'package:crowdradar/features/reportes/data/reporte_repository.dart';
+import 'package:crowdradar/features/validacion/data/validacion_repository.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+Matcher _falla(int status, String code) => throwsA(
+  isA<ApiException>()
+      .having((e) => e.status, 'status', status)
+      .having((e) => e.code, 'code', code),
+);
+
+void main() {
+  late SessionService sesion;
+  setUp(() => sesion = SessionService.instance..reiniciar());
+  tearDown(() => sesion.reiniciar());
+
+  group('FakeAuthRepository', () {
+    test('valid credentials start the session', () async {
+      final AuthRepository repo = FakeAuthRepository(sesion);
+
+      final user = await repo.iniciarSesion('ana@test.com', 'Secreta1');
+
+      expect(user.email, 'ana@test.com');
+      expect(sesion.usuario?.email, 'ana@test.com');
+      expect(sesion.token, isNotNull);
+    });
+
+    test('wrong password is a 401 and leaves the session closed', () async {
+      final repo = FakeAuthRepository(sesion);
+
+      await expectLater(
+        repo.iniciarSesion('ana@test.com', 'mala'),
+        _falla(401, 'CREDENCIALES_INVALIDAS'),
+      );
+      expect(sesion.token, isNull);
+    });
+
+    test(
+      'registering an existing email is a 409, a new one succeeds',
+      () async {
+        final repo = FakeAuthRepository(sesion);
+        Future<Object?> registrar(String email) => repo.registrar(
+          nombre: 'Luz',
+          apellido: 'Vega',
+          email: email,
+          password: 'Secreta1',
+          telefono: '',
+          distrito: 'Lima',
+        );
+
+        await expectLater(
+          registrar('ana@test.com'),
+          _falla(409, 'EMAIL_DUPLICADO'),
+        );
+        expect(
+          (await repo.registrar(
+            nombre: 'Luz',
+            apellido: 'Vega',
+            email: 'luz@test.com',
+            password: 'Secreta1',
+            telefono: '',
+            distrito: 'Lima',
+          )).email,
+          'luz@test.com',
+        );
+        await expectLater(
+          registrar('luz@test.com'),
+          _falla(409, 'EMAIL_DUPLICADO'),
+        );
+        await expectLater(repo.solicitarRecuperacion('x@y.z'), completes);
+      },
+    );
+  });
+
+  group('FakePerfilRepository', () {
+    test('without session it reports "No hay sesión activa"', () async {
+      final PerfilRepository repo = FakePerfilRepository(sesion);
+
+      await expectLater(repo.obtener(), _falla(401, 'NO_AUTENTICADO'));
+    });
+
+    test('obtener and actualizar follow the session user', () async {
+      await FakeAuthRepository(
+        sesion,
+      ).iniciarSesion('ana@test.com', 'Secreta1');
+      final repo = FakePerfilRepository(sesion);
+
+      expect((await repo.obtener()).nombre, 'Ana');
+      final editado = await repo.actualizar({'nombre': 'Beatriz'});
+
+      expect(editado.nombre, 'Beatriz');
+      expect((await repo.obtener()).nombre, 'Beatriz');
+      expect(sesion.usuario?.nombre, 'Beatriz');
+    });
+
+    test('cambiarPassword validates current and repeated passwords', () async {
+      await FakeAuthRepository(
+        sesion,
+      ).iniciarSesion('ana@test.com', 'Secreta1');
+      final repo = FakePerfilRepository(sesion);
+
+      await expectLater(
+        repo.cambiarPassword(
+          actual: 'mala',
+          nueva: 'Nueva1aa',
+          confirmar: 'Nueva1aa',
+        ),
+        _falla(422, 'PASSWORD_ACTUAL_INCORRECTA'),
+      );
+      await expectLater(
+        repo.cambiarPassword(
+          actual: 'Secreta1',
+          nueva: 'Secreta1',
+          confirmar: 'Secreta1',
+        ),
+        _falla(422, 'PASSWORD_REPETIDA'),
+      );
+      await expectLater(
+        repo.cambiarPassword(
+          actual: 'Secreta1',
+          nueva: 'Nueva1aa',
+          confirmar: 'Nueva1aa',
+        ),
+        completes,
+      );
+    });
+  });
+
+  group('FakeLugarRepository', () {
+    final LugarRepository repo = FakeLugarRepository();
+
+    test('buscar filters by text, ignoring case', () async {
+      final todos = await repo.buscar();
+      final parque = await repo.buscar(consulta: 'PARQUE');
+
+      expect(todos.items.length, greaterThan(1));
+      expect(parque.items.single.nombre, contains('Parque'));
+    });
+
+    test(
+      'buscar filters by bounding box and explains an empty result',
+      () async {
+        final vacio = await repo.buscar(
+          limites: const LimitesMapa(norte: 0, sur: -1, este: 0, oeste: -1),
+        );
+
+        expect(vacio.estaVacia, isTrue);
+        expect(vacio.mensaje, isNotEmpty);
+      },
+    );
+
+    test('obtenerDetalle returns the place or a 404', () async {
+      final primero = (await repo.buscar()).items.first;
+
+      expect((await repo.obtenerDetalle(primero.id)).nombre, primero.nombre);
+      await expectLater(
+        repo.obtenerDetalle(9999),
+        _falla(404, 'LUGAR_NO_ENCONTRADO'),
+      );
+    });
+  });
+
+  group('FakeReporteRepository', () {
+    test('reportar awards karma and enforces the cooldown per place', () async {
+      final ReporteRepository repo = FakeReporteRepository();
+
+      final primero = await repo.reportar(1, NivelSaturacion.saturado);
+      final otroLugar = await repo.reportar(2, NivelSaturacion.tranquilo);
+
+      expect(primero.puntosGanados, 10);
+      expect(otroLugar.totalKarma, primero.totalKarma + 10);
+      await expectLater(
+        repo.reportar(1, NivelSaturacion.moderado),
+        _falla(422, 'REPORTE_EN_ESPERA'),
+      );
+    });
+
+    test('listarMios paginates what was reported', () async {
+      final repo = FakeReporteRepository();
+      await repo.reportar(1, NivelSaturacion.saturado);
+      await repo.reportar(2, NivelSaturacion.tranquilo);
+
+      final p1 = await repo.listarMios(size: 1);
+      final p2 = await repo.listarMios(page: 2, size: 1);
+
+      expect(p1.items, hasLength(1));
+      expect(p1.total, 2);
+      expect(p1.hayMas, isTrue);
+      expect(p2.items, hasLength(1));
+      expect(p2.hayMas, isFalse);
+    });
+  });
+
+  group('FakeAnaliticaRepository', () {
+    final AnaliticaRepository repo = FakeAnaliticaRepository();
+    final d = DateTime.utc(2026, 10, 1);
+
+    test('known places return data for every query', () async {
+      expect((await repo.historial(1)).puntos, isNotEmpty);
+      expect((await repo.mejorHorario(1)).franjas, isNotEmpty);
+      final c = await repo.comparar(
+        1,
+        desdeA: d,
+        hastaA: d,
+        desdeB: d,
+        hastaB: d,
+      );
+      expect(c.periodoA.puntos, isNotEmpty);
+      expect(c.periodoB.puntos, isNotEmpty);
+    });
+
+    test('places without history answer 200 with sinDatos', () async {
+      expect((await repo.historial(9999)).sinDatos, isTrue);
+      expect((await repo.mejorHorario(9999)).sinDatos, isTrue);
+    });
+  });
+
+  group('FakeValidacionRepository', () {
+    test('pendientes, detalle and validar update my validation', () async {
+      final ValidacionRepository repo = FakeValidacionRepository();
+      final id = (await repo.pendientes()).items.first.id;
+
+      expect((await repo.obtenerReporte(id)).miValidacion, isNull);
+      await repo.validar(id, TipoAccionValidacion.confirmar);
+
+      expect(
+        (await repo.obtenerReporte(id)).miValidacion,
+        TipoAccionValidacion.confirmar,
+      );
+      await expectLater(
+        repo.validar(id, TipoAccionValidacion.rechazar),
+        _falla(409, 'VALIDACION_DUPLICADA'),
+      );
+      await expectLater(
+        repo.obtenerReporte(9999),
+        _falla(404, 'REPORTE_NO_ENCONTRADO'),
+      );
+      expect(await repo.estadoMisReportes(), isNotEmpty);
+    });
+
+    test('denunciar rejects duplicates and "otro" without detail', () async {
+      final repo = FakeValidacionRepository();
+      final id = (await repo.pendientes()).items.first.id;
+
+      await expectLater(
+        repo.denunciar(id, MotivoDenuncia.otro),
+        _falla(400, 'VALIDACION_FALLIDA'),
+      );
+      await repo.denunciar(id, MotivoDenuncia.spam);
+      await expectLater(
+        repo.denunciar(id, MotivoDenuncia.spam),
+        _falla(409, 'DENUNCIA_DUPLICADA'),
+      );
+      expect((await repo.obtenerReporte(id)).yaDenunciado, isTrue);
+    });
+  });
+
+  group('FakeFavoritoRepository', () {
+    test('starts empty with an explanatory message', () async {
+      final FavoritoRepository repo = FakeFavoritoRepository();
+
+      final r = await repo.listar();
+
+      expect(r.estaVacia, isTrue);
+      expect(r.mensaje, isNotEmpty);
+    });
+
+    test('agregar, duplicate, alertas and eliminar', () async {
+      final repo = FakeFavoritoRepository();
+
+      await repo.agregar(1);
+      await expectLater(repo.agregar(1), _falla(409, 'FAVORITO_DUPLICADO'));
+      await repo.configurarAlertas(1, activadas: true);
+      expect((await repo.listar()).items.single.alertasActivadas, isTrue);
+
+      await repo.eliminar(1);
+      expect((await repo.listar()).estaVacia, isTrue);
+      await expectLater(
+        repo.eliminar(1),
+        _falla(404, 'FAVORITO_NO_ENCONTRADO'),
+      );
+    });
+  });
+
+  group('FakeModeracionRepository', () {
+    test('resolver removes the reported report from the queue', () async {
+      final ModeracionRepository repo = FakeModeracionRepository();
+      final antes = await repo.reportesDenunciados();
+      final id = antes.items.first.reporteId;
+
+      await repo.resolver(id, DecisionModeracion.eliminar);
+
+      expect((await repo.reportesDenunciados()).total, antes.total - 1);
+      await expectLater(
+        repo.resolver(id, DecisionModeracion.desestimar),
+        _falla(409, 'SIN_DENUNCIAS_PENDIENTES'),
+      );
+      await expectLater(
+        repo.reporteDenunciado(id),
+        _falla(404, 'REPORTE_NO_ENCONTRADO'),
+      );
+    });
+
+    test('usuarios filters by text and status', () async {
+      final repo = FakeModeracionRepository();
+
+      final todos = await repo.usuarios();
+      final activos = await repo.usuarios(status: 'ACTIVO');
+      final busqueda = await repo.usuarios(q: todos.items.first.nombre);
+
+      expect(activos.items.every((u) => !u.estaSuspendido), isTrue);
+      expect(busqueda.items, isNotEmpty);
+      expect(busqueda.items.length, lessThanOrEqualTo(todos.items.length));
+    });
+
+    test(
+      'suspender and reactivar toggle the account with 409 on repeats',
+      () async {
+        final repo = FakeModeracionRepository();
+        final id = (await repo.usuarios(status: 'ACTIVO')).items.first.id;
+
+        await expectLater(
+          repo.reactivar(id),
+          _falla(409, 'USUARIO_NO_SUSPENDIDO'),
+        );
+        await repo.suspender(id, dias: 3, motivo: 'Spam reiterado');
+        expect((await repo.usuario(id)).estaSuspendido, isTrue);
+        await expectLater(
+          repo.suspender(id, dias: 7, motivo: 'Spam reiterado'),
+          _falla(409, 'USUARIO_YA_SUSPENDIDO'),
+        );
+
+        await repo.reactivar(id);
+        expect((await repo.usuario(id)).estaSuspendido, isFalse);
+        await expectLater(
+          repo.usuario(9999),
+          _falla(404, 'USUARIO_NO_ENCONTRADO'),
+        );
+      },
+    );
+  });
+}

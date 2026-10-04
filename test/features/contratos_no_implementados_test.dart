@@ -25,9 +25,11 @@ import 'package:http/http.dart' as http;
 
 import '../fakes/http_falso.dart';
 
-Matcher get _noImplementado => throwsA(isA<ApiException>()
-    .having((e) => e.status, 'status', 501)
-    .having((e) => e.code, 'code', 'NO_IMPLEMENTADO'));
+Matcher get _noImplementado => throwsA(
+  isA<ApiException>()
+      .having((e) => e.status, 'status', 501)
+      .having((e) => e.code, 'code', 'NO_IMPLEMENTADO'),
+);
 
 void main() {
   late ApiClient api;
@@ -41,7 +43,9 @@ void main() {
     }, SessionService.instance..reiniciar());
   });
 
-  tearDown(() => expect(peticiones, 0, reason: 'stubs must not hit the network'));
+  tearDown(
+    () => expect(peticiones, 0, reason: 'stubs must not hit the network'),
+  );
 
   group('stubs fail with 501', () {
     test('LugarRepository', () {
@@ -69,7 +73,10 @@ void main() {
       final ValidacionRepository r = ValidacionRepositoryHttp(api);
 
       expect(() => r.pendientes(), _noImplementado);
-      expect(() => r.validar(1, TipoAccionValidacion.confirmar), _noImplementado);
+      expect(
+        () => r.validar(1, TipoAccionValidacion.confirmar),
+        _noImplementado,
+      );
       expect(() => r.denunciar(1, MotivoDenuncia.spam), _noImplementado);
     });
 
@@ -85,8 +92,10 @@ void main() {
 
       expect(() => r.reportesDenunciados(), _noImplementado);
       expect(() => r.resolver(1, DecisionModeracion.eliminar), _noImplementado);
-      expect(() => r.suspender(1, dias: 3, motivo: 'Spam reiterado'),
-          _noImplementado);
+      expect(
+        () => r.suspender(1, dias: 3, motivo: 'Spam reiterado'),
+        _noImplementado,
+      );
     });
   });
 

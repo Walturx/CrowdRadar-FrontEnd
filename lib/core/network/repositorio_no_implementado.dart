@@ -7,8 +7,8 @@ import 'api_exception.dart';
 mixin RepositorioNoImplementado {
   @override
   dynamic noSuchMethod(Invocation invocation) => throw const ApiException(
-        status: 501,
-        message: 'Funcionalidad no implementada',
-        code: 'NO_IMPLEMENTADO',
-      );
+    status: 501,
+    message: 'Funcionalidad no implementada',
+    code: 'NO_IMPLEMENTADO',
+  );
 }

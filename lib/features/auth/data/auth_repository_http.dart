@@ -29,7 +29,9 @@ class AuthRepositoryHttp implements AuthRepository {
       },
     );
     await _sesion.iniciar(
-        res.datos.token, UsuarioSesion.desdeUserModel(res.datos.user));
+      res.datos.token,
+      UsuarioSesion.desdeUserModel(res.datos.user),
+    );
     return res.datos.user;
   }
 
