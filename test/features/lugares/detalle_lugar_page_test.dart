@@ -1,5 +1,6 @@
 import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
 import 'package:crowdradar/app/fakes/favorito_repository_fake.dart';
+import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
 import 'package:crowdradar/core/models/categoria_lugar.dart';
 import 'package:crowdradar/core/models/lugar_detalle.dart';
@@ -8,6 +9,7 @@ import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/features/favoritos/data/favorito_repository.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
 import 'package:crowdradar/features/lugares/detalle/detalle_lugar_page.dart';
+import 'package:crowdradar/features/reportes/data/reporte_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -55,6 +57,9 @@ void main() {
         providers: [
           RepositoryProvider<LugarRepository>.value(value: repo),
           RepositoryProvider<FavoritoRepository>.value(value: favoritos),
+          RepositoryProvider<ReporteRepository>.value(
+            value: ReporteRepositoryFake(),
+          ),
         ],
         child: MaterialApp(
           home: DetalleLugarPage(lugarId: 1, centroMapa: centro),
@@ -66,6 +71,58 @@ void main() {
   }
 
   setUp(() => favoritos = FavoritoRepositoryFake());
+
+  group('reportar', () {
+    testWidgets(
+      'the button opens the sheet and a sent report reloads the detail',
+      (tester) async {
+        repo = RepoLugarFalso(alObtener: (_) async => _detalle());
+        await abrir(tester);
+        expect(repo.detallesPedidos, [1]);
+
+        await tester.tap(find.text('Reportar saturación'));
+        await tester.pumpAndSettle();
+        expect(find.text('¿Qué tan lleno está?'), findsOneWidget);
+
+        await tester.tap(find.text('Saturado'));
+        await tester.pump();
+        await tester.tap(find.text('Enviar reporte'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Listo'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('¿Qué tan lleno está?'), findsNothing);
+        expect(repo.detallesPedidos, [1, 1]);
+      },
+    );
+
+    testWidgets('dismissing the sheet without sending does not reload', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(alObtener: (_) async => _detalle());
+      await abrir(tester);
+
+      await tester.tap(find.text('Reportar saturación'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      expect(find.text('¿Qué tan lleno está?'), findsNothing);
+      expect(repo.detallesPedidos, [1]);
+    });
+
+    testWidgets('the button is absent while loading and on error', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(
+        alObtener: (_) async =>
+            throw const ApiException(status: 500, message: 'x'),
+      );
+      await abrir(tester);
+
+      expect(find.text('Reportar saturación'), findsNothing);
+    });
+  });
 
   group('with saturation information', () {
     testWidgets('shows name, category with distance, level and freshness', (
