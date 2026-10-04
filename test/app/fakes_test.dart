@@ -1,5 +1,6 @@
 // S9.2: each in-memory fake implements its frozen interface and behaves like
 // the API contract for its main success and failure paths.
+import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
 import 'package:crowdradar/app/fakes/datos_fake.dart';
 import 'package:crowdradar/app/fakes/fake_analitica_repository.dart';
 import 'package:crowdradar/app/fakes/fake_auth_repository.dart';
@@ -23,6 +24,7 @@ import 'package:crowdradar/features/moderacion/data/moderacion_repository.dart';
 import 'package:crowdradar/features/perfil/data/perfil_repository.dart';
 import 'package:crowdradar/features/reportes/data/reporte_repository.dart';
 import 'package:crowdradar/features/validacion/data/validacion_repository.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Matcher _falla(int status, String code) => throwsA(
@@ -388,6 +390,57 @@ void main() {
     test('size <= 0 is a 400 PAGINACION_INVALIDA', () {
       expect(() => paginar(datos, 1, 0), _lanza400());
       expect(() => paginar(datos, 1, -5), _lanza400());
+    });
+  });
+
+  group('R4-105 ComportamientoFake', () {
+    test('a configured failure is thrown by every kind of fake', () async {
+      const caido = ComportamientoFake(fallo: ApiException.sinConexion());
+      final fakes = <Future<Object?> Function()>[
+        () => FakeLugarRepository(comportamiento: caido).buscar(),
+        () => FakeAuthRepository(sesion, comportamiento: caido)
+            .iniciarSesion('ana@test.com', 'Secreta1'),
+        () => FakePerfilRepository(sesion, comportamiento: caido).obtener(),
+        () => FakeReporteRepository(comportamiento: caido).listarMios(),
+        () => FakeAnaliticaRepository(comportamiento: caido)
+            .historial(1),
+        () => FakeValidacionRepository(comportamiento: caido).pendientes(),
+        () => FakeFavoritoRepository(comportamiento: caido).listar(),
+        () => FakeModeracionRepository(comportamiento: caido).usuarios(),
+      ];
+
+      for (final llamar in fakes) {
+        await expectLater(
+          llamar(),
+          throwsA(
+            isA<ApiException>().having((e) => e.esSinConexion, 'offline', true),
+          ),
+        );
+      }
+    });
+
+    test('the default behavior answers at once without failing', () async {
+      final repo = FakeLugarRepository();
+
+      expect((await repo.buscar()).items, isNotEmpty);
+    });
+
+    test('latency delays the answer until the duration elapses', () {
+      fakeAsync((reloj) {
+        final repo = FakeLugarRepository(
+          comportamiento: const ComportamientoFake(
+            latencia: Duration(seconds: 2),
+          ),
+        );
+        var respondio = false;
+        repo.buscar().then((_) => respondio = true);
+
+        reloj.elapse(const Duration(seconds: 1));
+        expect(respondio, isFalse);
+
+        reloj.elapse(const Duration(seconds: 1));
+        expect(respondio, isTrue);
+      });
     });
   });
 }

@@ -2,6 +2,7 @@ import '../../core/models/user_model.dart';
 import '../../core/session/session_service.dart';
 import '../../core/session/usuario_sesion.dart';
 import '../../features/perfil/data/perfil_repository.dart';
+import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 
 class FakePerfilRepository implements PerfilRepository {
@@ -9,16 +10,23 @@ class FakePerfilRepository implements PerfilRepository {
   UserModel _perfil = usuarioFake;
   String _password = passwordFake;
 
-  FakePerfilRepository(this._sesion);
+  final ComportamientoFake _comportamiento;
+
+  FakePerfilRepository(
+    this._sesion, {
+    ComportamientoFake comportamiento = const ComportamientoFake(),
+  }) : _comportamiento = comportamiento;
 
   @override
   Future<UserModel> obtener() async {
+    await _comportamiento.aplicar();
     _exigirSesion();
     return _perfil;
   }
 
   @override
   Future<UserModel> actualizar(Map<String, dynamic> cambios) async {
+    await _comportamiento.aplicar();
     _exigirSesion();
     _perfil = _perfil.copyWith(
       nombre: cambios['nombre'] as String?,
@@ -36,6 +44,7 @@ class FakePerfilRepository implements PerfilRepository {
     required String nueva,
     required String confirmar,
   }) async {
+    await _comportamiento.aplicar();
     _exigirSesion();
     if (actual != _password) {
       throw errorFake(

@@ -1,9 +1,16 @@
 import '../../core/models/analitica.dart';
 import '../../core/models/nivel_saturacion.dart';
 import '../../features/analitica/data/analitica_repository.dart';
+import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 
 class FakeAnaliticaRepository implements AnaliticaRepository {
+  final ComportamientoFake _comportamiento;
+
+  FakeAnaliticaRepository({
+    ComportamientoFake comportamiento = const ComportamientoFake(),
+  }) : _comportamiento = comportamiento;
+
   static const SerieSaturacion _serie = SerieSaturacion(
     puntos: [
       PuntoSerie('08:00', 1.5),
@@ -23,7 +30,10 @@ class FakeAnaliticaRepository implements AnaliticaRepository {
     int lugarId, {
     DateTime? desde,
     DateTime? hasta,
-  }) async => _tieneDatos(lugarId) ? _serie : _sinDatos;
+  }) async {
+    await _comportamiento.aplicar();
+    return _tieneDatos(lugarId) ? _serie : _sinDatos;
+  }
 
   @override
   Future<ComparacionPeriodos> comparar(
@@ -34,21 +44,27 @@ class FakeAnaliticaRepository implements AnaliticaRepository {
     required DateTime hastaB,
     String? diasA,
     String? diasB,
-  }) async => _tieneDatos(lugarId)
-      ? const ComparacionPeriodos(_serie, _serie)
-      : const ComparacionPeriodos(_sinDatos, _sinDatos);
+  }) async {
+    await _comportamiento.aplicar();
+    return _tieneDatos(lugarId)
+        ? const ComparacionPeriodos(_serie, _serie)
+        : const ComparacionPeriodos(_sinDatos, _sinDatos);
+  }
 
   @override
   Future<MejorHorario> mejorHorario(
     int lugarId, {
     String? dias,
     int semanas = 4,
-  }) async => _tieneDatos(lugarId)
-      ? const MejorHorario(
-          franjas: [FranjaHoraria(8, 10, NivelSaturacion.tranquilo)],
-        )
-      : const MejorHorario(
-          sinDatos: true,
-          mensaje: 'Aún no hay suficientes datos',
-        );
+  }) async {
+    await _comportamiento.aplicar();
+    return _tieneDatos(lugarId)
+        ? const MejorHorario(
+            franjas: [FranjaHoraria(8, 10, NivelSaturacion.tranquilo)],
+          )
+        : const MejorHorario(
+            sinDatos: true,
+            mensaje: 'Aún no hay suficientes datos',
+          );
+  }
 }

@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 
 import '../core/config/entorno.dart';
 import '../core/map/flutter_map_adapter.dart';
 import '../core/map/mapa_adapter.dart';
 import '../core/network/api_client.dart';
+import '../core/network/cliente_http_factory.dart';
 import '../core/network/interceptores/interceptores_sesion.dart';
 import '../core/push/receptor_push.dart';
 import '../core/push/receptor_push_nulo.dart';
@@ -85,7 +85,7 @@ class Dependencias {
       );
     }
     final api = ApiClient(
-      http.Client(),
+      const ClienteHttpFactory().crear(),
       entorno,
       interceptores: interceptoresDeSesion(sesion),
     );
