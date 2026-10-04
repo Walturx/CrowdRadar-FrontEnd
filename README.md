@@ -47,6 +47,29 @@ another feature or on an SDK (`flutter_map` lives only in `FlutterMapAdapter`).
 Endpoint strings live only in `features/*/data/*_repository_http.dart`.
 Route path literals live only in `app/rutas.dart`.
 
+## Places and map (M2)
+
+`features/lugares/` has `data/` (`LugarRepository` + HTTP + fake), and one
+folder per screen: `mapa/` (map, markers, legend, tile banner), `detalle/`
+(place detail, favorite toggle) and `buscar/` (search by name, route
+`Rutas.buscarLugar`, which pops the chosen place id with `context.pop(id)`).
+`categoria_presentacion.dart` holds the category label/emoji and
+`subtituloLugar` ("Parque · 315 m"); `core/utils/distancia.dart` has the
+haversine `distanciaMetros` and `formatoDistancia`; `core/widgets` has the
+shared `EtiquetaSeccion` and `TarjetaError`.
+
+`MapaAdapter.construirMapa` draws the map without exposing the map SDK. Its
+notifications come in an `EventosMapa` parameter object: `alMoverCamara`
+(continuous), `alCamaraQuieta` (map ready and after each gesture),
+`alErrorTile` and `alTileCargado` (tile failed / loaded; the offline banner is
+shown once per outage and re-armed when a tile loads again). Bounds are
+`LimitesMapa`; the wire format of `bbox` is `minLng,minLat,maxLng,maxLat`.
+
+Every places request sends `limite`: `MapaCubit.limiteLugares = 200` (map) and
+`BuscarLugarCubit.limiteResultados = 50` (search). `MapaCubit.centro` is the
+live camera centre (null before the first camera event; the detail then hides
+the distance).
+
 ## Naming convention
 
 Domain vocabulary is Spanish (`Lugar`, `Reporte`, `SesionCubit`,
