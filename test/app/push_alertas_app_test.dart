@@ -166,7 +166,7 @@ void main() {
       // The fake needs a live session to accept the DELETE, so an empty list
       // proves the call went out before the session was cleared.
       expect(alertas().dispositivos, isEmpty);
-      expect(find.text('Iniciar sesión'), findsWidgets);
+      expect(find.byKey(const Key('boton-iniciar-sesion')), findsOneWidget);
     });
   });
 
@@ -279,7 +279,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Av. Larco 345, Miraflores'), findsNothing);
-      expect(find.text('Iniciar sesión'), findsWidgets);
+      expect(find.byKey(const Key('boton-iniciar-sesion')), findsOneWidget);
     });
   });
 }

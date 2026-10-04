@@ -85,14 +85,23 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
         if (pendiente != null) _abrirLugar(pendiente);
       case SesionCerrada(:final motivo):
         _toquePendiente = null;
-        if (motivo == MotivoCierre.sesionExpirada) {
+        final aviso = switch (motivo) {
+          MotivoCierre.sesionExpirada => 'Tu sesión terminó',
+          MotivoCierre.cuentaSuspendida => 'Tu cuenta fue suspendida',
+          _ => null,
+        };
+        if (aviso != null) {
           _mensajero.currentState
             ?..hideCurrentSnackBar()
-            ..showSnackBar(const SnackBar(content: Text('Tu sesión terminó')));
+            ..showSnackBar(SnackBar(content: Text(aviso)));
         }
-        // A user sign out already ran the hook while the session was valid;
-        // a forced close tries best effort (it is retried on the next sign in).
-        if (motivo != MotivoCierre.usuario) unawaited(_dispositivo.quitar());
+        // A user or password-change close already ran the hook while the
+        // session was valid; a forced close tries best effort (it is retried
+        // on the next sign in).
+        if (motivo == MotivoCierre.sesionExpirada ||
+            motivo == MotivoCierre.cuentaSuspendida) {
+          unawaited(_dispositivo.quitar());
+        }
     }
   }
 

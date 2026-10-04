@@ -2,6 +2,7 @@ import 'package:crowdradar/app/app.dart';
 import 'package:crowdradar/app/dependencias.dart';
 import 'package:crowdradar/core/config/entorno.dart';
 import 'package:crowdradar/core/session/session_service.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -12,6 +13,6 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('Iniciar sesión'), findsWidgets);
+    expect(find.byKey(const Key('boton-iniciar-sesion')), findsOneWidget);
   });
 }

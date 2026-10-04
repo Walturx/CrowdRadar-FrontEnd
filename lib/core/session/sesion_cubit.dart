@@ -15,7 +15,7 @@ class SesionCubit extends Cubit<SesionState> {
   final SessionService _sesion;
 
   /// Runs while the session is still valid, right before a user-initiated
-  /// sign out (e.g. to unregister the push device). Its failure is ignored and
+  /// sign out or a password-change sign out (e.g. to unregister the push device). Its failure is ignored and
   /// it is abandoned after [plazoAntesDeCerrar].
   final Future<void> Function()? _antesDeCerrar;
   late final StreamSubscription<EventoSesion> _suscripcion;
@@ -38,12 +38,14 @@ class SesionCubit extends Cubit<SesionState> {
     return SesionAutenticada(usuario: usuario, esAdmin: usuario.esAdmin);
   }
 
-  /// Ends the session. The [antesDeCerrar] hook only runs for a plain user
-  /// sign out: any other [motivo] means the token is already unusable.
+  /// Ends the session. The [antesDeCerrar] hook runs for a user sign out and
+  /// after a password change (best effort, token still held); the other
+  /// [motivo]s mean the token is already unusable.
   Future<void> cerrarSesion({
     MotivoCierre motivo = MotivoCierre.usuario,
   }) async {
-    if (motivo == MotivoCierre.usuario) {
+    if (motivo == MotivoCierre.usuario ||
+        motivo == MotivoCierre.passwordCambiada) {
       try {
         await _antesDeCerrar?.call().timeout(plazoAntesDeCerrar);
       } catch (_) {

@@ -90,24 +90,57 @@ void main() {
         const SesionNoAutenticada(motivo: MotivoCierre.usuario));
     await cubit.close();
   });
-  test('a password-change sign out keeps its motive and skips the hook', () async {
+  test('R3-1204 a password-change sign out runs the hook before closing', () async {
     await sesion.iniciar(token, usuarioPrueba);
-    var hookLlamado = false;
+    String? tokenVisto;
     final cubit = SesionCubit(
       sesion,
-      antesDeCerrar: () async => hookLlamado = true,
+      antesDeCerrar: () async => tokenVisto = sesion.token,
     );
 
     await cubit.cerrarSesion(motivo: MotivoCierre.passwordCambiada);
     await Future<void>.delayed(Duration.zero);
 
-    expect(hookLlamado, isFalse); // the old token is already invalid
+    expect(tokenVisto, token);
     expect(sesion.token, isNull);
     expect(
       cubit.state,
       const SesionNoAutenticada(motivo: MotivoCierre.passwordCambiada),
     );
     await cubit.close();
+  });
+
+  test('R4-1204 a failing hook on a password-change sign out is tolerated', () async {
+    await sesion.iniciar(token, usuarioPrueba);
+    final cubit = SesionCubit(
+      sesion,
+      antesDeCerrar: () async => throw Exception('401'),
+    );
+
+    await cubit.cerrarSesion(motivo: MotivoCierre.passwordCambiada);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(sesion.token, isNull);
+    await cubit.close();
+  });
+
+  test('an expired or suspended close never runs the hook', () async {
+    for (final motivo in [
+      MotivoCierre.sesionExpirada,
+      MotivoCierre.cuentaSuspendida,
+    ]) {
+      await sesion.iniciar(token, usuarioPrueba);
+      var hookLlamado = false;
+      final cubit = SesionCubit(
+        sesion,
+        antesDeCerrar: () async => hookLlamado = true,
+      );
+
+      await cubit.cerrarSesion(motivo: motivo);
+
+      expect(hookLlamado, isFalse, reason: '$motivo');
+      await cubit.close();
+    }
   });
 
   group('antesDeCerrar hook', () {
