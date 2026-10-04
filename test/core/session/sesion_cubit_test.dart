@@ -31,8 +31,10 @@ void main() {
   test('initial state reflects a restored session (user)', () async {
     await sesion.iniciar(token, usuarioPrueba);
 
-    expect(SesionCubit(sesion).state,
-        const SesionAutenticada(usuario: usuarioPrueba, esAdmin: false));
+    expect(
+      SesionCubit(sesion).state,
+      const SesionAutenticada(usuario: usuarioPrueba, esAdmin: false),
+    );
   });
 
   test('initial state flags admins', () async {
@@ -72,57 +74,65 @@ void main() {
       await c.cerrarSesion();
     },
     skip: 1,
-    expect: () => [
-      const SesionNoAutenticada(motivo: MotivoCierre.usuario),
-    ],
+    expect: () => [const SesionNoAutenticada(motivo: MotivoCierre.usuario)],
   );
 
-  test('R4-103 cerrarSesion with throwing storage still ends closed, no throw',
-      () async {
-    await sesion.iniciar(token, usuarioPrueba);
-    final cubit = SesionCubit(sesion);
-    sesion.configurar(StorageQueFallaAlEscribir(), reloj: () => ahora);
+  test(
+    'R4-103 cerrarSesion with throwing storage still ends closed, no throw',
+    () async {
+      await sesion.iniciar(token, usuarioPrueba);
+      final cubit = SesionCubit(sesion);
+      sesion.configurar(StorageQueFallaAlEscribir(), reloj: () => ahora);
 
-    await cubit.cerrarSesion();
-    await Future<void>.delayed(Duration.zero);
+      await cubit.cerrarSesion();
+      await Future<void>.delayed(Duration.zero);
 
-    expect(cubit.state,
-        const SesionNoAutenticada(motivo: MotivoCierre.usuario));
-    await cubit.close();
-  });
-  test('R3-1204 a password-change sign out runs the hook before closing', () async {
-    await sesion.iniciar(token, usuarioPrueba);
-    String? tokenVisto;
-    final cubit = SesionCubit(
-      sesion,
-      antesDeCerrar: () async => tokenVisto = sesion.token,
-    );
+      expect(
+        cubit.state,
+        const SesionNoAutenticada(motivo: MotivoCierre.usuario),
+      );
+      await cubit.close();
+    },
+  );
+  test(
+    'R3-1204 a password-change sign out runs the hook before closing',
+    () async {
+      await sesion.iniciar(token, usuarioPrueba);
+      String? tokenVisto;
+      final cubit = SesionCubit(
+        sesion,
+        antesDeCerrar: () async => tokenVisto = sesion.token,
+      );
 
-    await cubit.cerrarSesion(motivo: MotivoCierre.passwordCambiada);
-    await Future<void>.delayed(Duration.zero);
+      await cubit.cerrarSesion(motivo: MotivoCierre.passwordCambiada);
+      await Future<void>.delayed(Duration.zero);
 
-    expect(tokenVisto, token);
-    expect(sesion.token, isNull);
-    expect(
-      cubit.state,
-      const SesionNoAutenticada(motivo: MotivoCierre.passwordCambiada),
-    );
-    await cubit.close();
-  });
+      expect(tokenVisto, token);
+      expect(sesion.token, isNull);
+      expect(
+        cubit.state,
+        const SesionNoAutenticada(motivo: MotivoCierre.passwordCambiada),
+      );
+      await cubit.close();
+    },
+  );
 
-  test('R4-1204 a failing hook on a password-change sign out is tolerated', () async {
-    await sesion.iniciar(token, usuarioPrueba);
-    final cubit = SesionCubit(
-      sesion,
-      antesDeCerrar: () async => throw Exception('401'),
-    );
+  test(
+    'R4-1204 a failing hook on a password-change sign out is tolerated',
+    () async {
+      await sesion.iniciar(token, usuarioPrueba);
+      final cubit = SesionCubit(
+        sesion,
+        antesDeCerrar: () async => throw Exception('401'),
+      );
 
-    await cubit.cerrarSesion(motivo: MotivoCierre.passwordCambiada);
-    await Future<void>.delayed(Duration.zero);
+      await cubit.cerrarSesion(motivo: MotivoCierre.passwordCambiada);
+      await Future<void>.delayed(Duration.zero);
 
-    expect(sesion.token, isNull);
-    await cubit.close();
-  });
+      expect(sesion.token, isNull);
+      await cubit.close();
+    },
+  );
 
   test('an expired or suspended close never runs the hook', () async {
     for (final motivo in [
@@ -157,34 +167,42 @@ void main() {
 
       expect(tokenVisto, token);
       expect(sesion.token, isNull);
-      expect(cubit.state, const SesionNoAutenticada(motivo: MotivoCierre.usuario));
+      expect(
+        cubit.state,
+        const SesionNoAutenticada(motivo: MotivoCierre.usuario),
+      );
       await cubit.close();
     });
 
-    test('a hook that never answers is abandoned after the timeout (R3-806)', () {
-      fakeAsync((reloj) {
-        final tokenCerrado = Completer<void>();
-        sesion.iniciar(token, usuarioPrueba);
-        reloj.flushMicrotasks();
-        final cubit = SesionCubit(
-          sesion,
-          antesDeCerrar: () => tokenCerrado.future,
-        );
+    test(
+      'a hook that never answers is abandoned after the timeout (R3-806)',
+      () {
+        fakeAsync((reloj) {
+          final tokenCerrado = Completer<void>();
+          sesion.iniciar(token, usuarioPrueba);
+          reloj.flushMicrotasks();
+          final cubit = SesionCubit(
+            sesion,
+            antesDeCerrar: () => tokenCerrado.future,
+          );
 
-        cubit.cerrarSesion();
-        reloj.elapse(SesionCubit.plazoAntesDeCerrar - const Duration(milliseconds: 1));
-        expect(sesion.token, token);
+          cubit.cerrarSesion();
+          reloj.elapse(
+            SesionCubit.plazoAntesDeCerrar - const Duration(milliseconds: 1),
+          );
+          expect(sesion.token, token);
 
-        reloj.elapse(const Duration(milliseconds: 2));
-        reloj.flushMicrotasks();
+          reloj.elapse(const Duration(milliseconds: 2));
+          reloj.flushMicrotasks();
 
-        expect(sesion.token, isNull);
-        expect(
-          cubit.state,
-          const SesionNoAutenticada(motivo: MotivoCierre.usuario),
-        );
-      });
-    });
+          expect(sesion.token, isNull);
+          expect(
+            cubit.state,
+            const SesionNoAutenticada(motivo: MotivoCierre.usuario),
+          );
+        });
+      },
+    );
 
     test('a failing hook never keeps the user signed in', () async {
       await sesion.iniciar(token, usuarioPrueba);
@@ -197,7 +215,10 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(sesion.token, isNull);
-      expect(cubit.state, const SesionNoAutenticada(motivo: MotivoCierre.usuario));
+      expect(
+        cubit.state,
+        const SesionNoAutenticada(motivo: MotivoCierre.usuario),
+      );
       await cubit.close();
     });
   });

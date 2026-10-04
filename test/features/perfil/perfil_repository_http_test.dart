@@ -35,99 +35,136 @@ void main() {
   tearDown(() => sesion.reiniciar());
 
   group('sin sesión', () {
-    test('obtener fails with "No hay sesión activa" and sends nothing',
-        () async {
-      final r = repo(200, {'data': _usuarioJson});
+    test(
+      'obtener fails with "No hay sesión activa" and sends nothing',
+      () async {
+        final r = repo(200, {'data': _usuarioJson});
 
-      await expectLater(
-        r.obtener(),
-        throwsA(isA<ApiException>()
-            .having((e) => e.message, 'message', 'No hay sesión activa')),
-      );
-      expect(visto, isNull);
-    });
+        await expectLater(
+          r.obtener(),
+          throwsA(
+            isA<ApiException>().having(
+              (e) => e.message,
+              'message',
+              'No hay sesión activa',
+            ),
+          ),
+        );
+        expect(visto, isNull);
+      },
+    );
 
-    test('actualizar fails with "No hay sesión activa" and sends nothing',
-        () async {
-      final r = repo(200, {'data': _usuarioJson});
+    test(
+      'actualizar fails with "No hay sesión activa" and sends nothing',
+      () async {
+        final r = repo(200, {'data': _usuarioJson});
 
-      await expectLater(
-        r.actualizar({'nombre': 'x'}),
-        throwsA(isA<ApiException>()
-            .having((e) => e.message, 'message', 'No hay sesión activa')),
-      );
-      expect(visto, isNull);
-    });
+        await expectLater(
+          r.actualizar({'nombre': 'x'}),
+          throwsA(
+            isA<ApiException>().having(
+              (e) => e.message,
+              'message',
+              'No hay sesión activa',
+            ),
+          ),
+        );
+        expect(visto, isNull);
+      },
+    );
   });
 
   group('con sesión', () {
     setUp(() => sesion.iniciar('tkn', usuarioPrueba));
 
-    test('S8.4 obtener GETs the profile with Bearer and parses the user',
-        () async {
-      final r = repo(200, {'message': 'ok', 'data': _usuarioJson});
+    test(
+      'S8.4 obtener GETs the profile with Bearer and parses the user',
+      () async {
+        final r = repo(200, {'message': 'ok', 'data': _usuarioJson});
 
-      final user = await r.obtener();
+        final user = await r.obtener();
 
-      expect(visto!.method, 'GET');
-      expect(visto!.url.path, '/api/users/profile');
-      expect(visto!.headers['Authorization'], 'Bearer tkn');
-      expect(user.nombre, 'Ana');
-    });
+        expect(visto!.method, 'GET');
+        expect(visto!.url.path, '/api/users/profile');
+        expect(visto!.headers['Authorization'], 'Bearer tkn');
+        expect(user.nombre, 'Ana');
+      },
+    );
 
-    test('obtener error without message falls back to the Sprint 1 text',
-        () async {
-      final r = repo(500, {});
+    test(
+      'obtener error without message falls back to the Sprint 1 text',
+      () async {
+        final r = repo(500, {});
 
-      await expectLater(
-        r.obtener(),
-        throwsA(isA<ApiException>().having(
-            (e) => e.message, 'message', 'Error al obtener el perfil')),
-      );
-    });
+        await expectLater(
+          r.obtener(),
+          throwsA(
+            isA<ApiException>().having(
+              (e) => e.message,
+              'message',
+              'Error al obtener el perfil',
+            ),
+          ),
+        );
+      },
+    );
 
-    test('S8.4 actualizar PUTs the changes and updates the session user',
-        () async {
-      final r = repo(200, {
-        'message': 'ok',
-        'data': {..._usuarioJson, 'nombre': 'Beatriz'},
-      });
+    test(
+      'S8.4 actualizar PUTs the changes and updates the session user',
+      () async {
+        final r = repo(200, {
+          'message': 'ok',
+          'data': {..._usuarioJson, 'nombre': 'Beatriz'},
+        });
 
-      final user = await r.actualizar({'nombre': 'Beatriz'});
+        final user = await r.actualizar({'nombre': 'Beatriz'});
 
-      expect(visto!.method, 'PUT');
-      expect(visto!.url.path, '/api/users/profile');
-      expect(jsonDecode(visto!.body), {'nombre': 'Beatriz'});
-      expect(user.nombre, 'Beatriz');
-      expect(sesion.usuario?.nombre, 'Beatriz');
-    });
+        expect(visto!.method, 'PUT');
+        expect(visto!.url.path, '/api/users/profile');
+        expect(jsonDecode(visto!.body), {'nombre': 'Beatriz'});
+        expect(user.nombre, 'Beatriz');
+        expect(sesion.usuario?.nombre, 'Beatriz');
+      },
+    );
 
-    test('actualizar error keeps the session user and falls back to the text',
-        () async {
-      final r = repo(500, {});
+    test(
+      'actualizar error keeps the session user and falls back to the text',
+      () async {
+        final r = repo(500, {});
 
-      await expectLater(
-        r.actualizar({'nombre': 'x'}),
-        throwsA(isA<ApiException>().having(
-            (e) => e.message, 'message', 'Error al actualizar el perfil')),
-      );
-      expect(sesion.usuario, usuarioPrueba);
-    });
+        await expectLater(
+          r.actualizar({'nombre': 'x'}),
+          throwsA(
+            isA<ApiException>().having(
+              (e) => e.message,
+              'message',
+              'Error al actualizar el perfil',
+            ),
+          ),
+        );
+        expect(sesion.usuario, usuarioPrueba);
+      },
+    );
 
-    test('cambiarPassword PUTs the three fields to /api/users/password',
-        () async {
-      final r = repo(200, {'message': 'ok'});
+    test(
+      'cambiarPassword PUTs the three fields to /api/users/password',
+      () async {
+        final r = repo(200, {'message': 'ok'});
 
-      await r.cambiarPassword(
-          actual: 'Vieja1aa', nueva: 'Nueva1aa', confirmar: 'Nueva1aa');
+        await r.cambiarPassword(
+          actual: 'Vieja1aa',
+          nueva: 'Nueva1aa',
+          confirmar: 'Nueva1aa',
+        );
 
-      expect(visto!.method, 'PUT');
-      expect(visto!.url.path, '/api/users/password');
-      expect(jsonDecode(visto!.body), {
-        'passwordActual': 'Vieja1aa',
-        'nuevaPassword': 'Nueva1aa',
-        'confirmarPassword': 'Nueva1aa',
-      });
-    });
+        expect(visto!.method, 'PUT');
+        expect(visto!.url.path, '/api/users/password');
+        expect(jsonDecode(visto!.body), {
+          'passwordActual': 'Vieja1aa',
+          'nuevaPassword': 'Nueva1aa',
+          'confirmarPassword': 'Nueva1aa',
+        });
+      },
+    );
   });
 }

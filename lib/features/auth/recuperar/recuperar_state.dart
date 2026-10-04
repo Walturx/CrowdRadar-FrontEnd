@@ -40,6 +40,10 @@ class RecuperarFallido extends RecuperarState {
   });
 
   @override
-  List<Object?> get props =>
-      [mensaje, codigo, esSinConexion, reintentarEnSegundos];
+  List<Object?> get props => [
+    mensaje,
+    codigo,
+    esSinConexion,
+    reintentarEnSegundos,
+  ];
 }

@@ -31,49 +31,49 @@ class Usuario extends Equatable {
   });
 
   factory Usuario.fromJson(Map<String, dynamic> json) => Usuario(
-        id: json['id'] as int?,
-        nombre: json['nombre'] as String?,
-        apellido: json['apellido'] as String?,
-        email: json['email'] as String?,
-        telefono: json['telefono'] as String?,
-        rol: json['rol'] as String?,
-        distrito: json['distrito'] as String?,
-        status: json['status'] as String?,
-        createdAt: json['createdAt'] as String?,
-        updatedAt: json['updatedAt'] as String?,
-        puntosKarma: json['puntosKarma'] is num
-            ? (json['puntosKarma'] as num).toInt()
-            : null,
-      );
+    id: json['id'] as int?,
+    nombre: json['nombre'] as String?,
+    apellido: json['apellido'] as String?,
+    email: json['email'] as String?,
+    telefono: json['telefono'] as String?,
+    rol: json['rol'] as String?,
+    distrito: json['distrito'] as String?,
+    status: json['status'] as String?,
+    createdAt: json['createdAt'] as String?,
+    updatedAt: json['updatedAt'] as String?,
+    puntosKarma: json['puntosKarma'] is num
+        ? (json['puntosKarma'] as num).toInt()
+        : null,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'nombre': nombre,
-        'apellido': apellido,
-        'email': email,
-        'telefono': telefono,
-        'rol': rol,
-        'distrito': distrito,
-        'status': status,
-        'createdAt': createdAt,
-        'updatedAt': updatedAt,
-        'puntosKarma': puntosKarma,
-      };
+    'id': id,
+    'nombre': nombre,
+    'apellido': apellido,
+    'email': email,
+    'telefono': telefono,
+    'rol': rol,
+    'distrito': distrito,
+    'status': status,
+    'createdAt': createdAt,
+    'updatedAt': updatedAt,
+    'puntosKarma': puntosKarma,
+  };
 
   @override
   List<Object?> get props => [
-        id,
-        nombre,
-        apellido,
-        email,
-        telefono,
-        rol,
-        distrito,
-        status,
-        createdAt,
-        updatedAt,
-        puntosKarma,
-      ];
+    id,
+    nombre,
+    apellido,
+    email,
+    telefono,
+    rol,
+    distrito,
+    status,
+    createdAt,
+    updatedAt,
+    puntosKarma,
+  ];
 
   Usuario copyWith({
     int? id,

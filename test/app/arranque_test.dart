@@ -11,21 +11,24 @@ import '../fakes/registro_falso.dart';
 void main() {
   tearDown(() => SessionService.instance.reiniciar());
 
-  testWidgets('R4-107 failing bootstrap shows an error screen and retries',
-      (tester) async {
+  testWidgets('R4-107 failing bootstrap shows an error screen and retries', (
+    tester,
+  ) async {
     final registro = RegistroFalso();
     var intentos = 0;
-    await tester.pumpWidget(ArranqueApp(
-      registro: registro,
-      iniciar: () async {
-        intentos++;
-        if (intentos == 1) throw StateError('keystore');
-        return Dependencias.crear(
-          const Entorno(usarFakes: true),
-          SessionService.instance..reiniciar(),
-        );
-      },
-    ));
+    await tester.pumpWidget(
+      ArranqueApp(
+        registro: registro,
+        iniciar: () async {
+          intentos++;
+          if (intentos == 1) throw StateError('keystore');
+          return Dependencias.crear(
+            const Entorno(usarFakes: true),
+            SessionService.instance..reiniciar(),
+          );
+        },
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Reintentar'), findsOneWidget);
@@ -39,13 +42,15 @@ void main() {
   });
 
   testWidgets('successful bootstrap goes straight to the app', (tester) async {
-    await tester.pumpWidget(ArranqueApp(
-      registro: RegistroFalso(),
-      iniciar: () async => Dependencias.crear(
-        const Entorno(usarFakes: true),
-        SessionService.instance..reiniciar(),
+    await tester.pumpWidget(
+      ArranqueApp(
+        registro: RegistroFalso(),
+        iniciar: () async => Dependencias.crear(
+          const Entorno(usarFakes: true),
+          SessionService.instance..reiniciar(),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
 
     expect(find.byType(CrowdRadarApp), findsOneWidget);

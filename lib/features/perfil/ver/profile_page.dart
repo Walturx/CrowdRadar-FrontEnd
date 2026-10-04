@@ -63,8 +63,8 @@ class _ProfileViewState extends State<_ProfileView> {
       body: BlocConsumer<PerfilCubit, PerfilState>(
         listenWhen: (_, actual) =>
             actual is PerfilCargado && actual.errorActualizacion != null,
-        listener: (context, state) => ScaffoldMessenger.of(context)
-            .showSnackBar(
+        listener: (context, state) =>
+            ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text((state as PerfilCargado).errorActualizacion!),
               ),
@@ -92,17 +92,17 @@ class _ProfileViewState extends State<_ProfileView> {
           final fullName = '${user.nombre ?? ''} ${user.apellido ?? ''}'.trim();
 
           Widget eyebrow(String text) => Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-                child: Text(
-                  text,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.6,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              );
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.6,
+                color: AppColors.textMuted,
+              ),
+            ),
+          );
 
           return ListView(
             padding: const EdgeInsets.only(bottom: 24),
@@ -161,8 +161,10 @@ class _ProfileViewState extends State<_ProfileView> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
                     onTap: () async {
-                      await context.push(Rutas.perfilEditar,
-                          extra: loaded.usuario.toJson());
+                      await context.push(
+                        Rutas.perfilEditar,
+                        extra: loaded.usuario.toJson(),
+                      );
                       if (context.mounted) {
                         context.read<PerfilCubit>().refrescar();
                       }
@@ -173,7 +175,9 @@ class _ProfileViewState extends State<_ProfileView> {
                         border: Border.all(color: AppColors.border),
                       ),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
                           Container(
@@ -183,8 +187,11 @@ class _ProfileViewState extends State<_ProfileView> {
                               color: AppColors.bg,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.edit,
-                                color: AppColors.primary, size: 20),
+                            child: const Icon(
+                              Icons.edit,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
                           ),
                           const SizedBox(width: 14),
                           const Expanded(
@@ -197,8 +204,10 @@ class _ProfileViewState extends State<_ProfileView> {
                               ),
                             ),
                           ),
-                          const Icon(Icons.chevron_right,
-                              color: AppColors.textMuted),
+                          const Icon(
+                            Icons.chevron_right,
+                            color: AppColors.textMuted,
+                          ),
                         ],
                       ),
                     ),
@@ -218,7 +227,10 @@ class _ProfileViewState extends State<_ProfileView> {
               eyebrow('INFORMACIÓN'),
               _TarjetaInfo(Icons.phone, 'Teléfono', user.telefono ?? '-'),
               _TarjetaInfo(
-                  Icons.location_city, 'Distrito', user.distrito ?? '-'),
+                Icons.location_city,
+                'Distrito',
+                user.distrito ?? '-',
+              ),
               _TarjetaInfo(Icons.verified_user, 'Rol', user.rol ?? '-'),
               _TarjetaInfo(Icons.info_outline, 'Estado', user.status ?? '-'),
               _TarjetaKarma(user.puntosKarma ?? 0),
@@ -243,7 +255,9 @@ class _ProfileViewState extends State<_ProfileView> {
                         border: Border.all(color: AppColors.border),
                       ),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
                           Container(
@@ -253,8 +267,11 @@ class _ProfileViewState extends State<_ProfileView> {
                               color: AppColors.danger.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.logout,
-                                color: AppColors.danger, size: 20),
+                            child: const Icon(
+                              Icons.logout,
+                              color: AppColors.danger,
+                              size: 20,
+                            ),
                           ),
                           const SizedBox(width: 14),
                           const Expanded(
@@ -291,54 +308,54 @@ class _TarjetaInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
+    padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+    child: Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.bg,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 20),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.bg,
-                  borderRadius: BorderRadius.circular(10),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textMuted,
+                  ),
                 ),
-                child: Icon(icon, color: AppColors.primary, size: 20),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      value,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.text,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 }
 
 /// HU 4.2: the accumulated karma points.
@@ -368,20 +385,20 @@ class _FilaPerfil extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-        child: Material(
-          color: AppColors.surface,
+    padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+    child: Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(12),
+      child: ListTile(
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          child: ListTile(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: AppColors.border),
-            ),
-            leading: Icon(icono, color: AppColors.primary),
-            title: Text(titulo),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: alTocar,
-          ),
+          side: const BorderSide(color: AppColors.border),
         ),
-      );
+        leading: Icon(icono, color: AppColors.primary),
+        title: Text(titulo),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: alTocar,
+      ),
+    ),
+  );
 }

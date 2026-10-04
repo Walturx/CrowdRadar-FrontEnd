@@ -15,6 +15,9 @@ GoRouter enrutadorDe({
     GoRoute(path: ruta, builder: (_, _) => pantalla),
     for (final o in otras)
       if (o != ruta)
-        GoRoute(path: o, builder: (_, _) => Scaffold(body: Text('RUTA $o'))),
+        GoRoute(
+          path: o,
+          builder: (_, _) => Scaffold(body: Text('RUTA $o')),
+        ),
   ],
 );

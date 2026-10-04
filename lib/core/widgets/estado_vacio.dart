@@ -45,10 +45,7 @@ class EstadoVacio extends StatelessWidget {
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textMuted,
-              ),
+              style: const TextStyle(fontSize: 14, color: AppColors.textMuted),
             ),
           ],
         ),

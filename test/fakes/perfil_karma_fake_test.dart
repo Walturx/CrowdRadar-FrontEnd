@@ -7,18 +7,20 @@ import 'package:crowdradar/core/session/usuario_sesion.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('the profile fake reflects karma earned through the report fake',
-      () async {
-    final sesion = SessionService.instance..reiniciar();
-    addTearDown(sesion.reiniciar);
-    final karma = KarmaFake(100);
-    final perfil = PerfilRepositoryFake(sesion, karma: karma);
-    final reportes = ReporteRepositoryFake(karma: karma);
-    await sesion.iniciar('t', const UsuarioSesion(id: 1));
+  test(
+    'the profile fake reflects karma earned through the report fake',
+    () async {
+      final sesion = SessionService.instance..reiniciar();
+      addTearDown(sesion.reiniciar);
+      final karma = KarmaFake(100);
+      final perfil = PerfilRepositoryFake(sesion, karma: karma);
+      final reportes = ReporteRepositoryFake(karma: karma);
+      await sesion.iniciar('t', const UsuarioSesion(id: 1));
 
-    expect((await perfil.obtener()).puntosKarma, 100);
-    await reportes.reportar(1, NivelSaturacion.moderado);
+      expect((await perfil.obtener()).puntosKarma, 100);
+      await reportes.reportar(1, NivelSaturacion.moderado);
 
-    expect((await perfil.obtener()).puntosKarma, 110);
-  });
+      expect((await perfil.obtener()).puntosKarma, 110);
+    },
+  );
 }

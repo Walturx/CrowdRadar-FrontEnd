@@ -117,13 +117,18 @@ class _Gracias extends StatelessWidget {
             ),
             const Text('Tu aporte mejora la confiabilidad de la información.'),
             const SizedBox(height: 8),
-            Text(
-              '+${voto.puntosGanados} karma',
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                color: AppColors.success,
+            if (voto.puntosGanados > 0)
+              Text(
+                '+${voto.puntosGanados} karma',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.success,
+                ),
+              )
+            else
+              const Text(
+                'Voto registrado (alcanzaste el máximo de karma por hoy)',
               ),
-            ),
             Text('$eligio el reporte de ${voto.reporte.lugar.nombre}'),
           ],
         ),

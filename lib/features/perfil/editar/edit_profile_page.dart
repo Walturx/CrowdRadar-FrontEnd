@@ -84,16 +84,14 @@ class _EditProfileViewState extends State<_EditProfileView> {
           );
           context.pop();
         } else if (state is EditarPerfilFallido) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.mensaje)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.mensaje)));
         }
       },
       builder: (context, state) {
         if (state is EditarPerfilGuardando) {
-          return const Scaffold(
-            body: Cargando(),
-          );
+          return const Scaffold(body: Cargando());
         }
 
         return Scaffold(
@@ -119,7 +117,9 @@ class _EditProfileViewState extends State<_EditProfileView> {
                   TextFormField(
                     enabled: false,
                     initialValue: widget.user?.email ?? '',
-                    decoration: const InputDecoration(labelText: 'Correo electrónico'),
+                    decoration: const InputDecoration(
+                      labelText: 'Correo electrónico',
+                    ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -140,7 +140,10 @@ class _EditProfileViewState extends State<_EditProfileView> {
                     validator: Validadores.requerido,
                   ),
                   const SizedBox(height: 24),
-                  BotonPrincipal(texto: 'Guardar cambios', onPressed: () => _onGuardar(context)),
+                  BotonPrincipal(
+                    texto: 'Guardar cambios',
+                    onPressed: () => _onGuardar(context),
+                  ),
                 ],
               ),
             ),

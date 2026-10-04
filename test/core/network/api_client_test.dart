@@ -16,10 +16,10 @@ import 'package:http/testing.dart';
 const _entorno = Entorno(apiUrl: 'http://api.test');
 
 http.Response _json(int status, Object? body) => http.Response.bytes(
-      utf8.encode(jsonEncode(body)),
-      status,
-      headers: {'content-type': 'application/json; charset=utf-8'},
-    );
+  utf8.encode(jsonEncode(body)),
+  status,
+  headers: {'content-type': 'application/json; charset=utf-8'},
+);
 
 ApiClient _cliente(
   MockClientHandler handler, {
@@ -27,15 +27,14 @@ ApiClient _cliente(
   Duration timeout = const Duration(seconds: 15),
   RegistroFalso? registro,
   DateTime Function()? ahora,
-}) =>
-    ApiClient(
-      MockClient(handler),
-      _entorno,
-      interceptores: interceptores,
-      timeout: timeout,
-      registro: registro,
-      ahora: ahora,
-    );
+}) => ApiClient(
+  MockClient(handler),
+  _entorno,
+  interceptores: interceptores,
+  timeout: timeout,
+  registro: registro,
+  ahora: ahora,
+);
 
 class _InterceptorQueFalla extends InterceptorApi {
   final bool alEnviar;
@@ -48,7 +47,10 @@ class _InterceptorQueFalla extends InterceptorApi {
   }
 
   @override
-  Future<void> alRecibirError(ApiException error, SolicitudApi solicitud) async {
+  Future<void> alRecibirError(
+    ApiException error,
+    SolicitudApi solicitud,
+  ) async {
     if (!alEnviar) throw StateError('boom despues');
   }
 }
@@ -115,8 +117,11 @@ void main() {
         return http.Response('', 204);
       });
 
-      final res =
-          await api.put<Object?>('/api/x', body: {}, parser: _identidad);
+      final res = await api.put<Object?>(
+        '/api/x',
+        body: {},
+        parser: _identidad,
+      );
 
       expect(metodo, 'PUT');
       expect(res.datos, isNull);
@@ -126,16 +131,19 @@ void main() {
 
   group('ApiClient errors', () {
     test('S3.2 422 body becomes ApiException with code and errors', () async {
-      final api = _cliente((_) async => _json(422, {
-            'message': 'Datos inválidos.',
-            'code': 'VALIDACION_FALLIDA',
-            'errors': [
-              {'campo': 'email', 'mensaje': 'Email inválido'},
-            ],
-          }));
+      final api = _cliente(
+        (_) async => _json(422, {
+          'message': 'Datos inválidos.',
+          'code': 'VALIDACION_FALLIDA',
+          'errors': [
+            {'campo': 'email', 'mensaje': 'Email inválido'},
+          ],
+        }),
+      );
 
       final e = await _capturar(
-          () => api.get<Object?>('/api/x', parser: _identidad));
+        () => api.get<Object?>('/api/x', parser: _identidad),
+      );
 
       expect(e.status, 422);
       expect(e.message, 'Datos inválidos.');
@@ -145,14 +153,17 @@ void main() {
     });
 
     test('429 keeps the Retry-After seconds on the exception', () async {
-      final api = _cliente((_) async => http.Response.bytes(
-            utf8.encode(jsonEncode({'code': 'DEMASIADOS_INTENTOS'})),
-            429,
-            headers: {'retry-after': '120'},
-          ));
+      final api = _cliente(
+        (_) async => http.Response.bytes(
+          utf8.encode(jsonEncode({'code': 'DEMASIADOS_INTENTOS'})),
+          429,
+          headers: {'retry-after': '120'},
+        ),
+      );
 
       final e = await _capturar(
-          () => api.get<Object?>('/api/x', parser: _identidad));
+        () => api.get<Object?>('/api/x', parser: _identidad),
+      );
 
       expect(e.reintentarEnSegundos, 120);
     });
@@ -170,7 +181,8 @@ void main() {
           ahora: () => ahora,
         );
         final e = await _capturar(
-            () => api.get<Object?>('/api/x', parser: _identidad));
+          () => api.get<Object?>('/api/x', parser: _identidad),
+        );
         return e.reintentarEnSegundos;
       }
 
@@ -207,8 +219,13 @@ void main() {
     test('S3.6 non-JSON failure falls back to the provided message', () async {
       final api = _cliente((_) async => http.Response('<html>', 500));
 
-      final e = await _capturar(() => api.post<Object?>('/api/x',
-          parser: _identidad, mensajeError: 'Error al registrar usuario'));
+      final e = await _capturar(
+        () => api.post<Object?>(
+          '/api/x',
+          parser: _identidad,
+          mensajeError: 'Error al registrar usuario',
+        ),
+      );
 
       expect(e.status, 500);
       expect(e.message, 'Error al registrar usuario');
@@ -220,7 +237,8 @@ void main() {
       final api = _cliente((_) async => _json(400, {'otro': 1}));
 
       final e = await _capturar(
-          () => api.get<Object?>('/api/x', parser: _identidad));
+        () => api.get<Object?>('/api/x', parser: _identidad),
+      );
 
       expect(e.message, ApiException.mensajePorDefecto);
       expect(e.code, isNull);
@@ -230,7 +248,8 @@ void main() {
       final api = _cliente((_) async => http.Response('{no', 200));
 
       final e = await _capturar(
-          () => api.get<Object?>('/api/x', parser: _identidad));
+        () => api.get<Object?>('/api/x', parser: _identidad),
+      );
 
       expect(e.status, 200);
     });
@@ -239,7 +258,8 @@ void main() {
       final api = _cliente((_) async => throw const SocketException('down'));
 
       final e = await _capturar(
-          () => api.get<Object?>('/api/x', parser: _identidad));
+        () => api.get<Object?>('/api/x', parser: _identidad),
+      );
 
       expect(e.esSinConexion, isTrue);
       expect(e.message, ApiException.mensajeSinConexion);
@@ -248,12 +268,15 @@ void main() {
     test('S3.5 timeout maps to sinConexion', () async {
       final api = _cliente(
         (_) => Future.delayed(
-            const Duration(milliseconds: 300), () => _json(200, {})),
+          const Duration(milliseconds: 300),
+          () => _json(200, {}),
+        ),
         timeout: const Duration(milliseconds: 20),
       );
 
       final e = await _capturar(
-          () => api.get<Object?>('/api/x', parser: _identidad));
+        () => api.get<Object?>('/api/x', parser: _identidad),
+      );
 
       expect(e.esSinConexion, isTrue);
     });
@@ -262,35 +285,47 @@ void main() {
       final api = _cliente((_) async => throw http.ClientException('boom'));
 
       final e = await _capturar(
-          () => api.get<Object?>('/api/x', parser: _identidad));
+        () => api.get<Object?>('/api/x', parser: _identidad),
+      );
 
       expect(e.esSinConexion, isTrue);
     });
   });
 
   group('ApiClient review fixes', () {
-    test('R3-006 interceptor failing before send becomes INTERCEPTOR', () async {
-      final api = _cliente((_) async => _json(200, {}),
-          interceptores: [_InterceptorQueFalla(alEnviar: true)]);
+    test(
+      'R3-006 interceptor failing before send becomes INTERCEPTOR',
+      () async {
+        final api = _cliente(
+          (_) async => _json(200, {}),
+          interceptores: [_InterceptorQueFalla(alEnviar: true)],
+        );
 
-      final e = await _capturar(
-          () => api.get<Object?>('/api/x', parser: _identidad));
+        final e = await _capturar(
+          () => api.get<Object?>('/api/x', parser: _identidad),
+        );
 
-      expect(e.code, ApiException.codigoInterceptor);
-      expect(e.status, -1);
-    });
+        expect(e.code, ApiException.codigoInterceptor);
+        expect(e.status, -1);
+      },
+    );
 
-    test('R3-006 interceptor failing on error does not mask the original',
-        () async {
-      final api = _cliente((_) async => _json(500, {'message': 'real'}),
-          interceptores: [_InterceptorQueFalla()]);
+    test(
+      'R3-006 interceptor failing on error does not mask the original',
+      () async {
+        final api = _cliente(
+          (_) async => _json(500, {'message': 'real'}),
+          interceptores: [_InterceptorQueFalla()],
+        );
 
-      final e = await _capturar(
-          () => api.get<Object?>('/api/x', parser: _identidad));
+        final e = await _capturar(
+          () => api.get<Object?>('/api/x', parser: _identidad),
+        );
 
-      expect(e.status, 500);
-      expect(e.message, 'real');
-    });
+        expect(e.status, 500);
+        expect(e.message, 'real');
+      },
+    );
 
     test('R3-006 SesionExpiradaInterceptor awaits expirar', () async {
       var terminado = false;
@@ -304,51 +339,61 @@ void main() {
         ],
       );
 
-      await _capturar(() => api.get<Object?>('/api/users/p', parser: _identidad));
+      await _capturar(
+        () => api.get<Object?>('/api/users/p', parser: _identidad),
+      );
 
       expect(terminado, isTrue);
     });
 
-    test('R3-006 SesionExpiradaInterceptor swallows and logs expirar failure',
-        () async {
-      final registro = RegistroFalso();
-      final api = _cliente(
-        (_) async => _json(401, {'message': 'x'}),
-        registro: registro,
-        interceptores: [
-          SesionExpiradaInterceptor((_) async => throw StateError('x'),
-              registro: registro),
-        ],
-      );
+    test(
+      'R3-006 SesionExpiradaInterceptor swallows and logs expirar failure',
+      () async {
+        final registro = RegistroFalso();
+        final api = _cliente(
+          (_) async => _json(401, {'message': 'x'}),
+          registro: registro,
+          interceptores: [
+            SesionExpiradaInterceptor(
+              (_) async => throw StateError('x'),
+              registro: registro,
+            ),
+          ],
+        );
 
-      final e = await _capturar(
-          () => api.get<Object?>('/api/users/p', parser: _identidad));
+        final e = await _capturar(
+          () => api.get<Object?>('/api/users/p', parser: _identidad),
+        );
 
-      expect(e.status, 401);
-      expect(registro.registros, isNotEmpty);
-    });
+        expect(e.status, 401);
+        expect(registro.registros, isNotEmpty);
+      },
+    );
 
     for (final (status, codigo) in [
       (422, 'PASSWORD_ACTUAL_INCORRECTA'),
       (422, 'PASSWORD_REPETIDA'),
       (400, 'VALIDACION_FALLIDA'),
     ]) {
-      test('R3-1208 a $status $codigo on the password change keeps the session',
-          () async {
-        final motivos = <MotivoCierre>[];
-        final api = _cliente(
-          (_) async => _json(status, {'code': codigo, 'message': 'x'}),
-          interceptores: [
-            SesionExpiradaInterceptor((m) async => motivos.add(m)),
-          ],
-        );
+      test(
+        'R3-1208 a $status $codigo on the password change keeps the session',
+        () async {
+          final motivos = <MotivoCierre>[];
+          final api = _cliente(
+            (_) async => _json(status, {'code': codigo, 'message': 'x'}),
+            interceptores: [
+              SesionExpiradaInterceptor((m) async => motivos.add(m)),
+            ],
+          );
 
-        final e = await _capturar(
-            () => api.put<Object?>('/api/users/password', parser: _identidad));
+          final e = await _capturar(
+            () => api.put<Object?>('/api/users/password', parser: _identidad),
+          );
 
-        expect(e.status, status);
-        expect(motivos, isEmpty);
-      });
+          expect(e.status, status);
+          expect(motivos, isEmpty);
+        },
+      );
     }
 
     for (final (nombre, error) in <(String, Object)>[
@@ -356,34 +401,49 @@ void main() {
       ('ArgumentError', ArgumentError('x')),
       ('RangeError', RangeError('x')),
     ]) {
-      test('R3-006 parser throwing $nombre becomes RESPUESTA_INVALIDA',
-          () async {
-        final registro = RegistroFalso();
-        final api = _cliente((_) async => _json(200, {'data': 1}),
-            registro: registro);
+      test(
+        'R3-006 parser throwing $nombre becomes RESPUESTA_INVALIDA',
+        () async {
+          final registro = RegistroFalso();
+          final api = _cliente(
+            (_) async => _json(200, {'data': 1}),
+            registro: registro,
+          );
 
-        final e = await _capturar(() => api.get<Object?>('/api/x',
-            parser: (_) => throw error, mensajeError: 'Fallo'));
+          final e = await _capturar(
+            () => api.get<Object?>(
+              '/api/x',
+              parser: (_) => throw error,
+              mensajeError: 'Fallo',
+            ),
+          );
 
-        expect(e.code, ApiException.codigoRespuestaInvalida);
-        expect(e.message, 'Fallo');
-        expect(registro.registros, hasLength(1));
-      });
+          expect(e.code, ApiException.codigoRespuestaInvalida);
+          expect(e.message, 'Fallo');
+          expect(registro.registros, hasLength(1));
+        },
+      );
     }
 
     test('parser ApiException passes through untouched', () async {
       final api = _cliente((_) async => _json(200, {'data': 1}));
 
-      final e = await _capturar(() => api.get<Object?>('/api/x',
-          parser: (_) => throw const ApiException(status: 7, message: 'm')));
+      final e = await _capturar(
+        () => api.get<Object?>(
+          '/api/x',
+          parser: (_) => throw const ApiException(status: 7, message: 'm'),
+        ),
+      );
 
       expect(e.status, 7);
     });
 
     test('R4-007 transport failure is reported', () async {
       final registro = RegistroFalso();
-      final api = _cliente((_) async => throw http.ClientException('x'),
-          registro: registro);
+      final api = _cliente(
+        (_) async => throw http.ClientException('x'),
+        registro: registro,
+      );
 
       await _capturar(() => api.get<Object?>('/api/x', parser: _identidad));
 
@@ -395,13 +455,10 @@ void main() {
     test('S3.7 Bearer header present with token, absent without', () async {
       final headers = <Map<String, String>>[];
       String? token = 'abc';
-      final api = _cliente(
-        (r) async {
-          headers.add(r.headers);
-          return _json(200, {'message': '', 'data': null});
-        },
-        interceptores: [AuthInterceptor(() => token)],
-      );
+      final api = _cliente((r) async {
+        headers.add(r.headers);
+        return _json(200, {'message': '', 'data': null});
+      }, interceptores: [AuthInterceptor(() => token)]);
 
       await api.get<Object?>('/api/x', parser: _identidad);
       token = null;
@@ -419,7 +476,8 @@ void main() {
       );
 
       final e = await _capturar(
-          () => api.get<Object?>('/api/users/profile', parser: _identidad));
+        () => api.get<Object?>('/api/users/profile', parser: _identidad),
+      );
 
       expect(e.status, 401);
       expect(motivos, [MotivoCierre.sesionExpirada]);
@@ -432,8 +490,10 @@ void main() {
         interceptores: [SesionExpiradaInterceptor((m) async => motivos.add(m))],
       );
 
-      final e = await _capturar(() => api.post<Object?>('/api/auth/login',
-          body: {}, parser: _identidad));
+      final e = await _capturar(
+        () =>
+            api.post<Object?>('/api/auth/login', body: {}, parser: _identidad),
+      );
 
       expect(e.status, 401);
       expect(motivos, isEmpty);
@@ -442,13 +502,14 @@ void main() {
     test('CUENTA_SUSPENDIDA expires with cuentaSuspendida', () async {
       final motivos = <MotivoCierre>[];
       final api = _cliente(
-        (_) async => _json(
-            403, {'message': 'Suspendida', 'code': 'CUENTA_SUSPENDIDA'}),
+        (_) async =>
+            _json(403, {'message': 'Suspendida', 'code': 'CUENTA_SUSPENDIDA'}),
         interceptores: [SesionExpiradaInterceptor((m) async => motivos.add(m))],
       );
 
       await _capturar(
-          () => api.get<Object?>('/api/users/profile', parser: _identidad));
+        () => api.get<Object?>('/api/users/profile', parser: _identidad),
+      );
 
       expect(motivos, [MotivoCierre.cuentaSuspendida]);
     });
@@ -461,7 +522,8 @@ void main() {
       );
 
       await _capturar(
-          () => api.get<Object?>('/api/users/profile', parser: _identidad));
+        () => api.get<Object?>('/api/users/profile', parser: _identidad),
+      );
 
       expect(motivos, isEmpty);
     });

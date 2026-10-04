@@ -33,47 +33,60 @@ void main() {
   tearDown(() => sesion.reiniciar());
 
   group('iniciarSesion', () {
-    test('S8.1 success posts credentials, starts the session, returns the user',
-        () async {
-      final r = repo(200, {
-        'message': 'ok',
-        'data': {'token': 'tkn', 'user': _usuarioJson},
-      });
+    test(
+      'S8.1 success posts credentials, starts the session, returns the user',
+      () async {
+        final r = repo(200, {
+          'message': 'ok',
+          'data': {'token': 'tkn', 'user': _usuarioJson},
+        });
 
-      final user = await r.iniciarSesion('ana@test.com', 'Secreta1');
+        final user = await r.iniciarSesion('ana@test.com', 'Secreta1');
 
-      expect(visto.method, 'POST');
-      expect(visto.url.toString(), 'http://api.test/api/auth/login');
-      expect(jsonDecode(visto.body),
-          {'email': 'ana@test.com', 'password': 'Secreta1'});
-      expect(user.id, 7);
-      expect(sesion.token, 'tkn');
-      expect(sesion.usuario?.email, 'ana@test.com');
-    });
+        expect(visto.method, 'POST');
+        expect(visto.url.toString(), 'http://api.test/api/auth/login');
+        expect(jsonDecode(visto.body), {
+          'email': 'ana@test.com',
+          'password': 'Secreta1',
+        });
+        expect(user.id, 7);
+        expect(sesion.token, 'tkn');
+        expect(sesion.usuario?.email, 'ana@test.com');
+      },
+    );
 
-    test('S8.2 401 surfaces body.message and keeps the session closed',
-        () async {
-      final r = repo(401, {
-        'message': 'Credenciales inválidas',
-        'code': 'CREDENCIALES_INVALIDAS',
-      });
+    test(
+      'S8.2 401 surfaces body.message and keeps the session closed',
+      () async {
+        final r = repo(401, {
+          'message': 'Credenciales inválidas',
+          'code': 'CREDENCIALES_INVALIDAS',
+        });
 
-      await expectLater(
-        r.iniciarSesion('a@b.c', 'x'),
-        throwsA(isA<ApiException>()
-            .having((e) => e.message, 'message', 'Credenciales inválidas')
-            .having((e) => e.code, 'code', 'CREDENCIALES_INVALIDAS')),
-      );
-      expect(sesion.token, isNull);
-    });
+        await expectLater(
+          r.iniciarSesion('a@b.c', 'x'),
+          throwsA(
+            isA<ApiException>()
+                .having((e) => e.message, 'message', 'Credenciales inválidas')
+                .having((e) => e.code, 'code', 'CREDENCIALES_INVALIDAS'),
+          ),
+        );
+        expect(sesion.token, isNull);
+      },
+    );
 
     test('error without message falls back to the Sprint 1 text', () async {
       final r = repo(500, {});
 
       await expectLater(
         r.iniciarSesion('a@b.c', 'x'),
-        throwsA(isA<ApiException>()
-            .having((e) => e.message, 'message', 'Error al iniciar sesión')),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.message,
+            'message',
+            'Error al iniciar sesión',
+          ),
+        ),
       );
     });
 
@@ -83,29 +96,36 @@ void main() {
       ('missing user', {'token': 'tkn'}),
       ('null data', null),
     ]) {
-      test('R3-004 2xx with $nombre is rejected without starting a session',
-          () async {
-        final r = repo(200, {'message': 'ok', 'data': data});
+      test(
+        'R3-004 2xx with $nombre is rejected without starting a session',
+        () async {
+          final r = repo(200, {'message': 'ok', 'data': data});
 
-        await expectLater(
-          r.iniciarSesion('a@b.c', 'x'),
-          throwsA(isA<ApiException>()
-              .having((e) => e.message, 'message', 'Error al iniciar sesión')),
-        );
-        expect(sesion.token, isNull);
-      });
+          await expectLater(
+            r.iniciarSesion('a@b.c', 'x'),
+            throwsA(
+              isA<ApiException>().having(
+                (e) => e.message,
+                'message',
+                'Error al iniciar sesión',
+              ),
+            ),
+          );
+          expect(sesion.token, isNull);
+        },
+      );
     }
   });
 
   group('registrar', () {
     Future<Object?> registrar(AuthRepositoryHttp r) => r.registrar(
-          nombre: 'Ana',
-          apellido: 'Paz',
-          email: 'ana@test.com',
-          password: 'Secreta1',
-          telefono: '912345678',
-          distrito: 'Miraflores',
-        );
+      nombre: 'Ana',
+      apellido: 'Paz',
+      email: 'ana@test.com',
+      password: 'Secreta1',
+      telefono: '912345678',
+      distrito: 'Miraflores',
+    );
 
     test('S8.3 success posts the six fields and returns the user', () async {
       final r = repo(201, {'message': 'creado', 'data': _usuarioJson});
@@ -137,8 +157,13 @@ void main() {
 
       await expectLater(
         registrar(r),
-        throwsA(isA<ApiException>()
-            .having((e) => e.message, 'message', 'Error al registrar usuario')),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.message,
+            'message',
+            'Error al registrar usuario',
+          ),
+        ),
       );
     });
 
@@ -150,41 +175,58 @@ void main() {
 
       await expectLater(
         registrar(r),
-        throwsA(isA<ApiException>().having(
-            (e) => e.message, 'message', 'El email ya está registrado')),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.message,
+            'message',
+            'El email ya está registrado',
+          ),
+        ),
       );
     });
 
     test('error without message falls back to the Sprint 1 text', () async {
       final api = apiClientPrueba(
-          (_) async => http.Response('<html>', 500), sesion);
+        (_) async => http.Response('<html>', 500),
+        sesion,
+      );
 
       await expectLater(
         registrar(AuthRepositoryHttp(api, sesion)),
-        throwsA(isA<ApiException>().having(
-            (e) => e.message, 'message', 'Error al registrar usuario')),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.message,
+            'message',
+            'Error al registrar usuario',
+          ),
+        ),
       );
     });
   });
 
   test('S8.5 network failure maps to sinConexion', () async {
-    final api =
-        apiClientPrueba((_) async => throw http.ClientException('x'), sesion);
+    final api = apiClientPrueba(
+      (_) async => throw http.ClientException('x'),
+      sesion,
+    );
 
     await expectLater(
       AuthRepositoryHttp(api, sesion).iniciarSesion('a', 'b'),
-      throwsA(isA<ApiException>()
-          .having((e) => e.esSinConexion, 'sinConexion', true)),
+      throwsA(
+        isA<ApiException>().having((e) => e.esSinConexion, 'sinConexion', true),
+      ),
     );
   });
 
-  test('solicitarRecuperacion posts the email to /api/auth/recuperar',
-      () async {
-    final r = repo(200, {'message': 'Si el correo existe...'});
+  test(
+    'solicitarRecuperacion posts the email to /api/auth/recuperar',
+    () async {
+      final r = repo(200, {'message': 'Si el correo existe...'});
 
-    await r.solicitarRecuperacion('ana@test.com');
+      await r.solicitarRecuperacion('ana@test.com');
 
-    expect(visto.url.path, '/api/auth/recuperar');
-    expect(jsonDecode(visto.body), {'email': 'ana@test.com'});
-  });
+      expect(visto.url.path, '/api/auth/recuperar');
+      expect(jsonDecode(visto.body), {'email': 'ana@test.com'});
+    },
+  );
 }

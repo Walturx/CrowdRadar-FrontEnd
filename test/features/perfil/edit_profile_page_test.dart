@@ -50,9 +50,9 @@ void main() {
   testWidgets('a failed save shows the error message in a snackbar', (
     tester,
   ) async {
-    when(() => repo.actualizar(any())).thenThrow(
-      const ApiException(status: 422, message: 'Teléfono inválido'),
-    );
+    when(
+      () => repo.actualizar(any()),
+    ).thenThrow(const ApiException(status: 422, message: 'Teléfono inválido'));
     await abrir(tester);
 
     await guardar(tester);

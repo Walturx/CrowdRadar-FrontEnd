@@ -44,9 +44,8 @@ class RegistroDispositivo {
   /// Registers the token once: a call while another runs shares it, and a
   /// token the backend already has is not sent again. A DELETE that failed
   /// earlier is retried first.
-  Future<void> registrar() => _registrando ??= _registrar().whenComplete(
-    () => _registrando = null,
-  );
+  Future<void> registrar() =>
+      _registrando ??= _registrar().whenComplete(() => _registrando = null);
 
   Future<void> _registrar() async {
     try {

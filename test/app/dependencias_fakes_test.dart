@@ -51,22 +51,35 @@ void main() {
         SessionService.instance,
         esRelease: true,
       ),
-      throwsA(isA<StateError>().having(
-          (e) => e.message, 'message', contains('USAR_FAKES'))),
+      throwsA(
+        isA<StateError>().having(
+          (e) => e.message,
+          'message',
+          contains('USAR_FAKES'),
+        ),
+      ),
     );
   });
 
-  test('R1-101 release without fakes and non-release with fakes still work',
-      () {
-    expect(
-      Dependencias.crear(const Entorno(), SessionService.instance,
-          esRelease: true).authRepository,
-      isA<AuthRepositoryHttp>(),
-    );
-    expect(
-      Dependencias.crear(const Entorno(usarFakes: true),
-          SessionService.instance, esRelease: false).authRepository,
-      isA<AuthRepositoryFake>(),
-    );
-  });
+  test(
+    'R1-101 release without fakes and non-release with fakes still work',
+    () {
+      expect(
+        Dependencias.crear(
+          const Entorno(),
+          SessionService.instance,
+          esRelease: true,
+        ).authRepository,
+        isA<AuthRepositoryHttp>(),
+      );
+      expect(
+        Dependencias.crear(
+          const Entorno(usarFakes: true),
+          SessionService.instance,
+          esRelease: false,
+        ).authRepository,
+        isA<AuthRepositoryFake>(),
+      );
+    },
+  );
 }

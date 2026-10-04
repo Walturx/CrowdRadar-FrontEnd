@@ -19,11 +19,13 @@ class EditarPerfilCubit extends Cubit<EditarPerfilState> {
     try {
       emit(EditarPerfilGuardado(await _repositorio.actualizar(cambios)));
     } catch (e) {
-      emit(EditarPerfilFallido(
-        mensajeDeError(e),
-        codigo: codigoDeError(e),
-        esSinConexion: esErrorSinConexion(e),
-      ));
+      emit(
+        EditarPerfilFallido(
+          mensajeDeError(e),
+          codigo: codigoDeError(e),
+          esSinConexion: esErrorSinConexion(e),
+        ),
+      );
     } finally {
       _enVuelo = false;
     }

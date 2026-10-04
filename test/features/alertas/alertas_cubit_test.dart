@@ -24,37 +24,43 @@ Alerta _alerta(int id, {bool leida = false}) => Alerta(
   leida: leida,
 );
 
-PaginaAlertas _pagina(List<Alerta> items, int noLeidas, {String mensaje = ''}) =>
-    PaginaAlertas(
-      pagina: Pagina(
-        items: items,
-        page: 1,
-        size: 20,
-        total: items.length,
-        totalPaginas: 1,
-      ),
-      noLeidas: noLeidas,
-      mensaje: mensaje,
-    );
+PaginaAlertas _pagina(
+  List<Alerta> items,
+  int noLeidas, {
+  String mensaje = '',
+}) => PaginaAlertas(
+  pagina: Pagina(
+    items: items,
+    page: 1,
+    size: 20,
+    total: items.length,
+    totalPaginas: 1,
+  ),
+  noLeidas: noLeidas,
+  mensaje: mensaje,
+);
 
 AlertasCargado _cargado(AlertasCubit c) => c.state as AlertasCargado;
 
 void main() {
   group('cargar', () {
-    test('emits Cargando then Cargado with the alerts and unread count', () async {
-      final cubit = AlertasCubit(AlertaRepositoryFake());
-      final estados = <AlertasState>[];
-      cubit.stream.listen(estados.add);
+    test(
+      'emits Cargando then Cargado with the alerts and unread count',
+      () async {
+        final cubit = AlertasCubit(AlertaRepositoryFake());
+        final estados = <AlertasState>[];
+        cubit.stream.listen(estados.add);
 
-      await cubit.cargar();
-      await pumpEventQueue();
+        await cubit.cargar();
+        await pumpEventQueue();
 
-      expect(estados.first, const AlertasCargando());
-      expect(_cargado(cubit).alertas, hasLength(2));
-      expect(_cargado(cubit).noLeidas, 1);
-      expect(cubit.noLeidas, 1);
-      await cubit.close();
-    });
+        expect(estados.first, const AlertasCargando());
+        expect(_cargado(cubit).alertas, hasLength(2));
+        expect(_cargado(cubit).noLeidas, 1);
+        expect(cubit.noLeidas, 1);
+        await cubit.close();
+      },
+    );
 
     test('no alerts carries the server message and zero unread', () async {
       final cubit = AlertasCubit(AlertaRepositoryFake(sembrar: false));
@@ -70,7 +76,8 @@ void main() {
     test('unread alerts come first', () async {
       final repo = _MockRepo();
       when(() => repo.listar()).thenAnswer(
-        (_) async => _pagina([_alerta(3, leida: true), _alerta(2), _alerta(1)], 2),
+        (_) async =>
+            _pagina([_alerta(3, leida: true), _alerta(2), _alerta(1)], 2),
       );
       final cubit = AlertasCubit(repo);
 
@@ -80,23 +87,26 @@ void main() {
       await cubit.close();
     });
 
-    test('failure emits Error with code and offline flag; retry loads', () async {
-      final repo = _MockRepo();
-      var n = 0;
-      when(() => repo.listar()).thenAnswer((_) async {
-        if (n++ == 0) throw const ApiException.sinConexion();
-        return _pagina([_alerta(1)], 1);
-      });
-      final cubit = AlertasCubit(repo);
+    test(
+      'failure emits Error with code and offline flag; retry loads',
+      () async {
+        final repo = _MockRepo();
+        var n = 0;
+        when(() => repo.listar()).thenAnswer((_) async {
+          if (n++ == 0) throw const ApiException.sinConexion();
+          return _pagina([_alerta(1)], 1);
+        });
+        final cubit = AlertasCubit(repo);
 
-      await cubit.cargar();
-      expect((cubit.state as AlertasError).esSinConexion, isTrue);
-      expect(cubit.noLeidas, 0);
+        await cubit.cargar();
+        expect((cubit.state as AlertasError).esSinConexion, isTrue);
+        expect(cubit.noLeidas, 0);
 
-      await cubit.cargar();
-      expect(_cargado(cubit).alertas, hasLength(1));
-      await cubit.close();
-    });
+        await cubit.cargar();
+        expect(_cargado(cubit).alertas, hasLength(1));
+        await cubit.close();
+      },
+    );
 
     test('a second load while one is in flight is ignored', () async {
       final repo = _MockRepo();
@@ -160,7 +170,9 @@ void main() {
 
     test('a failure restores the alert as unread and reports it', () async {
       final repo = _MockRepo();
-      when(() => repo.listar()).thenAnswer((_) async => _pagina([_alerta(1)], 1));
+      when(
+        () => repo.listar(),
+      ).thenAnswer((_) async => _pagina([_alerta(1)], 1));
       when(
         () => repo.marcarLeida(1),
       ).thenThrow(const ApiException(status: 500, message: 'Servidor caído'));
@@ -177,7 +189,9 @@ void main() {
 
     test('a 404 keeps it as read without an error', () async {
       final repo = _MockRepo();
-      when(() => repo.listar()).thenAnswer((_) async => _pagina([_alerta(1)], 1));
+      when(
+        () => repo.listar(),
+      ).thenAnswer((_) async => _pagina([_alerta(1)], 1));
       when(() => repo.marcarLeida(1)).thenThrow(
         const ApiException(
           status: 404,
@@ -261,30 +275,36 @@ void main() {
       lenta.complete(_pagina([_alerta(1), _alerta(2)], 2)); // server was stale
       await refresco;
 
-      expect(_cargado(cubit).alertas.firstWhere((a) => a.id == 1).leida, isTrue);
+      expect(
+        _cargado(cubit).alertas.firstWhere((a) => a.id == 1).leida,
+        isTrue,
+      );
       expect(cubit.noLeidas, 1);
       await cubit.close();
     });
 
-    test('a failed mark after the refresh leaves the count at the list', () async {
-      final repo = _MockRepo();
-      final marca = Completer<void>();
-      when(() => repo.listar()).thenAnswer(
-        (_) async => _pagina([_alerta(1), _alerta(2)], 2),
-      );
-      when(() => repo.marcarLeida(1)).thenAnswer((_) => marca.future);
-      final cubit = AlertasCubit(repo);
-      await cubit.cargar();
+    test(
+      'a failed mark after the refresh leaves the count at the list',
+      () async {
+        final repo = _MockRepo();
+        final marca = Completer<void>();
+        when(
+          () => repo.listar(),
+        ).thenAnswer((_) async => _pagina([_alerta(1), _alerta(2)], 2));
+        when(() => repo.marcarLeida(1)).thenAnswer((_) => marca.future);
+        final cubit = AlertasCubit(repo);
+        await cubit.cargar();
 
-      final marcando = cubit.marcarLeida(1);
-      await cubit.refrescar();
-      marca.completeError(const ApiException.sinConexion());
-      await marcando;
+        final marcando = cubit.marcarLeida(1);
+        await cubit.refrescar();
+        marca.completeError(const ApiException.sinConexion());
+        await marcando;
 
-      final estado = _cargado(cubit);
-      expect(estado.noLeidas, estado.alertas.where((a) => !a.leida).length);
-      await cubit.close();
-    });
+        final estado = _cargado(cubit);
+        expect(estado.noLeidas, estado.alertas.where((a) => !a.leida).length);
+        await cubit.close();
+      },
+    );
 
     test('a failed refresh keeps a mark made while it ran', () async {
       final repo = _MockRepo();
@@ -304,7 +324,10 @@ void main() {
       lenta.completeError(const ApiException.sinConexion());
       await refresco;
 
-      expect(_cargado(cubit).alertas.firstWhere((a) => a.id == 1).leida, isTrue);
+      expect(
+        _cargado(cubit).alertas.firstWhere((a) => a.id == 1).leida,
+        isTrue,
+      );
       expect(cubit.noLeidas, 1);
       await cubit.close();
     });
@@ -312,9 +335,9 @@ void main() {
     test('marking the same alert twice at once sends one request', () async {
       final repo = _MockRepo();
       final marca = Completer<void>();
-      when(() => repo.listar()).thenAnswer(
-        (_) async => _pagina([_alerta(1), _alerta(2)], 2),
-      );
+      when(
+        () => repo.listar(),
+      ).thenAnswer((_) async => _pagina([_alerta(1), _alerta(2)], 2));
       when(() => repo.marcarLeida(1)).thenAnswer((_) => marca.future);
       final cubit = AlertasCubit(repo);
       await cubit.cargar();
@@ -398,21 +421,24 @@ void main() {
       await cubit.close();
     });
 
-    test('a failed first load is retried on the next resume and flagged', () async {
-      falla = true;
-      final cubit = crear();
-      await cubit.cargar();
-      expect(cubit.errorCarga, isTrue);
-      expect(cubit.noLeidas, 0);
+    test(
+      'a failed first load is retried on the next resume and flagged',
+      () async {
+        falla = true;
+        final cubit = crear();
+        await cubit.cargar();
+        expect(cubit.errorCarga, isTrue);
+        expect(cubit.noLeidas, 0);
 
-      falla = false;
-      await cubit.alVolverAPrimerPlano();
+        falla = false;
+        await cubit.alVolverAPrimerPlano();
 
-      expect(llamadas, 2);
-      expect(cubit.errorCarga, isFalse);
-      expect(cubit.noLeidas, 1);
-      await cubit.close();
-    });
+        expect(llamadas, 2);
+        expect(cubit.errorCarga, isFalse);
+        expect(cubit.noLeidas, 1);
+        await cubit.close();
+      },
+    );
   });
 
   test('against a failing fake the state is Error', () async {

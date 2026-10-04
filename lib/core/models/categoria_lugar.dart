@@ -1,1 +1,8 @@
-enum CategoriaLugar { parque, centroComercial, mercado, transporte, plaza, playa }
+enum CategoriaLugar {
+  parque,
+  centroComercial,
+  mercado,
+  transporte,
+  plaza,
+  playa,
+}

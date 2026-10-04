@@ -16,17 +16,17 @@ void main() {
   setUp(() => repo = _AuthRepoMock());
 
   Future<void> abrir(WidgetTester tester) => tester.pumpWidget(
-        RepositoryProvider<AuthRepository>.value(
-          value: repo,
-          child: MaterialApp.router(
-            routerConfig: enrutadorDe(
-              ruta: '/recuperar',
-              inicial: '/recuperar',
-              pantalla: const RecuperarPage(),
-            ),
-          ),
+    RepositoryProvider<AuthRepository>.value(
+      value: repo,
+      child: MaterialApp.router(
+        routerConfig: enrutadorDe(
+          ruta: '/recuperar',
+          inicial: '/recuperar',
+          pantalla: const RecuperarPage(),
         ),
-      );
+      ),
+    ),
+  );
 
   Future<void> enviar(WidgetTester tester, String correo) async {
     await tester.enterText(find.byType(TextFormField), correo);
@@ -40,14 +40,18 @@ void main() {
 
     expect(find.byType(TextFormField), findsOneWidget);
     expect(find.text('Correo electrónico'), findsOneWidget);
-    expect(find.widgetWithText(ElevatedButton, 'Enviar enlace'), findsOneWidget);
+    expect(
+      find.widgetWithText(ElevatedButton, 'Enviar enlace'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('HU 2.1 c2 shows the neutral message and hides the form', (
     tester,
   ) async {
-    when(() => repo.solicitarRecuperacion('ana@test.com'))
-        .thenAnswer((_) async {});
+    when(
+      () => repo.solicitarRecuperacion('ana@test.com'),
+    ).thenAnswer((_) async {});
     await abrir(tester);
 
     await enviar(tester, 'ana@test.com');
@@ -78,7 +82,9 @@ void main() {
     expect(find.text('Ingresá un correo válido'), findsOneWidget);
   });
 
-  testWidgets('"Volver a iniciar sesión" goes back to the login', (tester) async {
+  testWidgets('"Volver a iniciar sesión" goes back to the login', (
+    tester,
+  ) async {
     when(() => repo.solicitarRecuperacion(any())).thenAnswer((_) async {});
     await tester.pumpWidget(
       RepositoryProvider<AuthRepository>.value(

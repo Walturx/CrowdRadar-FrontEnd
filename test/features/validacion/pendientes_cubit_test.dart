@@ -162,6 +162,44 @@ void main() {
   });
 
   group('votar', () {
+    test('cargar during a vote keeps votando and ultimoVoto and does not '
+        'resurrect the report', () async {
+      final c = await cargado([1, 2]);
+      final espera = Completer<ResultadoVoto>();
+      when(
+        () => repo.validar(1, TipoAccionValidacion.confirmar),
+      ).thenAnswer((_) => espera.future);
+      final f = c.votar(_r(1), TipoAccionValidacion.confirmar);
+
+      stubPendientes([1, 2, 3]);
+      await c.cargar();
+
+      final s = c.state as PendientesCargado;
+      expect([for (final r in s.reportes) r.id], [2, 3]);
+      expect(s.votando, {1});
+      espera.complete(_voto);
+      await f;
+      await c.cargar();
+      expect((c.state as PendientesCargado).ultimoVoto, isNotNull);
+    });
+
+    test('429 on a vote says to wait and keeps the report restored', () async {
+      final c = await cargado([1, 2]);
+      when(() => repo.validar(1, TipoAccionValidacion.confirmar)).thenThrow(
+        const ApiException(
+          status: 429,
+          message: 'x',
+          code: 'DEMASIADAS_SOLICITUDES',
+          reintentarEnSegundos: 120,
+        ),
+      );
+
+      await c.votar(_r(1), TipoAccionValidacion.confirmar);
+
+      final s = c.state as PendientesCargado;
+      expect([for (final r in s.reportes) r.id], [1, 2]);
+      expect(s.aviso, 'Demasiadas acciones seguidas, probá en 2 minutos');
+    });
     test(
       'removes the report at once, then records the vote and karma',
       () async {

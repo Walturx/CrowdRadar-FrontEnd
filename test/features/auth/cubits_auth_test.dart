@@ -24,8 +24,9 @@ void main() {
     blocTest<LoginCubit, LoginState>(
       'S8.1 success -> Enviando, Exitoso(usuario)',
       build: () {
-        when(() => repo.iniciarSesion('a@b.c', 'x'))
-            .thenAnswer((_) async => _user);
+        when(
+          () => repo.iniciarSesion('a@b.c', 'x'),
+        ).thenAnswer((_) async => _user);
         return LoginCubit(repo);
       },
       act: (c) => c.iniciarSesion('a@b.c', 'x'),
@@ -36,40 +37,48 @@ void main() {
       'S8.2 ApiException -> Fallido(message, code)',
       build: () {
         when(() => repo.iniciarSesion(any(), any())).thenThrow(
-            const ApiException(
-                status: 401,
-                message: 'Credenciales inválidas',
-                code: 'CREDENCIALES_INVALIDAS'));
+          const ApiException(
+            status: 401,
+            message: 'Credenciales inválidas',
+            code: 'CREDENCIALES_INVALIDAS',
+          ),
+        );
         return LoginCubit(repo);
       },
       act: (c) => c.iniciarSesion('a@b.c', 'x'),
       expect: () => [
         const LoginEnviando(),
-        const LoginFallido('Correo o contraseña incorrectos',
-            codigo: 'CREDENCIALES_INVALIDAS'),
+        const LoginFallido(
+          'Correo o contraseña incorrectos',
+          codigo: 'CREDENCIALES_INVALIDAS',
+        ),
       ],
     );
 
     blocTest<LoginCubit, LoginState>(
       'S8.5 network failure -> Fallido(sinConexion)',
       build: () {
-        when(() => repo.iniciarSesion(any(), any()))
-            .thenThrow(const ApiException.sinConexion());
+        when(
+          () => repo.iniciarSesion(any(), any()),
+        ).thenThrow(const ApiException.sinConexion());
         return LoginCubit(repo);
       },
       act: (c) => c.iniciarSesion('a@b.c', 'x'),
       expect: () => [
         const LoginEnviando(),
-        const LoginFallido('No se pudo conectar con el servidor',
-            esSinConexion: true),
+        const LoginFallido(
+          'No se pudo conectar con el servidor',
+          esSinConexion: true,
+        ),
       ],
     );
 
     blocTest<LoginCubit, LoginState>(
       'R4-101 unexpected error -> generic message, no toString leak',
       build: () {
-        when(() => repo.iniciarSesion(any(), any()))
-            .thenThrow(StateError('boom'));
+        when(
+          () => repo.iniciarSesion(any(), any()),
+        ).thenThrow(StateError('boom'));
         return LoginCubit(repo);
       },
       act: (c) => c.iniciarSesion('a@b.c', 'x'),
@@ -81,8 +90,9 @@ void main() {
   });
 
   test('R4-101 FormatException does not leak its text', () async {
-    when(() => repo.iniciarSesion(any(), any()))
-        .thenThrow(const FormatException('token=secreto'));
+    when(
+      () => repo.iniciarSesion(any(), any()),
+    ).thenThrow(const FormatException('token=secreto'));
     final c = LoginCubit(repo);
 
     await c.iniciarSesion('a', 'b');
@@ -95,22 +105,24 @@ void main() {
 
   group('RegistroCubit', () {
     Future<void> registrar(RegistroCubit c) => c.registrar(
-          nombre: 'Ana',
-          apellido: 'Paz',
-          email: 'a@b.c',
-          password: 'Secreta1',
-          telefono: '',
-          distrito: 'Lima',
-        );
+      nombre: 'Ana',
+      apellido: 'Paz',
+      email: 'a@b.c',
+      password: 'Secreta1',
+      telefono: '',
+      distrito: 'Lima',
+    );
 
-    When<Future<Usuario>> cuandoRegistra() => when(() => repo.registrar(
-          nombre: any(named: 'nombre'),
-          apellido: any(named: 'apellido'),
-          email: any(named: 'email'),
-          password: any(named: 'password'),
-          telefono: any(named: 'telefono'),
-          distrito: any(named: 'distrito'),
-        ));
+    When<Future<Usuario>> cuandoRegistra() => when(
+      () => repo.registrar(
+        nombre: any(named: 'nombre'),
+        apellido: any(named: 'apellido'),
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+        telefono: any(named: 'telefono'),
+        distrito: any(named: 'distrito'),
+      ),
+    );
 
     blocTest<RegistroCubit, RegistroState>(
       'S8.3 success -> Enviando, Exitoso',
@@ -125,8 +137,12 @@ void main() {
     blocTest<RegistroCubit, RegistroState>(
       'S8.3 409 -> Fallido(message) with empty field errors',
       build: () {
-        cuandoRegistra().thenThrow(const ApiException(
-            status: 409, message: 'El email ya está registrado'));
+        cuandoRegistra().thenThrow(
+          const ApiException(
+            status: 409,
+            message: 'El email ya está registrado',
+          ),
+        );
         return RegistroCubit(repo);
       },
       act: registrar,
@@ -139,18 +155,24 @@ void main() {
     blocTest<RegistroCubit, RegistroState>(
       '400 field errors map to erroresPorCampo',
       build: () {
-        cuandoRegistra().thenThrow(const ApiException(
-          status: 400,
-          message: 'Datos inválidos.',
-          errors: [ErrorCampo(campo: 'password', mensaje: 'Mínimo 8 caracteres')],
-        ));
+        cuandoRegistra().thenThrow(
+          const ApiException(
+            status: 400,
+            message: 'Datos inválidos.',
+            errors: [
+              ErrorCampo(campo: 'password', mensaje: 'Mínimo 8 caracteres'),
+            ],
+          ),
+        );
         return RegistroCubit(repo);
       },
       act: registrar,
       expect: () => [
         const RegistroEnviando(),
-        const RegistroFallido('Datos inválidos.',
-            erroresPorCampo: {'password': 'Mínimo 8 caracteres'}),
+        const RegistroFallido(
+          'Datos inválidos.',
+          erroresPorCampo: {'password': 'Mínimo 8 caracteres'},
+        ),
       ],
     );
 
@@ -174,8 +196,7 @@ void main() {
         return RegistroCubit(repo);
       },
       act: registrar,
-      verify: (c) =>
-          expect((c.state as RegistroFallido).esSinConexion, isTrue),
+      verify: (c) => expect((c.state as RegistroFallido).esSinConexion, isTrue),
     );
   });
 
@@ -200,8 +221,9 @@ void main() {
   blocTest<LoginCubit, LoginState>(
     'R3-F02 storage failure on login surfaces the storage message',
     build: () {
-      when(() => repo.iniciarSesion(any(), any()))
-          .thenThrow(ErrorAlmacenamientoSesion(StateError('keystore')));
+      when(
+        () => repo.iniciarSesion(any(), any()),
+      ).thenThrow(ErrorAlmacenamientoSesion(StateError('keystore')));
       return LoginCubit(repo);
     },
     act: (c) => c.iniciarSesion('a@b.c', 'x'),
@@ -215,8 +237,9 @@ void main() {
   group('R3-109 a second submit while a request is in flight is ignored', () {
     test('LoginCubit sends one request for a double submit', () async {
       final pendiente = Completer<Usuario>();
-      when(() => repo.iniciarSesion(any(), any()))
-          .thenAnswer((_) => pendiente.future);
+      when(
+        () => repo.iniciarSesion(any(), any()),
+      ).thenAnswer((_) => pendiente.future);
       final cubit = LoginCubit(repo);
 
       final primero = cubit.iniciarSesion('a@b.c', 'x');
@@ -229,8 +252,9 @@ void main() {
     });
 
     test('LoginCubit accepts a new submit after a failure', () async {
-      when(() => repo.iniciarSesion(any(), any()))
-          .thenThrow(const ApiException.sinConexion());
+      when(
+        () => repo.iniciarSesion(any(), any()),
+      ).thenThrow(const ApiException.sinConexion());
       final cubit = LoginCubit(repo);
 
       await cubit.iniciarSesion('a@b.c', 'x');
@@ -253,13 +277,13 @@ void main() {
       ).thenAnswer((_) => pendiente.future);
       final cubit = RegistroCubit(repo);
       Future<void> enviar() => cubit.registrar(
-            nombre: 'a',
-            apellido: 'b',
-            email: 'c@d.e',
-            password: 'Secreta12',
-            telefono: '999999999',
-            distrito: 'x',
-          );
+        nombre: 'a',
+        apellido: 'b',
+        email: 'c@d.e',
+        password: 'Secreta12',
+        telefono: '999999999',
+        distrito: 'x',
+      );
 
       final primero = enviar();
       final segundo = enviar();

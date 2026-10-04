@@ -26,7 +26,9 @@ class AuthRepositoryHttp implements AuthRepository {
         final data = aMapa(d);
         final token = data['token'];
         final user = data['user'];
-        if (token is! String || token.isEmpty || user is! Map<String, dynamic>) {
+        if (token is! String ||
+            token.isEmpty ||
+            user is! Map<String, dynamic>) {
           throw const FormatException('Login response lacks token or user');
         }
         return (token: token, user: Usuario.fromJson(user));

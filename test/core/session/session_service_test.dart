@@ -94,18 +94,21 @@ void main() {
       expect((eventos.single as SesionIniciada).usuario, usuarioPrueba);
     });
 
-    test('S4.4 cerrar clears storage and emits SesionCerrada(motivo)', () async {
-      await sesion.iniciar(tokenVigente, usuarioPrueba);
-      final eventos = <EventoSesion>[];
-      sesion.eventos.listen(eventos.add);
+    test(
+      'S4.4 cerrar clears storage and emits SesionCerrada(motivo)',
+      () async {
+        await sesion.iniciar(tokenVigente, usuarioPrueba);
+        final eventos = <EventoSesion>[];
+        sesion.eventos.listen(eventos.add);
 
-      await sesion.cerrar(MotivoCierre.usuario);
-      await Future<void>.delayed(Duration.zero);
+        await sesion.cerrar(MotivoCierre.usuario);
+        await Future<void>.delayed(Duration.zero);
 
-      expect(sesion.token, isNull);
-      expect(await storage.leerToken(), isNull);
-      expect((eventos.single as SesionCerrada).motivo, MotivoCierre.usuario);
-    });
+        expect(sesion.token, isNull);
+        expect(await storage.leerToken(), isNull);
+        expect((eventos.single as SesionCerrada).motivo, MotivoCierre.usuario);
+      },
+    );
 
     test('S4.4 expirar behaves like cerrar and only fires once', () async {
       await sesion.iniciar(tokenVigente, usuarioPrueba);
@@ -117,8 +120,10 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(eventos, hasLength(1));
-      expect((eventos.single as SesionCerrada).motivo,
-          MotivoCierre.sesionExpirada);
+      expect(
+        (eventos.single as SesionCerrada).motivo,
+        MotivoCierre.sesionExpirada,
+      );
     });
 
     test('actualizarUsuario replaces the user and persists it', () async {
@@ -132,25 +137,28 @@ void main() {
     });
   });
 
-
   group('restaurar (review fixes)', () {
     test('R3-008 restored ADMIN session yields esAdmin', () async {
       await storage.guardar(tokenVigente, adminPrueba);
 
       await sesion.restaurar();
 
-      expect(SesionCubit(sesion).state,
-          const SesionAutenticada(usuario: adminPrueba, esAdmin: true));
+      expect(
+        SesionCubit(sesion).state,
+        const SesionAutenticada(usuario: adminPrueba, esAdmin: true),
+      );
     });
 
     test('R3-007 slow storage times out and means no session', () async {
       final registro = RegistroFalso();
       final lento = StorageLento();
       await lento.guardar(tokenVigente, usuarioPrueba);
-      sesion.configurar(lento,
-          reloj: () => ahora,
-          registro: registro,
-          timeoutRestaurar: const Duration(milliseconds: 20));
+      sesion.configurar(
+        lento,
+        reloj: () => ahora,
+        registro: registro,
+        timeoutRestaurar: const Duration(milliseconds: 20),
+      );
 
       await sesion.restaurar();
 
@@ -158,29 +166,37 @@ void main() {
       expect(registro.registros, hasLength(1));
     });
 
-    test('R3-F01 a late storage result after the timeout is discarded',
-        () async {
-      final lento = StorageLento();
-      await lento.guardar(tokenVigente, usuarioPrueba);
-      sesion.configurar(lento,
+    test(
+      'R3-F01 a late storage result after the timeout is discarded',
+      () async {
+        final lento = StorageLento();
+        await lento.guardar(tokenVigente, usuarioPrueba);
+        sesion.configurar(
+          lento,
           reloj: () => ahora,
           registro: RegistroFalso(),
-          timeoutRestaurar: const Duration(milliseconds: 20));
-      final eventos = <EventoSesion>[];
-      final sub = sesion.eventos.listen(eventos.add);
+          timeoutRestaurar: const Duration(milliseconds: 20),
+        );
+        final eventos = <EventoSesion>[];
+        final sub = sesion.eventos.listen(eventos.add);
 
-      await sesion.restaurar();
-      await Future<void>.delayed(const Duration(milliseconds: 500));
-      await sub.cancel();
+        await sesion.restaurar();
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        await sub.cancel();
 
-      expect(sesion.token, isNull);
-      expect(sesion.usuario, isNull);
-      expect(eventos, isEmpty);
-    });
+        expect(sesion.token, isNull);
+        expect(sesion.usuario, isNull);
+        expect(eventos, isEmpty);
+      },
+    );
 
     test('R4-004 storage failure on restore is reported', () async {
       final registro = RegistroFalso();
-      sesion.configurar(StorageQueFalla(), reloj: () => ahora, registro: registro);
+      sesion.configurar(
+        StorageQueFalla(),
+        reloj: () => ahora,
+        registro: registro,
+      );
 
       await sesion.restaurar();
 
@@ -189,23 +205,28 @@ void main() {
   });
 
   group('failing storage (review fixes)', () {
-    test('R3-002 cerrar clears memory and emits even if borrar throws',
-        () async {
-      await sesion.iniciar(tokenVigente, usuarioPrueba);
-      final registro = RegistroFalso();
-      sesion.configurar(StorageQueFallaAlEscribir(),
-          reloj: () => ahora, registro: registro);
-      final eventos = <EventoSesion>[];
-      sesion.eventos.listen(eventos.add);
+    test(
+      'R3-002 cerrar clears memory and emits even if borrar throws',
+      () async {
+        await sesion.iniciar(tokenVigente, usuarioPrueba);
+        final registro = RegistroFalso();
+        sesion.configurar(
+          StorageQueFallaAlEscribir(),
+          reloj: () => ahora,
+          registro: registro,
+        );
+        final eventos = <EventoSesion>[];
+        sesion.eventos.listen(eventos.add);
 
-      await sesion.cerrar(MotivoCierre.usuario);
-      await Future<void>.delayed(Duration.zero);
+        await sesion.cerrar(MotivoCierre.usuario);
+        await Future<void>.delayed(Duration.zero);
 
-      expect(sesion.token, isNull);
-      expect(sesion.usuario, isNull);
-      expect(eventos.single, isA<SesionCerrada>());
-      expect(registro.registros, hasLength(1));
-    });
+        expect(sesion.token, isNull);
+        expect(sesion.usuario, isNull);
+        expect(eventos.single, isA<SesionCerrada>());
+        expect(registro.registros, hasLength(1));
+      },
+    );
 
     test('R3-002 expirar emits even if borrar throws', () async {
       await sesion.iniciar(tokenVigente, usuarioPrueba);
@@ -220,20 +241,24 @@ void main() {
       expect(eventos.single, isA<SesionCerrada>());
     });
 
-    test('R3-003 iniciar persists first: on failure nothing is mutated',
-        () async {
-      sesion.configurar(StorageQueFallaAlEscribir(), reloj: () => ahora);
-      final eventos = <EventoSesion>[];
-      sesion.eventos.listen(eventos.add);
+    test(
+      'R3-003 iniciar persists first: on failure nothing is mutated',
+      () async {
+        sesion.configurar(StorageQueFallaAlEscribir(), reloj: () => ahora);
+        final eventos = <EventoSesion>[];
+        sesion.eventos.listen(eventos.add);
 
-      await expectLater(sesion.iniciar(tokenVigente, usuarioPrueba),
-          throwsA(isA<ErrorAlmacenamientoSesion>()));
-      await Future<void>.delayed(Duration.zero);
+        await expectLater(
+          sesion.iniciar(tokenVigente, usuarioPrueba),
+          throwsA(isA<ErrorAlmacenamientoSesion>()),
+        );
+        await Future<void>.delayed(Duration.zero);
 
-      expect(sesion.token, isNull);
-      expect(sesion.usuario, isNull);
-      expect(eventos, isEmpty);
-    });
+        expect(sesion.token, isNull);
+        expect(sesion.usuario, isNull);
+        expect(eventos, isEmpty);
+      },
+    );
 
     test('R3-008 SesionCubit sequence on failing storage', () async {
       await sesion.iniciar(tokenVigente, usuarioPrueba);
@@ -243,40 +268,47 @@ void main() {
       sesion.configurar(StorageQueFallaAlEscribir(), reloj: () => ahora);
 
       await cubit.cerrarSesion();
-      await expectLater(sesion.iniciar(tokenVigente, usuarioPrueba),
-          throwsA(isA<ErrorAlmacenamientoSesion>()));
+      await expectLater(
+        sesion.iniciar(tokenVigente, usuarioPrueba),
+        throwsA(isA<ErrorAlmacenamientoSesion>()),
+      );
       await Future<void>.delayed(Duration.zero);
 
-      expect(estados,
-          [const SesionNoAutenticada(motivo: MotivoCierre.usuario)]);
+      expect(estados, [
+        const SesionNoAutenticada(motivo: MotivoCierre.usuario),
+      ]);
       await cubit.close();
     });
   });
 
   group('wiring', () {
-    test('S3.3 401 through ApiClient expires the real SessionService', () async {
-      await sesion.iniciar(tokenVigente, usuarioPrueba);
-      final eventos = <EventoSesion>[];
-      sesion.eventos.listen(eventos.add);
-      String? authVisto;
-      final api = ApiClient(
-        MockClient((r) async {
-          authVisto = r.headers['Authorization'];
-          return http.Response('{"message":"x"}', 401);
-        }),
-        const Entorno(),
-        interceptores: interceptoresDeSesion(sesion),
-      );
+    test(
+      'S3.3 401 through ApiClient expires the real SessionService',
+      () async {
+        await sesion.iniciar(tokenVigente, usuarioPrueba);
+        final eventos = <EventoSesion>[];
+        sesion.eventos.listen(eventos.add);
+        String? authVisto;
+        final api = ApiClient(
+          MockClient((r) async {
+            authVisto = r.headers['Authorization'];
+            return http.Response('{"message":"x"}', 401);
+          }),
+          const Entorno(),
+          interceptores: interceptoresDeSesion(sesion),
+        );
 
-      await expectLater(
+        await expectLater(
           api.get<Object?>('/api/users/profile', parser: (d) => d),
-          throwsA(anything));
-      await Future<void>.delayed(Duration.zero);
+          throwsA(anything),
+        );
+        await Future<void>.delayed(Duration.zero);
 
-      expect(authVisto, 'Bearer $tokenVigente');
-      expect(sesion.token, isNull);
-      expect(eventos.whereType<SesionCerrada>(), hasLength(1));
-    });
+        expect(authVisto, 'Bearer $tokenVigente');
+        expect(sesion.token, isNull);
+        expect(eventos.whereType<SesionCerrada>(), hasLength(1));
+      },
+    );
 
     test('R3-008 concurrent 401s emit a single SesionCerrada', () async {
       await sesion.iniciar(tokenVigente, usuarioPrueba);
@@ -290,8 +322,9 @@ void main() {
 
       await Future.wait([
         for (var i = 0; i < 3; i++)
-          api.get<Object?>('/api/users/profile', parser: (d) => d).then(
-              (_) => null, onError: (_) => null),
+          api
+              .get<Object?>('/api/users/profile', parser: (d) => d)
+              .then((_) => null, onError: (_) => null),
       ]);
       await Future<void>.delayed(Duration.zero);
 
@@ -315,8 +348,7 @@ void main() {
     });
 
     test('corrupt user JSON reads as null', () async {
-      FlutterSecureStorage.setMockInitialValues(
-          {'crowdradar.usuario': '{no'});
+      FlutterSecureStorage.setMockInitialValues({'crowdradar.usuario': '{no'});
       final s = SecureTokenStorage(const FlutterSecureStorage());
 
       expect(await s.leerUsuario(), isNull);

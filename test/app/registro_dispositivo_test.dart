@@ -127,7 +127,10 @@ void main() {
       await r.quitar();
       await r.quitar();
 
-      expect(alertas.llamadas.where((l) => l.startsWith('eliminar')), hasLength(1));
+      expect(
+        alertas.llamadas.where((l) => l.startsWith('eliminar')),
+        hasLength(1),
+      );
     });
 
     test('a failure is logged and never thrown', () async {
@@ -142,20 +145,23 @@ void main() {
   });
 
   group('races and retries', () {
-    test('a quick sign out waits for the registration in flight (R3-805)', () async {
-      final r = crear('tok-1');
-      alertas.bloqueoRegistrar = Completer<void>();
+    test(
+      'a quick sign out waits for the registration in flight (R3-805)',
+      () async {
+        final r = crear('tok-1');
+        alertas.bloqueoRegistrar = Completer<void>();
 
-      final registro1 = r.registrar();
-      await pumpEventQueue();
-      final quitado = r.quitar();
-      await pumpEventQueue();
-      alertas.bloqueoRegistrar!.complete();
-      await Future.wait([registro1, quitado]);
+        final registro1 = r.registrar();
+        await pumpEventQueue();
+        final quitado = r.quitar();
+        await pumpEventQueue();
+        alertas.bloqueoRegistrar!.complete();
+        await Future.wait([registro1, quitado]);
 
-      expect(alertas.llamadas, ['registrar:tok-1', 'eliminar:tok-1']);
-      expect(alertas.dispositivos, isEmpty);
-    });
+        expect(alertas.llamadas, ['registrar:tok-1', 'eliminar:tok-1']);
+        expect(alertas.dispositivos, isEmpty);
+      },
+    );
 
     test('registering twice sends the token once (R4-802)', () async {
       final r = crear('tok-1');
@@ -175,43 +181,52 @@ void main() {
 
       await r.quitar();
 
-      expect(alertas.llamadas.where((l) => l.startsWith('eliminar')), hasLength(2));
+      expect(
+        alertas.llamadas.where((l) => l.startsWith('eliminar')),
+        hasLength(2),
+      );
       expect(alertas.dispositivos, isEmpty);
     });
 
-    test('the next sign in retries a failed DELETE before registering', () async {
-      final r = crear('tok-1');
-      await r.registrar();
-      alertas.error = const ApiException.sinConexion();
-      await r.quitar();
-      alertas.error = null;
-      alertas.llamadas.clear();
+    test(
+      'the next sign in retries a failed DELETE before registering',
+      () async {
+        final r = crear('tok-1');
+        await r.registrar();
+        alertas.error = const ApiException.sinConexion();
+        await r.quitar();
+        alertas.error = null;
+        alertas.llamadas.clear();
 
-      await r.registrar();
+        await r.registrar();
 
-      expect(alertas.llamadas, ['eliminar:tok-1', 'registrar:tok-1']);
-      expect(alertas.dispositivos, ['tok-1']);
-    });
+        expect(alertas.llamadas, ['eliminar:tok-1', 'registrar:tok-1']);
+        expect(alertas.dispositivos, ['tok-1']);
+      },
+    );
 
-    test('a sign in during a DELETE in flight registers after it (R3-901)', () async {
-      final r = crear('tok-1');
-      await r.registrar();
-      alertas.bloqueoEliminar = Completer<void>();
+    test(
+      'a sign in during a DELETE in flight registers after it (R3-901)',
+      () async {
+        final r = crear('tok-1');
+        await r.registrar();
+        alertas.bloqueoEliminar = Completer<void>();
 
-      final quitado = r.quitar();
-      await pumpEventQueue();
-      final registrado = r.registrar();
-      await pumpEventQueue();
-      alertas.bloqueoEliminar!.complete();
-      await Future.wait([quitado, registrado]);
+        final quitado = r.quitar();
+        await pumpEventQueue();
+        final registrado = r.registrar();
+        await pumpEventQueue();
+        alertas.bloqueoEliminar!.complete();
+        await Future.wait([quitado, registrado]);
 
-      expect(alertas.llamadas, [
-        'registrar:tok-1',
-        'eliminar:tok-1',
-        'registrar:tok-1',
-      ]);
-      expect(alertas.dispositivos, ['tok-1']);
-    });
+        expect(alertas.llamadas, [
+          'registrar:tok-1',
+          'eliminar:tok-1',
+          'registrar:tok-1',
+        ]);
+        expect(alertas.dispositivos, ['tok-1']);
+      },
+    );
 
     test('registering again after a clean sign out works', () async {
       final r = crear('tok-1');

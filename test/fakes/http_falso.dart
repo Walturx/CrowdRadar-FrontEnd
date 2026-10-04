@@ -10,10 +10,10 @@ import 'package:http/testing.dart';
 const entornoPrueba = Entorno(apiUrl: 'http://api.test');
 
 http.Response respuestaJson(int status, Object? body) => http.Response.bytes(
-      utf8.encode(jsonEncode(body)),
-      status,
-      headers: {'content-type': 'application/json; charset=utf-8'},
-    );
+  utf8.encode(jsonEncode(body)),
+  status,
+  headers: {'content-type': 'application/json; charset=utf-8'},
+);
 
 /// ApiClient wired like production (session interceptors) over a MockClient.
 ApiClient apiClientPrueba(MockClientHandler handler, SessionService sesion) =>

@@ -42,6 +42,10 @@ class LoginFallido extends LoginState {
   });
 
   @override
-  List<Object?> get props =>
-      [mensaje, codigo, esSinConexion, reintentarEnSegundos];
+  List<Object?> get props => [
+    mensaje,
+    codigo,
+    esSinConexion,
+    reintentarEnSegundos,
+  ];
 }

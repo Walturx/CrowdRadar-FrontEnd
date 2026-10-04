@@ -54,6 +54,7 @@ class SessionService {
   Duration _timeoutRestaurar = timeoutRestaurarPorDefecto;
   DateTime Function() _reloj = DateTime.now;
   StreamController<EventoSesion> _eventos = StreamController.broadcast();
+
   /// Bumped by every restore; a read that finishes under an older value is stale.
   int _generacionRestauracion = 0;
   String? _token;

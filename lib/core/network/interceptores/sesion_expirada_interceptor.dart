@@ -17,7 +17,10 @@ class SesionExpiradaInterceptor extends InterceptorApi {
   }) : _registro = registro;
 
   @override
-  Future<void> alRecibirError(ApiException error, SolicitudApi solicitud) async {
+  Future<void> alRecibirError(
+    ApiException error,
+    SolicitudApi solicitud,
+  ) async {
     if (solicitud.uri.path.startsWith(_prefijoAuth)) return;
     final MotivoCierre motivo;
     if (error.code == _codigoSuspendida) {

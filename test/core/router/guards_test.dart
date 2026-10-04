@@ -24,11 +24,14 @@ void main() {
       expect(redirigirPorSesion(_anonimo, '/admin/usuarios'), Rutas.login);
     });
 
-    test('HU 2.4 c2 after a user sign out a protected route asks to log in', () {
-      const cerrada = SesionNoAutenticada(motivo: MotivoCierre.usuario);
-      expect(redirigirPorSesion(cerrada, '/perfil'), Rutas.login);
-      expect(redirigirPorSesion(cerrada, '/mapa'), Rutas.login);
-    });
+    test(
+      'HU 2.4 c2 after a user sign out a protected route asks to log in',
+      () {
+        const cerrada = SesionNoAutenticada(motivo: MotivoCierre.usuario);
+        expect(redirigirPorSesion(cerrada, '/perfil'), Rutas.login);
+        expect(redirigirPorSesion(cerrada, '/mapa'), Rutas.login);
+      },
+    );
 
     test('S5.1 public routes stay reachable while unauthenticated', () {
       for (final ruta in [Rutas.login, Rutas.registro, Rutas.recuperar]) {
@@ -41,10 +44,12 @@ void main() {
       expect(redirigirPorSesion(_usuario, Rutas.registro), Rutas.mapa);
     });
 
-    test('S5.2 authenticated ADMIN on a public route goes to /admin/reportes',
-        () {
-      expect(redirigirPorSesion(_admin, Rutas.login), Rutas.adminReportes);
-    });
+    test(
+      'S5.2 authenticated ADMIN on a public route goes to /admin/reportes',
+      () {
+        expect(redirigirPorSesion(_admin, Rutas.login), Rutas.adminReportes);
+      },
+    );
 
     test('S5.3 USUARIO on /admin/* goes to /mapa', () {
       expect(redirigirPorSesion(_usuario, '/admin/reportes'), Rutas.mapa);
@@ -82,12 +87,13 @@ void main() {
     tearDown(() => sesion.reiniciar());
 
     Widget app(String inicial) => CrowdRadarApp(
-          dependencias: Dependencias.crear(const Entorno(usarFakes: true), sesion),
-          ubicacionInicial: inicial,
-        );
+      dependencias: Dependencias.crear(const Entorno(usarFakes: true), sesion),
+      ubicacionInicial: inicial,
+    );
 
-    testWidgets('S5.1 opening a protected route unauthenticated shows login',
-        (tester) async {
+    testWidgets('S5.1 opening a protected route unauthenticated shows login', (
+      tester,
+    ) async {
       await tester.pumpWidget(app(Rutas.favoritos));
       await tester.pumpAndSettle();
 
@@ -95,8 +101,9 @@ void main() {
       expect(find.text('Sin favoritos aún'), findsNothing);
     });
 
-    testWidgets('authenticated user reaches the protected route',
-        (tester) async {
+    testWidgets('authenticated user reaches the protected route', (
+      tester,
+    ) async {
       await sesion.iniciar('t', usuarioPrueba);
       await tester.pumpWidget(app(Rutas.favoritos));
       await tester.pumpAndSettle();
@@ -105,8 +112,9 @@ void main() {
       expect(find.text('Favoritos'), findsWidgets);
     });
 
-    testWidgets('S5.4 session expiry on a shell route redirects to /login',
-        (tester) async {
+    testWidgets('S5.4 session expiry on a shell route redirects to /login', (
+      tester,
+    ) async {
       await sesion.iniciar('t', usuarioPrueba);
       await tester.pumpWidget(app(Rutas.favoritos));
       await tester.pumpAndSettle();

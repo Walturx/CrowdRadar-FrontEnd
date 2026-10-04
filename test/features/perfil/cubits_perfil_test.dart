@@ -39,12 +39,15 @@ void main() {
       'no session -> Error("No hay sesión activa")',
       build: () {
         when(() => repo.obtener()).thenThrow(
-            const ApiException(status: 401, message: 'No hay sesión activa'));
+          const ApiException(status: 401, message: 'No hay sesión activa'),
+        );
         return PerfilCubit(repo);
       },
       act: (c) => c.cargar(),
-      expect: () =>
-          [const PerfilCargando(), const PerfilError('No hay sesión activa')],
+      expect: () => [
+        const PerfilCargando(),
+        const PerfilError('No hay sesión activa'),
+      ],
     );
 
     blocTest<PerfilCubit, PerfilState>(
@@ -56,8 +59,10 @@ void main() {
       act: (c) => c.cargar(),
       expect: () => [
         const PerfilCargando(),
-        const PerfilError('No se pudo conectar con el servidor',
-            esSinConexion: true),
+        const PerfilError(
+          'No se pudo conectar con el servidor',
+          esSinConexion: true,
+        ),
       ],
     );
 
@@ -68,34 +73,37 @@ void main() {
         return PerfilCubit(repo);
       },
       act: (c) => c.cargar(),
-      expect: () =>
-          [
-            const PerfilCargando(),
-            const PerfilError('Ocurrió un error inesperado'),
-          ],
+      expect: () => [
+        const PerfilCargando(),
+        const PerfilError('Ocurrió un error inesperado'),
+      ],
     );
   });
 
   group('PerfilCubit on a closed cubit', () {
-    test('cargar and refrescar after close neither throw nor call the repo',
-        () async {
-      final c = PerfilCubit(repo);
-      await c.close();
+    test(
+      'cargar and refrescar after close neither throw nor call the repo',
+      () async {
+        final c = PerfilCubit(repo);
+        await c.close();
 
-      await expectLater(c.cargar(), completes);
-      await expectLater(c.refrescar(), completes);
-      verifyNever(() => repo.obtener());
-    });
+        await expectLater(c.cargar(), completes);
+        await expectLater(c.refrescar(), completes);
+        verifyNever(() => repo.obtener());
+      },
+    );
 
-    test('refrescar on loaded data closed before entry does not throw',
-        () async {
-      when(() => repo.obtener()).thenAnswer((_) async => _user);
-      final c = PerfilCubit(repo);
-      await c.cargar();
-      await c.close();
+    test(
+      'refrescar on loaded data closed before entry does not throw',
+      () async {
+        when(() => repo.obtener()).thenAnswer((_) async => _user);
+        final c = PerfilCubit(repo);
+        await c.cargar();
+        await c.close();
 
-      await expectLater(c.refrescar(), completes);
-    });
+        await expectLater(c.refrescar(), completes);
+      },
+    );
   });
 
   group('PerfilCubit.refrescar (stale-while-revalidate)', () {
@@ -186,8 +194,9 @@ void main() {
   blocTest<EditarPerfilCubit, EditarPerfilState>(
     'R4-101 sinConexion and codigo are exposed',
     build: () {
-      when(() => repo.actualizar(any())).thenThrow(
-          const ApiException(status: 0, message: 'x', code: 'C1'));
+      when(
+        () => repo.actualizar(any()),
+      ).thenThrow(const ApiException(status: 0, message: 'x', code: 'C1'));
       return EditarPerfilCubit(repo);
     },
     act: (c) => c.guardar({}),
@@ -206,20 +215,27 @@ void main() {
     blocTest<EditarPerfilCubit, EditarPerfilState>(
       'S8.4 guardar success -> Guardando, Guardado(usuario)',
       build: () {
-        when(() => repo.actualizar({'nombre': 'Beatriz'}))
-            .thenAnswer((_) async => _editado);
+        when(
+          () => repo.actualizar({'nombre': 'Beatriz'}),
+        ).thenAnswer((_) async => _editado);
         return EditarPerfilCubit(repo);
       },
       act: (c) => c.guardar({'nombre': 'Beatriz'}),
-      expect: () =>
-          [const EditarPerfilGuardando(), const EditarPerfilGuardado(_editado)],
+      expect: () => [
+        const EditarPerfilGuardando(),
+        const EditarPerfilGuardado(_editado),
+      ],
     );
 
     blocTest<EditarPerfilCubit, EditarPerfilState>(
       'guardar failure -> Fallido(message)',
       build: () {
-        when(() => repo.actualizar(any())).thenThrow(const ApiException(
-            status: 500, message: 'Error al actualizar el perfil'));
+        when(() => repo.actualizar(any())).thenThrow(
+          const ApiException(
+            status: 500,
+            message: 'Error al actualizar el perfil',
+          ),
+        );
         return EditarPerfilCubit(repo);
       },
       act: (c) => c.guardar({'nombre': 'x'}),
@@ -268,18 +284,20 @@ void main() {
       verify(() => repo.obtener()).called(2);
     });
 
-    test('EditarPerfilCubit.guardar sends one request for a double tap',
-        () async {
-      final pendiente = Completer<Usuario>();
-      when(() => repo.actualizar(any())).thenAnswer((_) => pendiente.future);
-      final cubit = EditarPerfilCubit(repo);
+    test(
+      'EditarPerfilCubit.guardar sends one request for a double tap',
+      () async {
+        final pendiente = Completer<Usuario>();
+        when(() => repo.actualizar(any())).thenAnswer((_) => pendiente.future);
+        final cubit = EditarPerfilCubit(repo);
 
-      final primero = cubit.guardar({'nombre': 'x'});
-      final segundo = cubit.guardar({'nombre': 'x'});
-      pendiente.complete(_editado);
-      await Future.wait([primero, segundo]);
+        final primero = cubit.guardar({'nombre': 'x'});
+        final segundo = cubit.guardar({'nombre': 'x'});
+        pendiente.complete(_editado);
+        await Future.wait([primero, segundo]);
 
-      verify(() => repo.actualizar(any())).called(1);
-    });
+        verify(() => repo.actualizar(any())).called(1);
+      },
+    );
   });
 }

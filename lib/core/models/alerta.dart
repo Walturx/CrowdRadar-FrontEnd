@@ -25,25 +25,25 @@ class Alerta extends Equatable {
   });
 
   factory Alerta.fromJson(Map<String, dynamic> j) => Alerta(
-        id: aInt(j['id']),
-        lugarId: aInt(j['lugarId']),
-        lugarNombre: j['lugarNombre'] as String? ?? '',
-        nivelAnterior: NivelSaturacion.desdeApi(j['nivelAnterior']),
-        nivelNuevo: NivelSaturacion.desdeApi(j['nivelNuevo']),
-        mensaje: j['mensaje'] as String? ?? '',
-        leida: j['leida'] as bool? ?? false,
-        fechaHora: aFecha(j['fechaHora']),
-      );
+    id: aInt(j['id']),
+    lugarId: aInt(j['lugarId']),
+    lugarNombre: j['lugarNombre'] as String? ?? '',
+    nivelAnterior: NivelSaturacion.desdeApi(j['nivelAnterior']),
+    nivelNuevo: NivelSaturacion.desdeApi(j['nivelNuevo']),
+    mensaje: j['mensaje'] as String? ?? '',
+    leida: j['leida'] as bool? ?? false,
+    fechaHora: aFecha(j['fechaHora']),
+  );
 
   @override
   List<Object?> get props => [
-        id,
-        lugarId,
-        lugarNombre,
-        nivelAnterior,
-        nivelNuevo,
-        mensaje,
-        leida,
-        fechaHora,
-      ];
+    id,
+    lugarId,
+    lugarNombre,
+    nivelAnterior,
+    nivelNuevo,
+    mensaje,
+    leida,
+    fechaHora,
+  ];
 }

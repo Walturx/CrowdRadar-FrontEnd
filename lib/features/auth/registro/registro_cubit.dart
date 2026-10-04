@@ -34,12 +34,14 @@ class RegistroCubit extends Cubit<RegistroState> {
       );
       emit(const RegistroExitoso());
     } catch (e) {
-      emit(RegistroFallido(
-        mensajeDeError(e),
-        erroresPorCampo: erroresPorCampo(e),
-        codigo: codigoDeError(e),
-        esSinConexion: esErrorSinConexion(e),
-      ));
+      emit(
+        RegistroFallido(
+          mensajeDeError(e),
+          erroresPorCampo: erroresPorCampo(e),
+          codigo: codigoDeError(e),
+          esSinConexion: esErrorSinConexion(e),
+        ),
+      );
     } finally {
       _enVuelo = false;
     }
