@@ -31,10 +31,24 @@ class RegistroDispositivo {
       ? PlataformaPush.ios
       : PlataformaPush.android;
 
-  Future<void> registrar() async {
+  /// The registration running right now; [quitar] waits for it.
+  Future<void>? _registrando;
+
+  /// A DELETE failed: the backend may still hold [_tokenRegistrado].
+  bool _borradoPendiente = false;
+
+  /// Registers the token once: a call while another runs shares it, and a
+  /// token the backend already has is not sent again. A DELETE that failed
+  /// earlier is retried first.
+  Future<void> registrar() => _registrando ??= _registrar().whenComplete(
+    () => _registrando = null,
+  );
+
+  Future<void> _registrar() async {
     try {
+      if (_borradoPendiente) await _reintentarBorrado();
       final token = await _receptor.obtenerToken();
-      if (token == null) return;
+      if (token == null || token == _tokenRegistrado) return;
       await _alertas.registrarDispositivo(token, _plataforma);
       _tokenRegistrado = token;
     } catch (e, pila) {
@@ -42,14 +56,32 @@ class RegistroDispositivo {
     }
   }
 
-  /// Must run while the session is still valid (the DELETE is authenticated).
-  Future<void> quitar() async {
+  Future<void> _reintentarBorrado() async {
     final token = _tokenRegistrado;
-    if (token == null) return;
+    // One retry only: whatever happens, this sign in registers afresh.
+    _borradoPendiente = false;
     _tokenRegistrado = null;
+    if (token == null) return;
     try {
       await _alertas.eliminarDispositivo(token);
     } catch (e, pila) {
+      _registro.registrar('RegistroDispositivo.reintento', e, pila);
+    }
+  }
+
+  /// Waits for a registration in flight, then deletes the token. Must run
+  /// while the session is still valid (the DELETE is authenticated); when it
+  /// fails the token is kept and retried by the next [quitar] or [registrar].
+  Future<void> quitar() async {
+    await _registrando;
+    final token = _tokenRegistrado;
+    if (token == null) return;
+    try {
+      await _alertas.eliminarDispositivo(token);
+      _tokenRegistrado = null;
+      _borradoPendiente = false;
+    } catch (e, pila) {
+      _borradoPendiente = true;
       _registro.registrar('RegistroDispositivo.quitar', e, pila);
     }
   }

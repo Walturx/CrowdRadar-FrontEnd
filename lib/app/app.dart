@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/logging/registro_errores.dart';
 import '../core/map/mapa_adapter.dart';
+import '../core/session/motivo_cierre.dart';
 import '../core/session/sesion_cubit.dart';
 import '../core/session/sesion_state.dart';
 import '../core/session/session_service.dart';
@@ -55,17 +56,39 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
   StreamSubscription<EventoSesion>? _eventosSesion;
   StreamSubscription<int>? _toques;
 
+  /// A place tapped in a notification before the session was ready (single
+  /// slot: the last tap wins). Delivered on sign in, dropped on sign out.
+  int? _toquePendiente;
+
   @override
   void initState() {
     super.initState();
     final deps = widget.dependencias;
-    unawaited(_iniciarPush());
-    // A restored session registers the device now; later sign ins on the event.
-    if (deps.sesion.token != null) unawaited(_dispositivo.registrar());
-    _eventosSesion = deps.sesion.eventos.listen((evento) {
-      if (evento is SesionIniciada) unawaited(_dispositivo.registrar());
-    });
+    // Created first so its session listener runs before ours.
+    _sesion;
+    // Listen before initializing: a tap that launched the app is emitted by
+    // `inicializar` itself.
     _toques = deps.receptorPush.lugarAbierto.listen(_abrirLugar);
+    unawaited(_iniciarPush());
+    // A restored session registers the device now; later sign ins on the event
+    // ([RegistroDispositivo] never sends the same token twice).
+    if (deps.sesion.token != null) unawaited(_dispositivo.registrar());
+    _eventosSesion = deps.sesion.eventos.listen(_alCambiarSesion);
+  }
+
+  void _alCambiarSesion(EventoSesion evento) {
+    switch (evento) {
+      case SesionIniciada():
+        unawaited(_dispositivo.registrar());
+        final pendiente = _toquePendiente;
+        _toquePendiente = null;
+        if (pendiente != null) _abrirLugar(pendiente);
+      case SesionCerrada(:final motivo):
+        _toquePendiente = null;
+        // A user sign out already ran the hook while the session was valid;
+        // a forced close tries best effort (it is retried on the next sign in).
+        if (motivo != MotivoCierre.usuario) unawaited(_dispositivo.quitar());
+    }
   }
 
   Future<void> _iniciarPush() async {
@@ -77,9 +100,12 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
   }
 
   /// A notification tap (also the one that launched the app) opens the place;
-  /// without a session there is nothing to show.
+  /// without a session it waits for the sign in.
   void _abrirLugar(int lugarId) {
-    if (_sesion.state is! SesionAutenticada) return;
+    if (_sesion.state is! SesionAutenticada) {
+      _toquePendiente = lugarId;
+      return;
+    }
     // After the frame, so a tap that launched the app finds the router built.
     WidgetsBinding.instance
       ..addPostFrameCallback((_) {

@@ -9,10 +9,14 @@ import 'session_service.dart';
 /// Observer: exposes the session to the UI and router by listening to
 /// `SessionService.eventos`.
 class SesionCubit extends Cubit<SesionState> {
+  /// How long a sign out waits for the [antesDeCerrar] hook.
+  static const Duration plazoAntesDeCerrar = Duration(seconds: 2);
+
   final SessionService _sesion;
 
   /// Runs while the session is still valid, right before a user-initiated
-  /// sign out (e.g. to unregister the push device). Its failure is ignored.
+  /// sign out (e.g. to unregister the push device). Its failure is ignored and
+  /// it is abandoned after [plazoAntesDeCerrar].
   final Future<void> Function()? _antesDeCerrar;
   late final StreamSubscription<EventoSesion> _suscripcion;
 
@@ -36,7 +40,7 @@ class SesionCubit extends Cubit<SesionState> {
 
   Future<void> cerrarSesion() async {
     try {
-      await _antesDeCerrar?.call();
+      await _antesDeCerrar?.call().timeout(plazoAntesDeCerrar);
     } catch (_) {
       // Best effort: signing out must never depend on it.
     }

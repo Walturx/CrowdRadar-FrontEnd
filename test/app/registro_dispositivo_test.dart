@@ -29,12 +29,16 @@ class _Alertas extends AlertaRepositoryFake {
   PlataformaPush? plataforma;
   Object? error;
 
+  /// When set, `registrarDispositivo` waits for it.
+  Completer<void>? bloqueoRegistrar;
+
   _Alertas() : super(sembrar: false);
 
   @override
   Future<void> registrarDispositivo(String token, PlataformaPush p) async {
     llamadas.add('registrar:$token');
     plataforma = p;
+    await bloqueoRegistrar?.future;
     if (error != null) throw error!;
     return super.registrarDispositivo(token, p);
   }
@@ -130,6 +134,69 @@ void main() {
       await expectLater(r.quitar(), completes);
 
       expect(registro.contextos, ['RegistroDispositivo.quitar']);
+    });
+  });
+
+  group('races and retries', () {
+    test('a quick sign out waits for the registration in flight (R3-805)', () async {
+      final r = crear('tok-1');
+      alertas.bloqueoRegistrar = Completer<void>();
+
+      final registro1 = r.registrar();
+      await pumpEventQueue();
+      final quitado = r.quitar();
+      await pumpEventQueue();
+      alertas.bloqueoRegistrar!.complete();
+      await Future.wait([registro1, quitado]);
+
+      expect(alertas.llamadas, ['registrar:tok-1', 'eliminar:tok-1']);
+      expect(alertas.dispositivos, isEmpty);
+    });
+
+    test('registering twice sends the token once (R4-802)', () async {
+      final r = crear('tok-1');
+
+      await Future.wait([r.registrar(), r.registrar()]);
+      await r.registrar();
+
+      expect(alertas.llamadas, ['registrar:tok-1']);
+    });
+
+    test('a failed DELETE keeps the token and is retried (R4-803)', () async {
+      final r = crear('tok-1');
+      await r.registrar();
+      alertas.error = const ApiException.sinConexion();
+      await r.quitar();
+      alertas.error = null;
+
+      await r.quitar();
+
+      expect(alertas.llamadas.where((l) => l.startsWith('eliminar')), hasLength(2));
+      expect(alertas.dispositivos, isEmpty);
+    });
+
+    test('the next sign in retries a failed DELETE before registering', () async {
+      final r = crear('tok-1');
+      await r.registrar();
+      alertas.error = const ApiException.sinConexion();
+      await r.quitar();
+      alertas.error = null;
+      alertas.llamadas.clear();
+
+      await r.registrar();
+
+      expect(alertas.llamadas, ['eliminar:tok-1', 'registrar:tok-1']);
+      expect(alertas.dispositivos, ['tok-1']);
+    });
+
+    test('registering again after a clean sign out works', () async {
+      final r = crear('tok-1');
+      await r.registrar();
+      await r.quitar();
+
+      await r.registrar();
+
+      expect(alertas.dispositivos, ['tok-1']);
     });
   });
 }
