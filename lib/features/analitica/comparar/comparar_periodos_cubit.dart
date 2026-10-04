@@ -1,6 +1,6 @@
 import '../../../core/models/analitica.dart';
 import '../analitica_parametros.dart';
-import '../carga/analitica_cubit.dart';
+import '../comun/analitica_cubit.dart';
 import '../data/analitica_repository.dart';
 
 /// HU 6.2: weekdays against weekends over the last four weeks.

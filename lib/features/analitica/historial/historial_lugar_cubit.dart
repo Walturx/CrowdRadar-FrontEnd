@@ -1,6 +1,6 @@
 import '../../../core/models/analitica.dart';
 import '../analitica_parametros.dart';
-import '../carga/analitica_cubit.dart';
+import '../comun/analitica_cubit.dart';
 import '../data/analitica_repository.dart';
 
 class HistorialLugarCubit extends AnaliticaCubit<SerieSaturacion> {

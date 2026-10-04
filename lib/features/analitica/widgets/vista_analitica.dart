@@ -5,8 +5,8 @@ import '../../../core/widgets/cargando.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
 import '../../../theme/app_colors.dart';
-import '../carga/analitica_cubit.dart';
-import '../carga/analitica_state.dart';
+import '../comun/analitica_cubit.dart';
+import '../comun/analitica_state.dart';
 
 /// Small section label ("SATURACIÓN POR HORA").
 class EtiquetaSeccion extends StatelessWidget {

@@ -25,6 +25,9 @@ const _usuario = Usuario(
   distrito: 'Miraflores',
 );
 
+/// The karma card, by key instead of by its (collision-prone) text.
+Finder tarjetaKarma() => find.byKey(const Key('perfil-karma'));
+
 void main() {
   late _PerfilRepoMock repo;
   late _SesionCubitMock sesion;
@@ -111,15 +114,21 @@ void main() {
           .thenAnswer((_) async => _usuario.copyWith(puntosKarma: 1280));
       await abrir(tester);
 
-      expect(find.text('Karma'), findsOneWidget);
-      expect(find.text('1280'), findsOneWidget);
+      expect(tarjetaKarma(), findsOneWidget);
+      expect(
+        find.descendant(of: tarjetaKarma(), matching: find.text('1280')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('a user without karma data shows 0', (tester) async {
       when(() => repo.obtener()).thenAnswer((_) async => _usuario);
       await abrir(tester);
 
-      expect(find.text('0'), findsOneWidget);
+      expect(
+        find.descendant(of: tarjetaKarma(), matching: find.text('0')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Mis reportes opens /perfil/reportes', (tester) async {
@@ -147,7 +156,10 @@ void main() {
               TickerMode(enabled: v, child: const ProfilePage()),
         ),
       );
-      expect(find.text('100'), findsOneWidget);
+      expect(
+        find.descendant(of: tarjetaKarma(), matching: find.text('100')),
+        findsOneWidget,
+      );
 
       activa.value = false;
       await tester.pump();
@@ -156,7 +168,10 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.text('110'), findsOneWidget);
+      expect(
+        find.descendant(of: tarjetaKarma(), matching: find.text('110')),
+        findsOneWidget,
+      );
       verify(() => repo.obtener()).called(2);
     });
 
@@ -192,7 +207,10 @@ void main() {
         await tester.pump();
         await tester.pump();
 
-        expect(find.text('100'), findsOneWidget);
+        expect(
+          find.descendant(of: tarjetaKarma(), matching: find.text('100')),
+          findsOneWidget,
+        );
         expect(find.text('Reintentar'), findsNothing);
         expect(find.text(error.message), findsOneWidget);
       });

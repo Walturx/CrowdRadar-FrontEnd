@@ -4,7 +4,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:crowdradar/core/models/analitica.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
-import 'package:crowdradar/features/analitica/carga/analitica_state.dart';
+import 'package:crowdradar/features/analitica/comun/analitica_state.dart';
 import 'package:crowdradar/features/analitica/comparar/comparar_periodos_cubit.dart';
 import 'package:crowdradar/features/analitica/data/analitica_repository.dart';
 import 'package:crowdradar/features/analitica/historial/historial_lugar_cubit.dart';
