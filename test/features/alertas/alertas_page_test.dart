@@ -106,7 +106,7 @@ void main() {
     expect(find.text('No tienes alertas.'), findsOneWidget);
 
     repo.emitir(3, NivelSaturacion.tranquilo, NivelSaturacion.saturado);
-    await cubit.alAbrirApp();
+    await cubit.refrescar();
     await tester.pump();
     await tester.pump();
 

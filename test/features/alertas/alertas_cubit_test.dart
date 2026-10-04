@@ -206,7 +206,7 @@ void main() {
     });
   });
 
-  group('alAbrirApp', () {
+  group('refrescar', () {
     test('refreshes in the background and picks up new alerts', () async {
       final repo = AlertaRepositoryFake(sembrar: false);
       final cubit = AlertasCubit(repo);
@@ -216,7 +216,7 @@ void main() {
       cubit.stream.listen(estados.add);
 
       repo.emitir(3, NivelSaturacion.tranquilo, NivelSaturacion.saturado);
-      await cubit.alAbrirApp();
+      await cubit.refrescar();
       await pumpEventQueue();
 
       expect(estados.any((e) => e is AlertasCargando), isFalse);
@@ -235,7 +235,7 @@ void main() {
       final cubit = AlertasCubit(repo);
       await cubit.cargar();
 
-      await cubit.alAbrirApp();
+      await cubit.refrescar();
 
       expect(_cargado(cubit).alertas, hasLength(1));
       expect(cubit.noLeidas, 1);
@@ -243,10 +243,96 @@ void main() {
       await cubit.close();
     });
 
+    test('a mark made during the reload stays read (R3-804)', () async {
+      final repo = _MockRepo();
+      final lenta = Completer<PaginaAlertas>();
+      var n = 0;
+      when(() => repo.listar()).thenAnswer((_) {
+        if (n++ == 0) return Future.value(_pagina([_alerta(1), _alerta(2)], 2));
+        return lenta.future;
+      });
+      when(() => repo.marcarLeida(1)).thenAnswer((_) async {});
+      final cubit = AlertasCubit(repo);
+      await cubit.cargar();
+
+      final refresco = cubit.refrescar();
+      await pumpEventQueue();
+      await cubit.marcarLeida(1);
+      lenta.complete(_pagina([_alerta(1), _alerta(2)], 2)); // server was stale
+      await refresco;
+
+      expect(_cargado(cubit).alertas.firstWhere((a) => a.id == 1).leida, isTrue);
+      expect(cubit.noLeidas, 1);
+      await cubit.close();
+    });
+
+    test('a failed mark after the refresh leaves the count at the list', () async {
+      final repo = _MockRepo();
+      final marca = Completer<void>();
+      when(() => repo.listar()).thenAnswer(
+        (_) async => _pagina([_alerta(1), _alerta(2)], 2),
+      );
+      when(() => repo.marcarLeida(1)).thenAnswer((_) => marca.future);
+      final cubit = AlertasCubit(repo);
+      await cubit.cargar();
+
+      final marcando = cubit.marcarLeida(1);
+      await cubit.refrescar();
+      marca.completeError(const ApiException.sinConexion());
+      await marcando;
+
+      final estado = _cargado(cubit);
+      expect(estado.noLeidas, estado.alertas.where((a) => !a.leida).length);
+      await cubit.close();
+    });
+
+    test('a failed refresh keeps a mark made while it ran', () async {
+      final repo = _MockRepo();
+      final lenta = Completer<PaginaAlertas>();
+      var n = 0;
+      when(() => repo.listar()).thenAnswer((_) {
+        if (n++ == 0) return Future.value(_pagina([_alerta(1), _alerta(2)], 2));
+        return lenta.future;
+      });
+      when(() => repo.marcarLeida(1)).thenAnswer((_) async {});
+      final cubit = AlertasCubit(repo);
+      await cubit.cargar();
+
+      final refresco = cubit.refrescar();
+      await pumpEventQueue();
+      await cubit.marcarLeida(1);
+      lenta.completeError(const ApiException.sinConexion());
+      await refresco;
+
+      expect(_cargado(cubit).alertas.firstWhere((a) => a.id == 1).leida, isTrue);
+      expect(cubit.noLeidas, 1);
+      await cubit.close();
+    });
+
+    test('marking the same alert twice at once sends one request', () async {
+      final repo = _MockRepo();
+      final marca = Completer<void>();
+      when(() => repo.listar()).thenAnswer(
+        (_) async => _pagina([_alerta(1), _alerta(2)], 2),
+      );
+      when(() => repo.marcarLeida(1)).thenAnswer((_) => marca.future);
+      final cubit = AlertasCubit(repo);
+      await cubit.cargar();
+
+      final a = cubit.marcarLeida(1);
+      final b = cubit.marcarLeida(1);
+      marca.complete();
+      await Future.wait([a, b]);
+
+      verify(() => repo.marcarLeida(1)).called(1);
+      expect(cubit.noLeidas, 1);
+      await cubit.close();
+    });
+
     test('without data it behaves like cargar', () async {
       final cubit = AlertasCubit(AlertaRepositoryFake());
 
-      await cubit.alAbrirApp();
+      await cubit.refrescar();
 
       expect(_cargado(cubit).alertas, hasLength(2));
       await cubit.close();

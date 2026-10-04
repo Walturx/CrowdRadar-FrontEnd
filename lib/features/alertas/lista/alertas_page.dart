@@ -33,7 +33,7 @@ class _AlertasPageState extends State<AlertasPage> {
     super.initState();
     // Opening the list refreshes it without blanking what is already there.
     final cubit = context.read<AlertasCubit>();
-    if (cubit.state is AlertasCargado) cubit.alAbrirApp();
+    if (cubit.state is AlertasCargado) cubit.refrescar();
   }
 
   @override
