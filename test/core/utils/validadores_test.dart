@@ -30,4 +30,24 @@ void main() {
       expect(Validadores.distrito(' Ate '), isNull);
     });
   });
+
+  group('correo', () {
+    test('accepts a plain address and trims it', () {
+      expect(Validadores.correo('ana@test.com'), isNull);
+      expect(Validadores.correo(' ana@test.com '), isNull);
+    });
+
+    test('empty is required, malformed is invalid', () {
+      expect(Validadores.correo(''), Validadores.mensajeObligatorio);
+      expect(Validadores.correo(null), Validadores.mensajeObligatorio);
+      expect(Validadores.correo('ana'), 'Correo inválido');
+      expect(Validadores.correo('ana@test'), 'Correo inválido');
+      expect(Validadores.correo('a b@test.com'), 'Correo inválido');
+    });
+
+    test('esCorreo is the shared format check', () {
+      expect(Validadores.esCorreo('ana@test.com'), isTrue);
+      expect(Validadores.esCorreo('ana@'), isFalse);
+    });
+  });
 }

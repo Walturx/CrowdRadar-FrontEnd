@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/mensaje_error.dart';
 import '../../../core/utils/mensaje_espera.dart';
+import '../../../core/utils/validadores.dart';
 import '../data/auth_repository.dart';
 import 'recuperar_state.dart';
 
@@ -14,8 +15,6 @@ class RecuperarCubit extends Cubit<RecuperarState> {
   static const String mensajeCuentaNoExiste = 'Ese correo no está registrado';
   static const String codigoCuentaNoExiste = 'CUENTA_NO_EXISTE';
 
-  static final RegExp _formatoCorreo = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-
   final AuthRepository _repositorio;
 
   RecuperarCubit(this._repositorio) : super(const RecuperarInicial());
@@ -26,7 +25,7 @@ class RecuperarCubit extends Cubit<RecuperarState> {
   Future<void> enviar(String email) async {
     if (_enVuelo) return;
     final correo = email.trim();
-    if (!_formatoCorreo.hasMatch(correo)) {
+    if (!Validadores.esCorreo(correo)) {
       emit(const RecuperarFallido(mensajeCorreoInvalido));
       return;
     }

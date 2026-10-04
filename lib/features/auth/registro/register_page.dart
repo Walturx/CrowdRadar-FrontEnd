@@ -138,15 +138,7 @@ class _RegisterViewState extends State<_RegisterView> {
                       labelText: 'Correo electrónico',
                       errorText: errores['email'],
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Este campo es obligatorio';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Correo inválido';
-                      }
-                      return null;
-                    },
+                    validator: Validadores.correo,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
