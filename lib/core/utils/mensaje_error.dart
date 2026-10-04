@@ -1,10 +1,15 @@
+import '../errors/excepcion_con_mensaje.dart';
 import '../network/api_exception.dart';
 
 const String mensajeGenerico = 'Ocurrió un error inesperado';
 
-/// User-facing text: the API message, else a generic one (never `toString()`).
-String mensajeDeError(Object error) =>
-    error is ApiException ? error.message : mensajeGenerico;
+/// User-facing text: the API message or an [ExcepcionConMensaje] text, else a
+/// generic one (never `toString()`).
+String mensajeDeError(Object error) => switch (error) {
+      ApiException() => error.message,
+      ExcepcionConMensaje() => error.mensajeUsuario,
+      _ => mensajeGenerico,
+    };
 
 /// True when the failure is a network problem worth a retry affordance.
 bool esErrorSinConexion(Object error) =>

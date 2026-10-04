@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:crowdradar/core/models/user_model.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
@@ -6,6 +8,7 @@ import 'package:crowdradar/features/auth/login/login_cubit.dart';
 import 'package:crowdradar/features/auth/login/login_state.dart';
 import 'package:crowdradar/features/auth/registro/registro_cubit.dart';
 import 'package:crowdradar/features/auth/registro/registro_state.dart';
+import 'package:crowdradar/core/session/session_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -174,5 +177,105 @@ void main() {
       verify: (c) =>
           expect((c.state as RegistroFallido).esSinConexion, isTrue),
     );
+  });
+
+  group('R3-101 value equality of states holding a user', () {
+    test('two separately built identical users give equal LoginExitoso', () {
+      final a = UserModel.fromJson(const {'id': 1, 'nombre': 'Ana'});
+      final b = UserModel.fromJson(const {'id': 1, 'nombre': 'Ana'});
+
+      expect(identical(a, b), isFalse);
+      expect(LoginExitoso(a), LoginExitoso(b));
+      expect(a.hashCode, b.hashCode);
+    });
+
+    test('users that differ in one field are not equal', () {
+      expect(
+        const UserModel(id: 1, nombre: 'Ana'),
+        isNot(const UserModel(id: 1, nombre: 'Beatriz')),
+      );
+    });
+  });
+
+  blocTest<LoginCubit, LoginState>(
+    'R3-F02 storage failure on login surfaces the storage message',
+    build: () {
+      when(() => repo.iniciarSesion(any(), any()))
+          .thenThrow(ErrorAlmacenamientoSesion(StateError('keystore')));
+      return LoginCubit(repo);
+    },
+    act: (c) => c.iniciarSesion('a@b.c', 'x'),
+    verify: (c) {
+      final estado = c.state as LoginFallido;
+      expect(estado.mensaje, contains('guardar la sesión'));
+      expect(estado.mensaje, isNot('Ocurrió un error inesperado'));
+    },
+  );
+
+  group('R3-109 a second submit while a request is in flight is ignored', () {
+    test('LoginCubit sends one request for a double submit', () async {
+      final pendiente = Completer<UserModel>();
+      when(() => repo.iniciarSesion(any(), any()))
+          .thenAnswer((_) => pendiente.future);
+      final cubit = LoginCubit(repo);
+
+      final primero = cubit.iniciarSesion('a@b.c', 'x');
+      final segundo = cubit.iniciarSesion('a@b.c', 'x');
+      pendiente.complete(_user);
+      await Future.wait([primero, segundo]);
+
+      verify(() => repo.iniciarSesion(any(), any())).called(1);
+      expect(cubit.state, const LoginExitoso(_user));
+    });
+
+    test('LoginCubit accepts a new submit after a failure', () async {
+      when(() => repo.iniciarSesion(any(), any()))
+          .thenThrow(const ApiException.sinConexion());
+      final cubit = LoginCubit(repo);
+
+      await cubit.iniciarSesion('a@b.c', 'x');
+      await cubit.iniciarSesion('a@b.c', 'x');
+
+      verify(() => repo.iniciarSesion(any(), any())).called(2);
+    });
+
+    test('RegistroCubit sends one request for a double submit', () async {
+      final pendiente = Completer<UserModel>();
+      when(
+        () => repo.registrar(
+          nombre: any(named: 'nombre'),
+          apellido: any(named: 'apellido'),
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+          telefono: any(named: 'telefono'),
+          distrito: any(named: 'distrito'),
+        ),
+      ).thenAnswer((_) => pendiente.future);
+      final cubit = RegistroCubit(repo);
+      Future<void> enviar() => cubit.registrar(
+            nombre: 'a',
+            apellido: 'b',
+            email: 'c@d.e',
+            password: 'Secreta12',
+            telefono: '999999999',
+            distrito: 'x',
+          );
+
+      final primero = enviar();
+      final segundo = enviar();
+      pendiente.complete(_user);
+      await Future.wait([primero, segundo]);
+
+      verify(
+        () => repo.registrar(
+          nombre: any(named: 'nombre'),
+          apellido: any(named: 'apellido'),
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+          telefono: any(named: 'telefono'),
+          distrito: any(named: 'distrito'),
+        ),
+      ).called(1);
+    });
   });
 }

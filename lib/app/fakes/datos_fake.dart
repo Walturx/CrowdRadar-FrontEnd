@@ -50,7 +50,16 @@ ApiException errorFake(int status, String code, String message) =>
     ApiException(status: status, message: message, code: code);
 
 /// 1-based page of [todos] in the API's paginated envelope.
+///
+/// Like the API, `page <= 0` or `size <= 0` is a 400; a page past the end is empty.
 Pagina<T> paginar<T>(List<T> todos, int page, int size) {
+  if (page <= 0 || size <= 0) {
+    throw errorFake(
+      400,
+      'PAGINACION_INVALIDA',
+      'page y size deben ser mayores que cero',
+    );
+  }
   final desde = (page - 1) * size;
   return Pagina(
     items: todos.skip(desde).take(size).toList(),

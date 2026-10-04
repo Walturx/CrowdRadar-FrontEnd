@@ -9,7 +9,12 @@ class EditarPerfilCubit extends Cubit<EditarPerfilState> {
 
   EditarPerfilCubit(this._repositorio) : super(const EditarPerfilEditando());
 
+  /// A submit while another is in flight is ignored.
+  bool _enVuelo = false;
+
   Future<void> guardar(Map<String, dynamic> cambios) async {
+    if (_enVuelo) return;
+    _enVuelo = true;
     emit(const EditarPerfilGuardando());
     try {
       emit(EditarPerfilGuardado(await _repositorio.actualizar(cambios)));
@@ -19,6 +24,8 @@ class EditarPerfilCubit extends Cubit<EditarPerfilState> {
         codigo: codigoDeError(e),
         esSinConexion: esErrorSinConexion(e),
       ));
+    } finally {
+      _enVuelo = false;
     }
   }
 }

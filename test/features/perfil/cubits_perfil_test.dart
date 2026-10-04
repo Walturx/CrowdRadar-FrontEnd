@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:crowdradar/core/models/user_model.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
@@ -132,5 +134,45 @@ void main() {
         const EditarPerfilFallido('Ocurrió un error inesperado'),
       ],
     );
+  });
+
+  group('R3-109 a second submit while a request is in flight is ignored', () {
+    test('PerfilCubit.cargar sends one request for a double call', () async {
+      final pendiente = Completer<UserModel>();
+      when(() => repo.obtener()).thenAnswer((_) => pendiente.future);
+      final cubit = PerfilCubit(repo);
+
+      final primero = cubit.cargar();
+      final segundo = cubit.cargar();
+      pendiente.complete(_user);
+      await Future.wait([primero, segundo]);
+
+      verify(() => repo.obtener()).called(1);
+      expect(cubit.state, const PerfilCargado(_user));
+    });
+
+    test('PerfilCubit.cargar can retry after an error', () async {
+      when(() => repo.obtener()).thenThrow(const ApiException.sinConexion());
+      final cubit = PerfilCubit(repo);
+
+      await cubit.cargar();
+      await cubit.cargar();
+
+      verify(() => repo.obtener()).called(2);
+    });
+
+    test('EditarPerfilCubit.guardar sends one request for a double tap',
+        () async {
+      final pendiente = Completer<UserModel>();
+      when(() => repo.actualizar(any())).thenAnswer((_) => pendiente.future);
+      final cubit = EditarPerfilCubit(repo);
+
+      final primero = cubit.guardar({'nombre': 'x'});
+      final segundo = cubit.guardar({'nombre': 'x'});
+      pendiente.complete(_editado);
+      await Future.wait([primero, segundo]);
+
+      verify(() => repo.actualizar(any())).called(1);
+    });
   });
 }

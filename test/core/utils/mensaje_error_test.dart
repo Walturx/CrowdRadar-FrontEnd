@@ -1,5 +1,7 @@
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/utils/mensaje_error.dart';
+import 'package:crowdradar/core/errors/excepcion_con_mensaje.dart';
+import 'package:crowdradar/core/session/session_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -15,6 +17,14 @@ void main() {
     expect(mensajeDeError(StateError('x')), mensajeGenerico);
     expect(codigoDeError(StateError('x')), isNull);
     expect(esErrorSinConexion(StateError('x')), isFalse);
+  });
+
+  test('R3-F02 domain exceptions with a user message keep it', () {
+    final e = ErrorAlmacenamientoSesion(StateError('keystore'));
+
+    expect(e, isA<ExcepcionConMensaje>());
+    expect(mensajeDeError(e), e.mensajeUsuario);
+    expect(mensajeDeError(e), isNot(mensajeGenerico));
   });
 
   test('field errors come from ApiException only', () {

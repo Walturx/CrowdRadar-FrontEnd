@@ -215,6 +215,7 @@ void main() {
           () => api.get<Object?>('/api/x', parser: _identidad));
 
       expect(e.code, ApiException.codigoInterceptor);
+      expect(e.status, -1);
     });
 
     test('R3-006 interceptor failing on error does not mask the original',

@@ -9,6 +9,9 @@ class RegistroCubit extends Cubit<RegistroState> {
 
   RegistroCubit(this._repositorio) : super(const RegistroInicial());
 
+  /// A submit while another is in flight is ignored.
+  bool _enVuelo = false;
+
   Future<void> registrar({
     required String nombre,
     required String apellido,
@@ -17,6 +20,8 @@ class RegistroCubit extends Cubit<RegistroState> {
     required String telefono,
     required String distrito,
   }) async {
+    if (_enVuelo) return;
+    _enVuelo = true;
     emit(const RegistroEnviando());
     try {
       await _repositorio.registrar(
@@ -35,6 +40,8 @@ class RegistroCubit extends Cubit<RegistroState> {
         codigo: codigoDeError(e),
         esSinConexion: esErrorSinConexion(e),
       ));
+    } finally {
+      _enVuelo = false;
     }
   }
 }
