@@ -135,4 +135,59 @@ void main() {
     expect(limites!.norte, greaterThan(limites!.sur));
     expect(limites!.este, greaterThan(limites!.oeste));
   });
+
+  group('camera idle', () {
+    Future<void> montar(
+      WidgetTester tester,
+      void Function(LimitesMapa) alCamaraQuieta,
+    ) => tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: adapter.construirMapa(
+            centro: _centro,
+            zoom: 16,
+            alTocarMarcador: (_) {},
+            alCamaraQuieta: alCamaraQuieta,
+          ),
+        ),
+      ),
+    );
+
+    testWidgets('reports the initial bounds once the map is ready', (
+      tester,
+    ) async {
+      final reportes = <LimitesMapa>[];
+      await montar(tester, reportes.add);
+      await tester.pump();
+
+      expect(reportes, hasLength(1));
+      expect(reportes.single.norte, greaterThan(_centro.latitud));
+      expect(reportes.single.sur, lessThan(_centro.latitud));
+      expect(reportes.single.este, greaterThan(_centro.longitud));
+      expect(reportes.single.oeste, lessThan(_centro.longitud));
+    });
+
+    testWidgets('reports new bounds when a drag ends, not before', (
+      tester,
+    ) async {
+      final reportes = <LimitesMapa>[];
+      await montar(tester, reportes.add);
+      await tester.pump();
+      final inicial = reportes.single;
+
+      final gesto = await tester.startGesture(
+        tester.getCenter(find.byType(FlutterMap)),
+      );
+      await gesto.moveBy(const Offset(-120, 0));
+      await tester.pump();
+      expect(reportes, hasLength(1));
+
+      await gesto.up();
+      await tester.pumpAndSettle();
+
+      expect(reportes.length, greaterThan(1));
+      expect(reportes.last.oeste, isNot(inicial.oeste));
+      expect(reportes.last.este, greaterThan(inicial.este));
+    });
+  });
 }

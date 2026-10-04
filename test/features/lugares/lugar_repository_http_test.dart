@@ -18,7 +18,12 @@ const _lugarJson = {
   'saturacion': 'MODERADO',
 };
 
-const _bbox = LimitesMapa(norte: -12.10, sur: -12.14, este: -77.00, oeste: -77.06);
+const _bbox = LimitesMapa(
+  norte: -12.10,
+  sur: -12.14,
+  este: -77.00,
+  oeste: -77.06,
+);
 
 void main() {
   late SessionService sesion;
@@ -38,53 +43,63 @@ void main() {
   tearDown(() => sesion.reiniciar());
 
   group('buscar', () {
-    test('GETs /api/lugares and parses items with the server message', () async {
-      final r = repo(200, {
-        'message': 'ok',
-        'data': {
-          'items': [
-            _lugarJson,
-            {..._lugarJson, 'id': 8, 'saturacion': 'SIN_INFORMACION'},
-          ],
-          'total': 2,
-        },
-      });
+    test(
+      'GETs /api/lugares and parses items with the server message',
+      () async {
+        final r = repo(200, {
+          'message': 'ok',
+          'data': {
+            'items': [
+              _lugarJson,
+              {..._lugarJson, 'id': 8, 'saturacion': 'SIN_INFORMACION'},
+            ],
+            'total': 2,
+          },
+        });
 
-      final res = await r.buscar(bbox: _bbox);
+        final res = await r.buscar(bbox: _bbox);
 
-      expect(visto!.method, 'GET');
-      expect(visto!.url.path, '/api/lugares');
-      expect(res.items.map((l) => l.id), [7, 8]);
-      expect(res.items.first.saturacion, NivelSaturacion.moderado);
-      expect(res.items.first.categoria, CategoriaLugar.parque);
-      expect(res.items.last.saturacion, NivelSaturacion.sinInformacion);
-    });
+        expect(visto!.method, 'GET');
+        expect(visto!.url.path, '/api/lugares');
+        expect(res.items.map((l) => l.id), [7, 8]);
+        expect(res.items.first.saturacion, NivelSaturacion.moderado);
+        expect(res.items.first.categoria, CategoriaLugar.parque);
+        expect(res.items.last.saturacion, NivelSaturacion.sinInformacion);
+      },
+    );
 
     test('serializes bbox as minLng,minLat,maxLng,maxLat', () async {
-      final r = repo(200, {'data': {'items': []}});
+      final r = repo(200, {
+        'data': {'items': []},
+      });
 
       await r.buscar(bbox: _bbox);
 
       expect(visto!.url.queryParameters, {'bbox': '-77.06,-12.14,-77.0,-12.1'});
     });
 
-    test('serializes q, categoria, nivel and limite; omits the absent ones', () async {
-      final r = repo(200, {'data': {'items': []}});
+    test(
+      'serializes q, categoria, nivel and limite; omits the absent ones',
+      () async {
+        final r = repo(200, {
+          'data': {'items': []},
+        });
 
-      await r.buscar(
-        q: 'Par',
-        categoria: CategoriaLugar.centroComercial,
-        nivel: NivelSaturacion.sinInformacion,
-        limite: 20,
-      );
+        await r.buscar(
+          q: 'Par',
+          categoria: CategoriaLugar.centroComercial,
+          nivel: NivelSaturacion.sinInformacion,
+          limite: 20,
+        );
 
-      expect(visto!.url.queryParameters, {
-        'q': 'Par',
-        'categoria': 'CENTRO_COMERCIAL',
-        'nivel': 'SIN_INFORMACION',
-        'limite': '20',
-      });
-    });
+        expect(visto!.url.queryParameters, {
+          'q': 'Par',
+          'categoria': 'CENTRO_COMERCIAL',
+          'nivel': 'SIN_INFORMACION',
+          'limite': '20',
+        });
+      },
+    );
 
     test('an empty result keeps the server message', () async {
       final r = repo(200, {
@@ -120,12 +135,17 @@ void main() {
 
     test('a network failure becomes ApiException.sinConexion', () async {
       final r = LugarRepositoryHttp(
-        apiClientPrueba((_) async => throw http.ClientException('caído'), sesion),
+        apiClientPrueba(
+          (_) async => throw http.ClientException('caído'),
+          sesion,
+        ),
       );
 
       await expectLater(
         r.buscar(bbox: _bbox),
-        throwsA(isA<ApiException>().having((e) => e.esSinConexion, 'offline', true)),
+        throwsA(
+          isA<ApiException>().having((e) => e.esSinConexion, 'offline', true),
+        ),
       );
     });
   });
@@ -177,12 +197,17 @@ void main() {
 
     test('a network failure becomes ApiException.sinConexion', () async {
       final r = LugarRepositoryHttp(
-        apiClientPrueba((_) async => throw http.ClientException('caído'), sesion),
+        apiClientPrueba(
+          (_) async => throw http.ClientException('caído'),
+          sesion,
+        ),
       );
 
       await expectLater(
         r.obtener(1),
-        throwsA(isA<ApiException>().having((e) => e.esSinConexion, 'offline', true)),
+        throwsA(
+          isA<ApiException>().having((e) => e.esSinConexion, 'offline', true),
+        ),
       );
     });
   });
