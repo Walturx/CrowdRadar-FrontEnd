@@ -15,8 +15,9 @@ class MisReportesCubit extends Cubit<MisReportesState> {
 
   int _pagina = 1;
 
-  /// Bumped by every [cargar]; a "load more" that started before it is stale
-  /// (it would append to a list that was just replaced) and is discarded.
+  /// Bumped when a [cargar] replaces the list; a "load more" that started
+  /// before it is stale (it would append to a list that was just replaced) and
+  /// is discarded. A refresh that fails replaces nothing, so it does not bump.
   int _epoca = 0;
 
   bool _cargando = false;
@@ -28,12 +29,13 @@ class MisReportesCubit extends Cubit<MisReportesState> {
   Future<void> cargar() async {
     if (isClosed || _cargando) return;
     _cargando = true;
-    final epoca = ++_epoca;
+    final epoca = _epoca;
     final actual = state;
     if (actual is! MisReportesCargado) emit(const MisReportesCargando());
     try {
       final pagina = await _repositorio.listarMios(page: 1, size: _size);
       if (isClosed || epoca != _epoca) return;
+      _epoca++;
       _pagina = pagina.page;
       emit(
         pagina.items.isEmpty
@@ -42,12 +44,16 @@ class MisReportesCubit extends Cubit<MisReportesState> {
       );
     } catch (e) {
       if (isClosed) return;
+      // Judge by the current state: a load more may have landed meanwhile.
+      final ahora = state;
       emit(
-        actual is MisReportesCargado
+        ahora is MisReportesCargado
             ? MisReportesCargado(
-                actual.reportes,
-                hayMas: actual.hayMas,
-                errorMas: mensajeDeError(e),
+                ahora.reportes,
+                hayMas: ahora.hayMas,
+                cargandoMas: ahora.cargandoMas,
+                errorMas: ahora.errorMas,
+                errorActualizacion: mensajeDeError(e),
               )
             : MisReportesError(
                 mensajeDeError(e),

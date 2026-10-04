@@ -60,15 +60,16 @@ class _Lista extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 24),
       children: [
         for (final r in estado.reportes) _Fila(r),
-        if (estado.errorMas != null)
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              estado.errorMas!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.danger),
+        for (final error in [estado.errorActualizacion, estado.errorMas])
+          if (error != null)
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                error,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.danger),
+              ),
             ),
-          ),
         if (estado.cargandoMas)
           const Padding(padding: EdgeInsets.all(12), child: Cargando())
         else if (estado.hayMas)

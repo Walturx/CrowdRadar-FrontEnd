@@ -14,25 +14,24 @@ import 'package:mocktail/mocktail.dart';
 class _MockRepo extends Mock implements ReporteRepository {}
 
 ReporteSaturacion _r(int id) => ReporteSaturacion(
-      id: id,
-      lugarId: id,
-      nivel: NivelSaturacion.moderado,
-      lugarNombre: 'Lugar $id',
-      puntosOtorgados: 10,
-    );
+  id: id,
+  lugarId: id,
+  nivel: NivelSaturacion.moderado,
+  lugarNombre: 'Lugar $id',
+  puntosOtorgados: 10,
+);
 
 Pagina<ReporteSaturacion> _pagina(
   List<int> ids, {
   int page = 1,
   int totalPaginas = 1,
-}) =>
-    Pagina(
-      items: [for (final i in ids) _r(i)],
-      page: page,
-      size: 2,
-      total: ids.length,
-      totalPaginas: totalPaginas,
-    );
+}) => Pagina(
+  items: [for (final i in ids) _r(i)],
+  page: page,
+  size: 2,
+  total: ids.length,
+  totalPaginas: totalPaginas,
+);
 
 void main() {
   late _MockRepo repo;
@@ -43,8 +42,9 @@ void main() {
 
   blocTest<MisReportesCubit, MisReportesState>(
     'cargar emits Cargando then Cargado with the first page',
-    setUp: () => when(() => repo.listarMios(page: 1, size: 2))
-        .thenAnswer((_) async => _pagina([2, 1], totalPaginas: 2)),
+    setUp: () => when(
+      () => repo.listarMios(page: 1, size: 2),
+    ).thenAnswer((_) async => _pagina([2, 1], totalPaginas: 2)),
     build: cubit,
     act: (c) => c.cargar(),
     expect: () => [
@@ -55,8 +55,9 @@ void main() {
 
   blocTest<MisReportesCubit, MisReportesState>(
     'cargar with no reports emits Vacio',
-    setUp: () => when(() => repo.listarMios(page: 1, size: 2))
-        .thenAnswer((_) async => _pagina([], totalPaginas: 0)),
+    setUp: () => when(
+      () => repo.listarMios(page: 1, size: 2),
+    ).thenAnswer((_) async => _pagina([], totalPaginas: 0)),
     build: cubit,
     act: (c) => c.cargar(),
     expect: () => [const MisReportesCargando(), const MisReportesVacio()],
@@ -90,11 +91,12 @@ void main() {
   blocTest<MisReportesCubit, MisReportesState>(
     'cargarMas appends the next page and clears hayMas on the last one',
     setUp: () {
-      when(() => repo.listarMios(page: 1, size: 2))
-          .thenAnswer((_) async => _pagina([3, 2], totalPaginas: 2));
-      when(() => repo.listarMios(page: 2, size: 2)).thenAnswer(
-        (_) async => _pagina([1], page: 2, totalPaginas: 2),
-      );
+      when(
+        () => repo.listarMios(page: 1, size: 2),
+      ).thenAnswer((_) async => _pagina([3, 2], totalPaginas: 2));
+      when(
+        () => repo.listarMios(page: 2, size: 2),
+      ).thenAnswer((_) async => _pagina([1], page: 2, totalPaginas: 2));
     },
     build: cubit,
     act: (c) async {
@@ -110,8 +112,9 @@ void main() {
 
   blocTest<MisReportesCubit, MisReportesState>(
     'cargarMas with no more pages does nothing',
-    setUp: () => when(() => repo.listarMios(page: 1, size: 2))
-        .thenAnswer((_) async => _pagina([2, 1])),
+    setUp: () => when(
+      () => repo.listarMios(page: 1, size: 2),
+    ).thenAnswer((_) async => _pagina([2, 1])),
     build: cubit,
     act: (c) async {
       await c.cargar();
@@ -126,10 +129,12 @@ void main() {
   blocTest<MisReportesCubit, MisReportesState>(
     'a failing cargarMas keeps the list and reports the error',
     setUp: () {
-      when(() => repo.listarMios(page: 1, size: 2))
-          .thenAnswer((_) async => _pagina([2, 1], totalPaginas: 2));
-      when(() => repo.listarMios(page: 2, size: 2))
-          .thenThrow(const ApiException(status: 500, message: 'caído'));
+      when(
+        () => repo.listarMios(page: 1, size: 2),
+      ).thenAnswer((_) async => _pagina([2, 1], totalPaginas: 2));
+      when(
+        () => repo.listarMios(page: 2, size: 2),
+      ).thenThrow(const ApiException(status: 500, message: 'caído'));
     },
     build: cubit,
     act: (c) async {
@@ -144,10 +149,12 @@ void main() {
 
   test('cargarMas while a page is loading is ignored', () async {
     final siguiente = Completer<Pagina<ReporteSaturacion>>();
-    when(() => repo.listarMios(page: 1, size: 2))
-        .thenAnswer((_) async => _pagina([2, 1], totalPaginas: 3));
-    when(() => repo.listarMios(page: 2, size: 2))
-        .thenAnswer((_) => siguiente.future);
+    when(
+      () => repo.listarMios(page: 1, size: 2),
+    ).thenAnswer((_) async => _pagina([2, 1], totalPaginas: 3));
+    when(
+      () => repo.listarMios(page: 2, size: 2),
+    ).thenAnswer((_) => siguiente.future);
     final c = cubit();
     await c.cargar();
 
@@ -198,8 +205,52 @@ void main() {
         MisReportesCargado([
           _r(2),
           _r(1),
-        ], errorMas: ApiException.mensajeSinConexion),
+        ], errorActualizacion: ApiException.mensajeSinConexion),
       ],
+    );
+
+    test(
+      'a failed refresh during cargarMas does not discard the valid page',
+      () async {
+        final siguiente = Completer<Pagina<ReporteSaturacion>>();
+        var primeras = 0;
+        when(() => repo.listarMios(page: 1, size: 2)).thenAnswer((_) async {
+          if (primeras++ == 0) return _pagina([2, 1], totalPaginas: 3);
+          throw const ApiException.sinConexion();
+        });
+        when(
+          () => repo.listarMios(page: 2, size: 2),
+        ).thenAnswer((_) => siguiente.future);
+        final c = cubit();
+        await c.cargar();
+
+        final mas = c.cargarMas();
+        await c.cargar(); // fails
+        siguiente.complete(_pagina([0], page: 2, totalPaginas: 3));
+        await mas;
+
+        final estado = c.state as MisReportesCargado;
+        expect(estado.reportes, [_r(2), _r(1), _r(0)]);
+        expect(estado.errorMas, isNull);
+      },
+    );
+
+    test(
+      'a failed refresh reports errorActualizacion, never errorMas',
+      () async {
+        var n = 0;
+        when(() => repo.listarMios(page: 1, size: 2)).thenAnswer((_) async {
+          if (n++ == 0) return _pagina([2, 1]);
+          throw const ApiException(status: 500, message: 'caído');
+        });
+        final c = cubit();
+        await c.cargar();
+        await c.cargar();
+
+        final estado = c.state as MisReportesCargado;
+        expect(estado.errorActualizacion, 'caído');
+        expect(estado.errorMas, isNull);
+      },
     );
 
     test('cargar during cargarMas is not dropped and wins the race', () async {
