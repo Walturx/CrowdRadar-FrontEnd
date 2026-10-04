@@ -32,7 +32,10 @@ class SecureTokenStorage implements TokenStorage {
   @override
   Future<void> guardar(String token, UsuarioSesion usuario) async {
     await _storage.write(key: claveToken, value: token);
-    await _storage.write(key: claveUsuario, value: jsonEncode(usuario.toJson()));
+    await _storage.write(
+      key: claveUsuario,
+      value: jsonEncode(usuario.toJson()),
+    );
   }
 
   @override

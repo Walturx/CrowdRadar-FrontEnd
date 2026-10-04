@@ -49,11 +49,11 @@ class CambiarPasswordFallido extends CambiarPasswordState {
 
   @override
   List<Object?> get props => [
-        mensaje,
-        requisitosIncumplidos,
-        codigo,
-        esSinConexion,
-        resultadoIncierto,
-        reintentarEnSegundos,
-      ];
+    mensaje,
+    requisitosIncumplidos,
+    codigo,
+    esSinConexion,
+    resultadoIncierto,
+    reintentarEnSegundos,
+  ];
 }

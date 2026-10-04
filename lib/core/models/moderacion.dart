@@ -48,13 +48,13 @@ class UsuarioAdmin extends Equatable {
   });
 
   factory UsuarioAdmin.fromJson(Map<String, dynamic> j) => UsuarioAdmin(
-        id: aInt(j['id']),
-        nombre: j['nombre'] as String? ?? '',
-        apellido: j['apellido'] as String? ?? '',
-        email: j['email'] as String? ?? '',
-        status: j['status'] as String? ?? '',
-        puntosKarma: aInt(j['puntosKarma']),
-      );
+    id: aInt(j['id']),
+    nombre: j['nombre'] as String? ?? '',
+    apellido: j['apellido'] as String? ?? '',
+    email: j['email'] as String? ?? '',
+    status: j['status'] as String? ?? '',
+    puntosKarma: aInt(j['puntosKarma']),
+  );
 
   bool get estaSuspendido => status == 'SUSPENDIDO';
 

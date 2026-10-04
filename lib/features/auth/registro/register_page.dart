@@ -54,13 +54,13 @@ class _RegisterViewState extends State<_RegisterView> {
   void _onRegister(BuildContext context) {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<RegistroCubit>().registrar(
-            nombre: _nombreCtrl.text.trim(),
-            apellido: _apellidoCtrl.text.trim(),
-            email: _emailCtrl.text.trim(),
-            password: _passwordCtrl.text,
-            telefono: _telefonoCtrl.text.trim(),
-            distrito: _distritoCtrl.text.trim(),
-          );
+        nombre: _nombreCtrl.text.trim(),
+        apellido: _apellidoCtrl.text.trim(),
+        email: _emailCtrl.text.trim(),
+        password: _passwordCtrl.text,
+        telefono: _telefonoCtrl.text.trim(),
+        distrito: _distritoCtrl.text.trim(),
+      );
     }
   }
 
@@ -74,20 +74,19 @@ class _RegisterViewState extends State<_RegisterView> {
           );
           context.pop();
         } else if (state is RegistroFallido) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.mensaje)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.mensaje)));
         }
       },
       builder: (context, state) {
         if (state is RegistroEnviando) {
-          return const Scaffold(
-            body: Cargando(),
-          );
+          return const Scaffold(body: Cargando());
         }
 
-        final errores =
-            state is RegistroFallido ? state.erroresPorCampo : const <String, String>{};
+        final errores = state is RegistroFallido
+            ? state.erroresPorCampo
+            : const <String, String>{};
 
         return Scaffold(
           appBar: AppBar(title: const Text('Crear cuenta')),
@@ -177,7 +176,10 @@ class _RegisterViewState extends State<_RegisterView> {
                     validator: Validadores.distrito,
                   ),
                   const SizedBox(height: 24),
-                  BotonPrincipal(texto: 'Registrarme', onPressed: () => _onRegister(context)),
+                  BotonPrincipal(
+                    texto: 'Registrarme',
+                    onPressed: () => _onRegister(context),
+                  ),
                 ],
               ),
             ),

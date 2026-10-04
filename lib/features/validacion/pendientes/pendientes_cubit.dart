@@ -4,6 +4,7 @@ import '../../../core/map/centro_compartido.dart';
 import '../../../core/models/validacion.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/mensaje_error.dart';
+import '../../../core/utils/mensaje_espera.dart';
 import '../data/validacion_repository.dart';
 import 'pendientes_state.dart';
 
@@ -33,7 +34,19 @@ class PendientesCubit extends Cubit<PendientesState> {
         lng: centro.longitud,
       );
       if (isClosed) return;
-      emit(PendientesCargado(reportes: pagina.items));
+      final ahora = state;
+      emit(
+        ahora is PendientesCargado
+            ? PendientesCargado(
+                reportes: [
+                  for (final r in pagina.items)
+                    if (!ahora.votando.contains(r.id)) r,
+                ],
+                votando: ahora.votando,
+                ultimoVoto: ahora.ultimoVoto,
+              )
+            : PendientesCargado(reportes: pagina.items),
+      );
     } catch (e) {
       if (isClosed) return;
       final ahora = state;
@@ -82,7 +95,9 @@ class PendientesCubit extends Cubit<PendientesState> {
       final definitivo = const {404, 409, 422}.contains(e.status);
       _terminar(
         reporte.id,
-        aviso: e.code == 'VALIDACION_DUPLICADA'
+        aviso: esLimiteDeIntentos(e)
+            ? mensajeEspera(e.reintentarEnSegundos, sujeto: sujetoAcciones)
+            : e.code == 'VALIDACION_DUPLICADA'
             ? mensajeYaParticipo
             : mensajeDeError(e),
         devolver: definitivo ? null : (reporte, posicion),

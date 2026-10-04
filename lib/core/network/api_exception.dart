@@ -35,11 +35,11 @@ class ApiException implements Exception {
 
   /// Network failure or timeout (no HTTP status).
   const ApiException.sinConexion()
-      : status = 0,
-        message = mensajeSinConexion,
-        code = null,
-        errors = const [],
-        reintentarEnSegundos = null;
+    : status = 0,
+      message = mensajeSinConexion,
+      code = null,
+      errors = const [],
+      reintentarEnSegundos = null;
 
   /// Builds from a decoded error body; tolerant to missing or odd shapes.
   factory ApiException.desdeJson(

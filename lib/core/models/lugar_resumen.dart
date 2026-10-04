@@ -26,17 +26,25 @@ class LugarResumen extends Equatable {
   });
 
   factory LugarResumen.fromJson(Map<String, dynamic> j) => LugarResumen(
-        id: aInt(j['id']),
-        nombre: j['nombre'] as String? ?? '',
-        categoria: enumDesdeApi(CategoriaLugar.values, j['categoria']),
-        latitud: aDouble(j['latitud']),
-        longitud: aDouble(j['longitud']),
-        saturacion: NivelSaturacion.desdeApi(j['saturacion']),
-        distanciaMetros:
-            j['distanciaMetros'] is num ? aDouble(j['distanciaMetros']) : null,
-      );
+    id: aInt(j['id']),
+    nombre: j['nombre'] as String? ?? '',
+    categoria: enumDesdeApi(CategoriaLugar.values, j['categoria']),
+    latitud: aDouble(j['latitud']),
+    longitud: aDouble(j['longitud']),
+    saturacion: NivelSaturacion.desdeApi(j['saturacion']),
+    distanciaMetros: j['distanciaMetros'] is num
+        ? aDouble(j['distanciaMetros'])
+        : null,
+  );
 
   @override
-  List<Object?> get props =>
-      [id, nombre, categoria, latitud, longitud, saturacion, distanciaMetros];
+  List<Object?> get props => [
+    id,
+    nombre,
+    categoria,
+    latitud,
+    longitud,
+    saturacion,
+    distanciaMetros,
+  ];
 }

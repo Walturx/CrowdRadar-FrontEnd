@@ -15,7 +15,10 @@ void mostrarAviso(
         content: Text(texto),
         action: etiquetaAccion == null
             ? null
-            : SnackBarAction(label: etiquetaAccion, onPressed: alAccionar ?? () {}),
+            : SnackBarAction(
+                label: etiquetaAccion,
+                onPressed: alAccionar ?? () {},
+              ),
       ),
     );
 }

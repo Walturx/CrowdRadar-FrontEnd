@@ -24,9 +24,7 @@ class CrBottomNav extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        border: Border(
-          top: BorderSide(color: AppColors.borderNav, width: 1),
-        ),
+        border: Border(top: BorderSide(color: AppColors.borderNav, width: 1)),
       ),
       child: SafeArea(
         top: false,

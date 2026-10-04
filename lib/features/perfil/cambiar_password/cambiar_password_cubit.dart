@@ -22,7 +22,7 @@ class CambiarPasswordCubit extends Cubit<CambiarPasswordState> {
   final PerfilRepository _repositorio;
 
   CambiarPasswordCubit(this._repositorio)
-      : super(const CambiarPasswordInicial());
+    : super(const CambiarPasswordInicial());
 
   /// A submit while another is in flight is ignored.
   bool _enVuelo = false;
@@ -39,10 +39,12 @@ class CambiarPasswordCubit extends Cubit<CambiarPasswordState> {
     }
     final incumplidos = requisitosIncumplidos(nueva);
     if (incumplidos.isNotEmpty) {
-      emit(CambiarPasswordFallido(
-        mensajeNoCumple,
-        requisitosIncumplidos: [for (final r in incumplidos) r.texto],
-      ));
+      emit(
+        CambiarPasswordFallido(
+          mensajeNoCumple,
+          requisitosIncumplidos: [for (final r in incumplidos) r.texto],
+        ),
+      );
       return;
     }
     _enVuelo = true;
@@ -57,21 +59,23 @@ class CambiarPasswordCubit extends Cubit<CambiarPasswordState> {
     } catch (e) {
       // Offline or timed out after sending: the server may have applied it.
       final incierto = esErrorSinConexion(e);
-      _emitir(CambiarPasswordFallido(
-        incierto
-            ? mensajeResultadoIncierto
-            : esLimiteDeIntentos(e)
-                ? mensajeEspera(esperaDeError(e))
-                : mensajeDeError(e),
-        // Not `erroresPorCampo`: several unmet rules share one field.
-        requisitosIncumplidos: e is ApiException
-            ? [for (final error in e.errors) error.mensaje]
-            : const [],
-        codigo: codigoDeError(e),
-        esSinConexion: incierto,
-        resultadoIncierto: incierto,
-        reintentarEnSegundos: esperaDeError(e),
-      ));
+      _emitir(
+        CambiarPasswordFallido(
+          incierto
+              ? mensajeResultadoIncierto
+              : esLimiteDeIntentos(e)
+              ? mensajeEspera(esperaDeError(e))
+              : mensajeDeError(e),
+          // Not `erroresPorCampo`: several unmet rules share one field.
+          requisitosIncumplidos: e is ApiException
+              ? [for (final error in e.errors) error.mensaje]
+              : const [],
+          codigo: codigoDeError(e),
+          esSinConexion: incierto,
+          resultadoIncierto: incierto,
+          reintentarEnSegundos: esperaDeError(e),
+        ),
+      );
     } finally {
       _enVuelo = false;
     }

@@ -44,7 +44,10 @@ class _LoginViewState extends State<_LoginView> {
 
   void _onLogin(BuildContext context) {
     if (_formKey.currentState?.validate() ?? false) {
-      context.read<LoginCubit>().iniciarSesion(_emailCtrl.text.trim(), _passwordCtrl.text);
+      context.read<LoginCubit>().iniciarSesion(
+        _emailCtrl.text.trim(),
+        _passwordCtrl.text,
+      );
     }
   }
 
@@ -55,9 +58,9 @@ class _LoginViewState extends State<_LoginView> {
         if (state is LoginExitoso) {
           context.go(Rutas.mapa);
         } else if (state is LoginFallido) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.mensaje)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.mensaje)));
         }
       },
       builder: (context, state) {
@@ -99,68 +102,73 @@ class _LoginViewState extends State<_LoginView> {
                     ),
                     const SizedBox(height: 20),
                     TextFormField(
-                    controller: _emailCtrl,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(labelText: 'Correo electrónico'),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Ingresá tu correo';
-                      }
-                      return Validadores.correo(value);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordCtrl,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Contraseña'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Ingresá tu contraseña';
-                      }
-                      return null;
-                    },
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () => context.push(Rutas.recuperar),
-                      child: const Text('¿Olvidaste tu contraseña?'),
+                      controller: _emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Correo electrónico',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Ingresá tu correo';
+                        }
+                        return Validadores.correo(value);
+                      },
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  BotonConEspera(
-                    key: const Key('boton-iniciar-sesion'),
-                    texto: 'Iniciar sesión',
-                    segundos:
-                        state is LoginFallido ? state.reintentarEnSegundos : null,
-                    onPressed: () => _onLogin(context),
-                  ),
-                  const SizedBox(height: 4),
-                  Center(
-                    child: TextButton(
-                      onPressed: () => context.push(Rutas.registro),
-                      child: Text.rich(
-                        TextSpan(
-                          text: '¿No tienes cuenta? ',
-                          style: const TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          children: const [
-                            TextSpan(
-                              text: 'Regístrate',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w700,
-                              ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _passwordCtrl,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Contraseña',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Ingresá tu contraseña';
+                        }
+                        return null;
+                      },
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => context.push(Rutas.recuperar),
+                        child: const Text('¿Olvidaste tu contraseña?'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    BotonConEspera(
+                      key: const Key('boton-iniciar-sesion'),
+                      texto: 'Iniciar sesión',
+                      segundos: state is LoginFallido
+                          ? state.reintentarEnSegundos
+                          : null,
+                      onPressed: () => _onLogin(context),
+                    ),
+                    const SizedBox(height: 4),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => context.push(Rutas.registro),
+                        child: Text.rich(
+                          TextSpan(
+                            text: '¿No tienes cuenta? ',
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
                             ),
-                          ],
+                            children: const [
+                              TextSpan(
+                                text: 'Regístrate',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   ],
                 ),
               ),

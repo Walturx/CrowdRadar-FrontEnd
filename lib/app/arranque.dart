@@ -53,7 +53,9 @@ class _ArranqueAppState extends State<ArranqueApp> {
           debugShowCheckedModeBanner: false,
           home: snapshot.hasError
               ? PantallaErrorInicio(onReintentar: _reintentar)
-              : const Scaffold(body: Center(child: CircularProgressIndicator())),
+              : const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                ),
         );
       },
     );
@@ -75,7 +77,10 @@ class PantallaErrorInicio extends StatelessWidget {
           children: [
             const Text('No se pudo iniciar la aplicación'),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: onReintentar, child: const Text('Reintentar')),
+            ElevatedButton(
+              onPressed: onReintentar,
+              child: const Text('Reintentar'),
+            ),
           ],
         ),
       ),

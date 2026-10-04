@@ -22,8 +22,13 @@ void main() {
       isTrue,
     );
     expect(
-      esLimiteDeIntentos(const ApiException(
-          status: 400, message: 'x', code: 'DEMASIADOS_INTENTOS')),
+      esLimiteDeIntentos(
+        const ApiException(
+          status: 400,
+          message: 'x',
+          code: 'DEMASIADOS_INTENTOS',
+        ),
+      ),
       isTrue,
     );
     expect(

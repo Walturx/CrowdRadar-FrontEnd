@@ -21,14 +21,19 @@ class Favorito extends Equatable {
   });
 
   factory Favorito.fromJson(Map<String, dynamic> j) => Favorito(
-        lugarId: aInt(j['lugarId']),
-        nombre: j['nombre'] as String? ?? '',
-        categoria: enumDesdeApi(CategoriaLugar.values, j['categoria']),
-        saturacion: NivelSaturacion.desdeApi(j['saturacion']),
-        alertasActivadas: j['alertasActivadas'] as bool? ?? false,
-      );
+    lugarId: aInt(j['lugarId']),
+    nombre: j['nombre'] as String? ?? '',
+    categoria: enumDesdeApi(CategoriaLugar.values, j['categoria']),
+    saturacion: NivelSaturacion.desdeApi(j['saturacion']),
+    alertasActivadas: j['alertasActivadas'] as bool? ?? false,
+  );
 
   @override
-  List<Object?> get props =>
-      [lugarId, nombre, categoria, saturacion, alertasActivadas];
+  List<Object?> get props => [
+    lugarId,
+    nombre,
+    categoria,
+    saturacion,
+    alertasActivadas,
+  ];
 }

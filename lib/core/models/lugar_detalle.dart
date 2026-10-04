@@ -20,11 +20,11 @@ class SaturacionLugar extends Equatable {
   });
 
   factory SaturacionLugar.fromJson(Map<String, dynamic> j) => SaturacionLugar(
-        nivel: NivelSaturacion.desdeApi(j['nivel']),
-        actualizadoEn: aFecha(j['actualizadoEn']),
-        reportesRecientes: aInt(j['reportesRecientes']),
-        mensaje: j['mensaje'] as String?,
-      );
+    nivel: NivelSaturacion.desdeApi(j['nivel']),
+    actualizadoEn: aFecha(j['actualizadoEn']),
+    reportesRecientes: aInt(j['reportesRecientes']),
+    mensaje: j['mensaje'] as String?,
+  );
 
   @override
   List<Object?> get props => [nivel, actualizadoEn, reportesRecientes, mensaje];
@@ -60,33 +60,33 @@ class LugarDetalle extends Equatable {
   });
 
   factory LugarDetalle.fromJson(Map<String, dynamic> j) => LugarDetalle(
-        id: aInt(j['id']),
-        nombre: j['nombre'] as String? ?? '',
-        categoria: enumDesdeApi(CategoriaLugar.values, j['categoria']),
-        direccion: j['direccion'] as String?,
-        latitud: aDouble(j['latitud']),
-        longitud: aDouble(j['longitud']),
-        abiertoAhora: j['abiertoAhora'] as bool?,
-        horarioAtencion: j['horarioAtencion'] as String?,
-        urlFoto: j['urlFoto'] as String?,
-        saturacion: SaturacionLugar.fromJson(aMapa(j['saturacion'])),
-        esFavorito: j['esFavorito'] as bool? ?? false,
-        alertasActivadas: j['alertasActivadas'] as bool? ?? false,
-      );
+    id: aInt(j['id']),
+    nombre: j['nombre'] as String? ?? '',
+    categoria: enumDesdeApi(CategoriaLugar.values, j['categoria']),
+    direccion: j['direccion'] as String?,
+    latitud: aDouble(j['latitud']),
+    longitud: aDouble(j['longitud']),
+    abiertoAhora: j['abiertoAhora'] as bool?,
+    horarioAtencion: j['horarioAtencion'] as String?,
+    urlFoto: j['urlFoto'] as String?,
+    saturacion: SaturacionLugar.fromJson(aMapa(j['saturacion'])),
+    esFavorito: j['esFavorito'] as bool? ?? false,
+    alertasActivadas: j['alertasActivadas'] as bool? ?? false,
+  );
 
   @override
   List<Object?> get props => [
-        id,
-        nombre,
-        categoria,
-        direccion,
-        latitud,
-        longitud,
-        abiertoAhora,
-        horarioAtencion,
-        urlFoto,
-        saturacion,
-        esFavorito,
-        alertasActivadas,
-      ];
+    id,
+    nombre,
+    categoria,
+    direccion,
+    latitud,
+    longitud,
+    abiertoAhora,
+    horarioAtencion,
+    urlFoto,
+    saturacion,
+    esFavorito,
+    alertasActivadas,
+  ];
 }

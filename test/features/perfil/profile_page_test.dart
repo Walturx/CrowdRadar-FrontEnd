@@ -70,9 +70,9 @@ void main() {
   testWidgets('a load failure shows the message and a Reintentar button', (
     tester,
   ) async {
-    when(() => repo.obtener()).thenThrow(
-      const ApiException(status: 500, message: 'Servidor caído'),
-    );
+    when(
+      () => repo.obtener(),
+    ).thenThrow(const ApiException(status: 500, message: 'Servidor caído'));
     await abrir(tester);
 
     expect(find.text('Servidor caído'), findsOneWidget);
@@ -147,8 +147,9 @@ void main() {
 
   group('karma and reports (HU 4.2 / 4.3)', () {
     testWidgets('shows the accumulated karma points', (tester) async {
-      when(() => repo.obtener())
-          .thenAnswer((_) async => _usuario.copyWith(puntosKarma: 1280));
+      when(
+        () => repo.obtener(),
+      ).thenAnswer((_) async => _usuario.copyWith(puntosKarma: 1280));
       await abrir(tester);
 
       expect(tarjetaKarma(), findsOneWidget);
@@ -194,9 +195,9 @@ void main() {
 
     testWidgets('reloads when its tab becomes active again', (tester) async {
       var karma = 100;
-      when(() => repo.obtener()).thenAnswer(
-        (_) async => _usuario.copyWith(puntosKarma: karma),
-      );
+      when(
+        () => repo.obtener(),
+      ).thenAnswer((_) async => _usuario.copyWith(puntosKarma: karma));
       final activa = ValueNotifier(true);
       await abrir(
         tester,

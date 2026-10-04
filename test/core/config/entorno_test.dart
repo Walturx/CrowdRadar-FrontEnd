@@ -21,9 +21,10 @@ File _pubspec() {
 void main() {
   test('the shown app version matches pubspec.yaml', () {
     final pubspec = _pubspec().readAsStringSync();
-    final version = RegExp(r'^version:\s*([^+\s]+)', multiLine: true)
-        .firstMatch(pubspec)!
-        .group(1);
+    final version = RegExp(
+      r'^version:\s*([^+\s]+)',
+      multiLine: true,
+    ).firstMatch(pubspec)!.group(1);
 
     expect(Entorno.version, version);
   });

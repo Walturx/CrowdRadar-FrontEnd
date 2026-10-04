@@ -27,6 +27,28 @@ void main() {
     () => repo.denunciar(31, any(), detalle: any(named: 'detalle')),
   ).thenAnswer((_) async {});
 
+  test('429 keeps the form with the wait message', () async {
+    when(
+      () => repo.denunciar(31, any(), detalle: any(named: 'detalle')),
+    ).thenThrow(
+      const ApiException(
+        status: 429,
+        message: 'x',
+        code: 'DEMASIADAS_SOLICITUDES',
+        reintentarEnSegundos: 3600,
+      ),
+    );
+
+    await cubit.enviar(MotivoDenuncia.spam, '');
+
+    expect(
+      cubit.state,
+      const DenunciarFormulario(
+        error: 'Demasiadas acciones seguidas, probá en 60 minutos',
+      ),
+    );
+  });
+
   test('without a motivo it explains and does not call the API', () async {
     await cubit.enviar(null, '');
 

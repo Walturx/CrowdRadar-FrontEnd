@@ -155,34 +155,37 @@ class Dependencias {
   ) {
     final karma = KarmaFake();
     return (
-    auth: AuthRepositoryFake(sesion, comportamiento: comportamiento),
-    perfil: PerfilRepositoryFake(
-      sesion,
-      comportamiento: comportamiento,
-      karma: karma,
-    ),
-    lugar: LugarRepositoryFake(comportamiento: comportamiento),
-    reporte: ReporteRepositoryFake(
-      comportamiento: comportamiento,
-      karma: karma,
-      sesion: sesion,
-    ),
-    analitica: AnaliticaRepositoryFake(comportamiento: comportamiento),
-    validacion: ValidacionRepositoryFake(
-      comportamiento: comportamiento,
-      karma: karma,
-      sesion: sesion,
-    ),
-    favorito: FavoritoRepositoryFake(
-      comportamiento: comportamiento,
-      sesion: sesion,
-    ),
-    alerta: AlertaRepositoryFake(comportamiento: comportamiento, sesion: sesion),
-    exploracion: ExploracionRepositoryFake(
-      comportamiento: comportamiento,
-      sesion: sesion,
-    ),
-    moderacion: ModeracionRepositoryFake(comportamiento: comportamiento),
+      auth: AuthRepositoryFake(sesion, comportamiento: comportamiento),
+      perfil: PerfilRepositoryFake(
+        sesion,
+        comportamiento: comportamiento,
+        karma: karma,
+      ),
+      lugar: LugarRepositoryFake(comportamiento: comportamiento),
+      reporte: ReporteRepositoryFake(
+        comportamiento: comportamiento,
+        karma: karma,
+        sesion: sesion,
+      ),
+      analitica: AnaliticaRepositoryFake(comportamiento: comportamiento),
+      validacion: ValidacionRepositoryFake(
+        comportamiento: comportamiento,
+        karma: karma,
+        sesion: sesion,
+      ),
+      favorito: FavoritoRepositoryFake(
+        comportamiento: comportamiento,
+        sesion: sesion,
+      ),
+      alerta: AlertaRepositoryFake(
+        comportamiento: comportamiento,
+        sesion: sesion,
+      ),
+      exploracion: ExploracionRepositoryFake(
+        comportamiento: comportamiento,
+        sesion: sesion,
+      ),
+      moderacion: ModeracionRepositoryFake(comportamiento: comportamiento),
     );
   }
 }

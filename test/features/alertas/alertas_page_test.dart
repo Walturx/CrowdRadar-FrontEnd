@@ -12,10 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../fakes/enrutador_falso.dart';
 
 void main() {
-  Future<AlertasCubit> abrir(
-    WidgetTester tester,
-    AlertaRepository repo,
-  ) async {
+  Future<AlertasCubit> abrir(WidgetTester tester, AlertaRepository repo) async {
     tester.view.physicalSize = const Size(800, 3200);
     addTearDown(tester.view.resetPhysicalSize);
     final cubit = AlertasCubit(repo);
@@ -51,10 +48,15 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text('Recibes esta alerta porque Parque Kennedy está en tus favoritos.'),
+      find.text(
+        'Recibes esta alerta porque Parque Kennedy está en tus favoritos.',
+      ),
       findsOneWidget,
     );
-    expect(find.text('Mercado de Surquillo ahora está Moderado'), findsOneWidget);
+    expect(
+      find.text('Mercado de Surquillo ahora está Moderado'),
+      findsOneWidget,
+    );
     expect(find.text('Saturado'), findsOneWidget, reason: 'new level badge');
     expect(find.text('Tranquilo'), findsOneWidget, reason: 'old level badge');
     expect(find.text('Moderado'), findsNWidgets(2));

@@ -36,16 +36,18 @@ class RecuperarCubit extends Cubit<RecuperarState> {
       _emitir(const RecuperarEnviado(mensajeNeutral));
     } catch (e) {
       final codigo = codigoDeError(e);
-      _emitir(RecuperarFallido(
-        codigo == codigoCuentaNoExiste
-            ? mensajeCuentaNoExiste
-            : esLimiteDeIntentos(e)
-                ? mensajeEspera(esperaDeError(e))
-                : mensajeDeError(e),
-        codigo: codigo,
-        esSinConexion: esErrorSinConexion(e),
-        reintentarEnSegundos: esperaDeError(e),
-      ));
+      _emitir(
+        RecuperarFallido(
+          codigo == codigoCuentaNoExiste
+              ? mensajeCuentaNoExiste
+              : esLimiteDeIntentos(e)
+              ? mensajeEspera(esperaDeError(e))
+              : mensajeDeError(e),
+          codigo: codigo,
+          esSinConexion: esErrorSinConexion(e),
+          reintentarEnSegundos: esperaDeError(e),
+        ),
+      );
     } finally {
       _enVuelo = false;
     }

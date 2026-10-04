@@ -50,6 +50,7 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
     _sesion,
     ubicacionInicial: widget.ubicacionInicial,
   );
+
   /// Shows the session-ended notice above the router, so it survives the
   /// redirect to the login.
   final _mensajero = GlobalKey<ScaffoldMessengerState>();

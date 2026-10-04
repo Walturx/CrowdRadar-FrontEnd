@@ -2,10 +2,9 @@ import '../core/session/sesion_state.dart';
 import 'rutas.dart';
 
 /// Drops a trailing slash so `/login/` and `/login` are the same route.
-String _normalizar(String ruta) =>
-    ruta.length > 1 && ruta.endsWith('/')
-        ? ruta.substring(0, ruta.length - 1)
-        : ruta;
+String _normalizar(String ruta) => ruta.length > 1 && ruta.endsWith('/')
+    ? ruta.substring(0, ruta.length - 1)
+    : ruta;
 
 bool _esAdmin(String ruta) =>
     ruta == Rutas.admin || ruta.startsWith('${Rutas.admin}/');

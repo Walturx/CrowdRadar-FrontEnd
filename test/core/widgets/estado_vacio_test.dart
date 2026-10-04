@@ -4,13 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('renders icon, title and subtitle', (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: EstadoVacio(
-        icon: Icons.favorite_border,
-        title: 'Título',
-        subtitle: 'Detalle',
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: EstadoVacio(
+          icon: Icons.favorite_border,
+          title: 'Título',
+          subtitle: 'Detalle',
+        ),
       ),
-    ));
+    );
 
     expect(find.byIcon(Icons.favorite_border), findsOneWidget);
     expect(find.text('Título'), findsOneWidget);

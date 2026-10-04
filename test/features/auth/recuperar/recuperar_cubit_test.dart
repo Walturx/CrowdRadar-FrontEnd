@@ -15,8 +15,9 @@ void main() {
   blocTest<RecuperarCubit, RecuperarState>(
     'HU 2.1 c2 success -> Enviando, Enviado with the neutral message',
     build: () {
-      when(() => repo.solicitarRecuperacion('ana@test.com'))
-          .thenAnswer((_) async {});
+      when(
+        () => repo.solicitarRecuperacion('ana@test.com'),
+      ).thenAnswer((_) async {});
       return RecuperarCubit(repo);
     },
     act: (c) => c.enviar(' ana@test.com '),
@@ -28,16 +29,24 @@ void main() {
         verify(() => repo.solicitarRecuperacion('ana@test.com')).called(1),
   );
 
-  test('the neutral message promises a link only if the email is registered', () {
-    expect(RecuperarCubit.mensajeNeutral, startsWith('Si el correo está registrado'));
-  });
+  test(
+    'the neutral message promises a link only if the email is registered',
+    () {
+      expect(
+        RecuperarCubit.mensajeNeutral,
+        startsWith('Si el correo está registrado'),
+      );
+    },
+  );
 
   for (final email in ['', '   ', 'sin-arroba', 'a@b']) {
     blocTest<RecuperarCubit, RecuperarState>(
       'invalid email "$email" -> Fallido without calling the repository',
       build: () => RecuperarCubit(repo),
       act: (c) => c.enviar(email),
-      expect: () => [const RecuperarFallido(RecuperarCubit.mensajeCorreoInvalido)],
+      expect: () => [
+        const RecuperarFallido(RecuperarCubit.mensajeCorreoInvalido),
+      ],
       verify: (_) => verifyNever(() => repo.solicitarRecuperacion(any())),
     );
   }
@@ -46,11 +55,7 @@ void main() {
     'HU 2.1 c3 404 CUENTA_NO_EXISTE -> the literal "not registered" message',
     build: () {
       when(() => repo.solicitarRecuperacion(any())).thenThrow(
-        const ApiException(
-          status: 404,
-          message: 'x',
-          code: 'CUENTA_NO_EXISTE',
-        ),
+        const ApiException(status: 404, message: 'x', code: 'CUENTA_NO_EXISTE'),
       );
       return RecuperarCubit(repo);
     },
@@ -91,8 +96,9 @@ void main() {
   blocTest<RecuperarCubit, RecuperarState>(
     'network failure -> Fallido(esSinConexion)',
     build: () {
-      when(() => repo.solicitarRecuperacion(any()))
-          .thenThrow(const ApiException.sinConexion());
+      when(
+        () => repo.solicitarRecuperacion(any()),
+      ).thenThrow(const ApiException.sinConexion());
       return RecuperarCubit(repo);
     },
     act: (c) => c.enviar('ana@test.com'),

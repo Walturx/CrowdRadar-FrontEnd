@@ -13,8 +13,7 @@ String mensajeDeLogin(Object error) {
     'CUENTA_NO_EXISTE' => 'No existe una cuenta con este correo',
     'CUENTA_SUSPENDIDA' => 'Tu cuenta está suspendida',
     'DEMASIADOS_INTENTOS' ||
-    'DEMASIADAS_SOLICITUDES' =>
-      mensajeEspera(esperaDeError(error)),
+    'DEMASIADAS_SOLICITUDES' => mensajeEspera(esperaDeError(error)),
     _ => mensajeDeError(error),
   };
 }
@@ -34,12 +33,14 @@ class LoginCubit extends Cubit<LoginState> {
     try {
       emit(LoginExitoso(await _repositorio.iniciarSesion(email, password)));
     } catch (e) {
-      emit(LoginFallido(
-        mensajeDeLogin(e),
-        codigo: codigoDeError(e),
-        esSinConexion: esErrorSinConexion(e),
-        reintentarEnSegundos: esperaDeError(e),
-      ));
+      emit(
+        LoginFallido(
+          mensajeDeLogin(e),
+          codigo: codigoDeError(e),
+          esSinConexion: esErrorSinConexion(e),
+          reintentarEnSegundos: esperaDeError(e),
+        ),
+      );
     } finally {
       _enVuelo = false;
     }

@@ -57,7 +57,9 @@ void main() {
     expect(find.text('Tranquilo'), findsOneWidget);
     expect(find.text('Moderado'), findsOneWidget);
     expect(find.text('Saturado'), findsOneWidget);
-    final primero = tester.getTopLeft(find.byKey(const Key('chip-categoria-todos')));
+    final primero = tester.getTopLeft(
+      find.byKey(const Key('chip-categoria-todos')),
+    );
     final segundo = tester.getTopLeft(find.text('Parques'));
     expect(primero.dx, lessThan(segundo.dx));
   });

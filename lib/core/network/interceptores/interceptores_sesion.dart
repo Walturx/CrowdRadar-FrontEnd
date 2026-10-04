@@ -8,8 +8,7 @@ import 'sesion_expirada_interceptor.dart';
 List<InterceptorApi> interceptoresDeSesion(
   SessionService sesion, {
   RegistroErrores registro = const RegistroErroresConsola(),
-}) =>
-    [
-      AuthInterceptor(() => sesion.token),
-      SesionExpiradaInterceptor(sesion.expirar, registro: registro),
-    ];
+}) => [
+  AuthInterceptor(() => sesion.token),
+  SesionExpiradaInterceptor(sesion.expirar, registro: registro),
+];

@@ -18,23 +18,22 @@ void main() {
     String mensaje, {
     String? codigo,
     int? espera,
-  }) =>
-      blocTest<LoginCubit, LoginState>(
-        descripcion,
-        build: () {
-          when(() => repo.iniciarSesion(any(), any())).thenThrow(error);
-          return LoginCubit(repo);
-        },
-        act: (c) => c.iniciarSesion('a@b.c', 'x'),
-        expect: () => [
-          const LoginEnviando(),
-          LoginFallido(
-            mensaje,
-            codigo: codigo ?? error.code,
-            reintentarEnSegundos: espera,
-          ),
-        ],
-      );
+  }) => blocTest<LoginCubit, LoginState>(
+    descripcion,
+    build: () {
+      when(() => repo.iniciarSesion(any(), any())).thenThrow(error);
+      return LoginCubit(repo);
+    },
+    act: (c) => c.iniciarSesion('a@b.c', 'x'),
+    expect: () => [
+      const LoginEnviando(),
+      LoginFallido(
+        mensaje,
+        codigo: codigo ?? error.code,
+        reintentarEnSegundos: espera,
+      ),
+    ],
+  );
 
   caso(
     'HU 1.1 c2 CREDENCIALES_INVALIDAS -> same text for wrong email or password',
@@ -48,11 +47,7 @@ void main() {
 
   caso(
     'HU 1.1 c3 CUENTA_NO_EXISTE (DETALLADA) -> literal "no account" text',
-    const ApiException(
-      status: 404,
-      message: 'x',
-      code: 'CUENTA_NO_EXISTE',
-    ),
+    const ApiException(status: 404, message: 'x', code: 'CUENTA_NO_EXISTE'),
     'No existe una cuenta con este correo',
   );
 

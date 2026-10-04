@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/models/validacion.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/mensaje_error.dart';
+import '../../../core/utils/mensaje_espera.dart';
 import '../data/validacion_repository.dart';
 import 'denunciar_state.dart';
 
@@ -48,7 +49,11 @@ class DenunciarCubit extends Cubit<DenunciarState> {
           e is ApiException && const {404, 409, 422}.contains(e.status);
       emit(
         !bloqueante
-            ? DenunciarFormulario(error: mensajeDeError(e))
+            ? DenunciarFormulario(
+                error: esLimiteDeIntentos(e)
+                    ? mensajeEspera(esperaDeError(e), sujeto: sujetoAcciones)
+                    : mensajeDeError(e),
+              )
             : DenunciarBloqueado(
                 codigoDeError(e) == 'DENUNCIA_DUPLICADA'
                     ? mensajeYaRegistrada

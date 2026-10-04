@@ -26,7 +26,9 @@ class ReceptorPushConsola implements ReceptorPush {
 
   /// Behaves as if the user had tapped a notification about [lugarId].
   void simularApertura(int lugarId) {
-    debugPrint('[ReceptorPushConsola] toque en notificación del lugar $lugarId');
+    debugPrint(
+      '[ReceptorPushConsola] toque en notificación del lugar $lugarId',
+    );
     _toques.add(lugarId);
   }
 }

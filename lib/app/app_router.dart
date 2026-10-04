@@ -68,10 +68,12 @@ GoRoute _pagina(
   String path,
   Widget Function(GoRouterState state) pagina, {
   List<RouteBase> routes = const [],
-}) =>
-    GoRoute(path: path, builder: (_, state) => pagina(state), routes: routes);
+}) => GoRoute(path: path, builder: (_, state) => pagina(state), routes: routes);
 
-GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa}) {
+GoRouter crearRouter(
+  SesionCubit sesion, {
+  String ubicacionInicial = Rutas.mapa,
+}) {
   // The map writes its centre here and the validation tab reads it.
   final centroMapa = CentroMapaCompartido();
   return GoRouter(
@@ -86,103 +88,146 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => MainLayout(shell: shell),
         branches: [
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: Rutas.mapa,
-              builder: (_, _) => MapPage(centroCompartido: centroMapa),
-              routes: [
-                _pagina(_hija(Rutas.explorar, Rutas.mapa), (_) => const ExplorarPage()),
-                _pagina(
-                  _hija(Rutas.buscarLugar, Rutas.mapa),
-                  (s) => BuscarLugarPage(centroMapa: _centroDe(s)),
-                ),
-                _pagina(
-                  _hija(Rutas.lugarPlantilla, Rutas.mapa),
-                  (s) => DetalleLugarPage(
-                    lugarId: _id(s),
-                    centroMapa: _centroDe(s),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Rutas.mapa,
+                builder: (_, _) => MapPage(centroCompartido: centroMapa),
+                routes: [
+                  _pagina(
+                    _hija(Rutas.explorar, Rutas.mapa),
+                    (_) => const ExplorarPage(),
                   ),
-                  routes: [
-                    _pagina(_hija(Rutas.historialPlantilla, Rutas.lugarPlantilla), (s) => HistorialPage(lugarId: _id(s))),
-                    _pagina(_hija(Rutas.compararPlantilla, Rutas.lugarPlantilla), (s) => CompararPage(lugarId: _id(s))),
-                    _pagina(
-                      _hija(Rutas.mejorHorarioPlantilla, Rutas.lugarPlantilla),
-                      (s) => MejorHorarioPage(lugarId: _id(s)),
+                  _pagina(
+                    _hija(Rutas.buscarLugar, Rutas.mapa),
+                    (s) => BuscarLugarPage(centroMapa: _centroDe(s)),
+                  ),
+                  _pagina(
+                    _hija(Rutas.lugarPlantilla, Rutas.mapa),
+                    (s) => DetalleLugarPage(
+                      lugarId: _id(s),
+                      centroMapa: _centroDe(s),
                     ),
-                  ],
-                ),
-              ],
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: Rutas.validar,
-              builder: (_, _) => ValidarPage(centro: centroMapa),
-              routes: [
-                _pagina(
-                  _hija(Rutas.reporteValidarPlantilla, Rutas.validar),
-                  (s) => DetalleReportePage(reporteId: _id(s)),
-                ),
-              ],
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: Rutas.favoritos,
-              builder: (_, _) => const FavoritosPage(),
-              routes: [_pagina(_hija(Rutas.alertas, Rutas.favoritos), (_) => const AlertasPage())],
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: Rutas.perfil,
-              builder: (_, _) => const ProfilePage(),
-              routes: [
-                GoRoute(
-                  path: _hija(Rutas.perfilEditar, Rutas.perfil),
-                  builder: (_, state) {
-                    final extra = state.extra as Map<String, dynamic>?;
-                    return EditProfilePage(
-                      user: extra != null ? Usuario.fromJson(extra) : null,
-                    );
-                  },
-                ),
-                _pagina(_hija(Rutas.perfilPassword, Rutas.perfil), (_) => const CambiarPasswordPage()),
-                _pagina(_hija(Rutas.perfilAcerca, Rutas.perfil), (_) => const AcercaPage()),
-                GoRoute(
-                  path: _hija(Rutas.perfilReportes, Rutas.perfil),
-                  builder: (context, _) => MisReportesPage(validacion: context.read<ValidacionRepository>()),
-                ),
-                _pagina(_hija(Rutas.perfilValidaciones, Rutas.perfil), (_) => const EstadoValidacionPage()),
-              ],
-            ),
-          ]),
+                    routes: [
+                      _pagina(
+                        _hija(Rutas.historialPlantilla, Rutas.lugarPlantilla),
+                        (s) => HistorialPage(lugarId: _id(s)),
+                      ),
+                      _pagina(
+                        _hija(Rutas.compararPlantilla, Rutas.lugarPlantilla),
+                        (s) => CompararPage(lugarId: _id(s)),
+                      ),
+                      _pagina(
+                        _hija(
+                          Rutas.mejorHorarioPlantilla,
+                          Rutas.lugarPlantilla,
+                        ),
+                        (s) => MejorHorarioPage(lugarId: _id(s)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Rutas.validar,
+                builder: (_, _) => ValidarPage(centro: centroMapa),
+                routes: [
+                  _pagina(
+                    _hija(Rutas.reporteValidarPlantilla, Rutas.validar),
+                    (s) => DetalleReportePage(reporteId: _id(s)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Rutas.favoritos,
+                builder: (_, _) => const FavoritosPage(),
+                routes: [
+                  _pagina(
+                    _hija(Rutas.alertas, Rutas.favoritos),
+                    (_) => const AlertasPage(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Rutas.perfil,
+                builder: (_, _) => const ProfilePage(),
+                routes: [
+                  GoRoute(
+                    path: _hija(Rutas.perfilEditar, Rutas.perfil),
+                    builder: (_, state) {
+                      final extra = state.extra as Map<String, dynamic>?;
+                      return EditProfilePage(
+                        user: extra != null ? Usuario.fromJson(extra) : null,
+                      );
+                    },
+                  ),
+                  _pagina(
+                    _hija(Rutas.perfilPassword, Rutas.perfil),
+                    (_) => const CambiarPasswordPage(),
+                  ),
+                  _pagina(
+                    _hija(Rutas.perfilAcerca, Rutas.perfil),
+                    (_) => const AcercaPage(),
+                  ),
+                  GoRoute(
+                    path: _hija(Rutas.perfilReportes, Rutas.perfil),
+                    builder: (context, _) => MisReportesPage(
+                      validacion: context.read<ValidacionRepository>(),
+                    ),
+                  ),
+                  _pagina(
+                    _hija(Rutas.perfilValidaciones, Rutas.perfil),
+                    (_) => const EstadoValidacionPage(),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => AdminLayout(shell: shell),
         branches: [
-          StatefulShellBranch(routes: [
-            _pagina(
-              Rutas.adminReportes,
-              (_) => const ReportesDenunciadosPage(),
-              routes: [
-                _pagina(_hija(Rutas.adminReportePlantilla, Rutas.adminReportes), (s) => RevisionReportePage(reporteId: _id(s))),
-              ],
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            _pagina(
-              Rutas.adminUsuarios,
-              (_) => const UsuariosAdminPage(),
-              routes: [
-                _pagina(
-                  _hija(Rutas.adminUsuarioPlantilla, Rutas.adminUsuarios),
-                  (s) => UsuarioAdminDetallePage(usuarioId: _id(s)),
-                ),
-              ],
-            ),
-          ]),
+          StatefulShellBranch(
+            routes: [
+              _pagina(
+                Rutas.adminReportes,
+                (_) => const ReportesDenunciadosPage(),
+                routes: [
+                  _pagina(
+                    _hija(Rutas.adminReportePlantilla, Rutas.adminReportes),
+                    (s) => RevisionReportePage(reporteId: _id(s)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              _pagina(
+                Rutas.adminUsuarios,
+                (_) => const UsuariosAdminPage(),
+                routes: [
+                  _pagina(
+                    _hija(Rutas.adminUsuarioPlantilla, Rutas.adminUsuarios),
+                    (s) => UsuarioAdminDetallePage(usuarioId: _id(s)),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
     ],

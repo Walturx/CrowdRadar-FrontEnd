@@ -124,7 +124,10 @@ class _Tarjeta extends StatelessWidget {
                 'La saturación cambió de '
                 '${ChipSaturacion.etiquetaDe(alerta.nivelAnterior)} a '
                 '${ChipSaturacion.etiquetaDe(alerta.nivelNuevo)}$cuando.',
-                style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textMuted,
+                ),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -140,7 +143,10 @@ class _Tarjeta extends StatelessWidget {
               Text(
                 'Recibes esta alerta porque ${alerta.lugarNombre} está en tus '
                 'favoritos.',
-                style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
+                ),
               ),
             ],
           ),

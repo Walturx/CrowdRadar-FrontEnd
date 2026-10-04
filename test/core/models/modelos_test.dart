@@ -18,9 +18,14 @@ void main() {
     });
 
     test('enumDesdeApi finds a value or returns null', () {
-      expect(enumDesdeApi(CategoriaLugar.values, 'PLAYA'), CategoriaLugar.playa);
-      expect(enumDesdeApi(CategoriaLugar.values, 'CENTRO_COMERCIAL'),
-          CategoriaLugar.centroComercial);
+      expect(
+        enumDesdeApi(CategoriaLugar.values, 'PLAYA'),
+        CategoriaLugar.playa,
+      );
+      expect(
+        enumDesdeApi(CategoriaLugar.values, 'CENTRO_COMERCIAL'),
+        CategoriaLugar.centroComercial,
+      );
       expect(enumDesdeApi(CategoriaLugar.values, 'NADA'), isNull);
       expect(enumDesdeApi(CategoriaLugar.values, null), isNull);
     });
@@ -99,19 +104,22 @@ void main() {
       expect(d.alertasActivadas, true);
     });
 
-    test('LugarDetalle without saturation block defaults to sinInformacion', () {
-      final d = LugarDetalle.fromJson({
-        'id': 9,
-        'nombre': 'Playa',
-        'categoria': 'PLAYA',
-        'latitud': 0,
-        'longitud': 0,
-      });
+    test(
+      'LugarDetalle without saturation block defaults to sinInformacion',
+      () {
+        final d = LugarDetalle.fromJson({
+          'id': 9,
+          'nombre': 'Playa',
+          'categoria': 'PLAYA',
+          'latitud': 0,
+          'longitud': 0,
+        });
 
-      expect(d.saturacion.nivel, NivelSaturacion.sinInformacion);
-      expect(d.saturacion.reportesRecientes, 0);
-      expect(d.esFavorito, false);
-    });
+        expect(d.saturacion.nivel, NivelSaturacion.sinInformacion);
+        expect(d.saturacion.reportesRecientes, 0);
+        expect(d.esFavorito, false);
+      },
+    );
   });
 
   group('reportes', () {
@@ -197,7 +205,10 @@ void main() {
       expect(s.puntos.map((p) => p.valor), [2.5, 3.0]);
       expect(s.sinDatos, false);
 
-      final vacia = SerieSaturacion.fromJson({'sinDatos': true, 'mensaje': 'Sin datos'});
+      final vacia = SerieSaturacion.fromJson({
+        'sinDatos': true,
+        'mensaje': 'Sin datos',
+      });
       expect(vacia.puntos, isEmpty);
       expect(vacia.sinDatos, true);
       expect(vacia.mensaje, 'Sin datos');
@@ -207,8 +218,8 @@ void main() {
       final c = ComparacionPeriodos.fromJson({
         'periodoA': {
           'puntos': [
-            {'etiqueta': 'L', 'valor': 1}
-          ]
+            {'etiqueta': 'L', 'valor': 1},
+          ],
         },
         'periodoB': {'sinDatos': true},
       });
@@ -217,7 +228,7 @@ void main() {
 
       final m = MejorHorario.fromJson({
         'franjas': [
-          {'horaInicio': 8, 'horaFin': 10, 'nivel': 'TRANQUILO'}
+          {'horaInicio': 8, 'horaFin': 10, 'nivel': 'TRANQUILO'},
         ],
       });
       expect(m.franjas.single.horaInicio, 8);

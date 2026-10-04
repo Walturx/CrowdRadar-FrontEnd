@@ -23,11 +23,15 @@ class SesionCubit extends Cubit<SesionState> {
   SesionCubit(this._sesion, {Future<void> Function()? antesDeCerrar})
     : _antesDeCerrar = antesDeCerrar,
       super(_estadoInicial(_sesion)) {
-    _suscripcion = _sesion.eventos.listen((evento) => emit(switch (evento) {
-          SesionIniciada(:final usuario) =>
-            SesionAutenticada(usuario: usuario, esAdmin: usuario.esAdmin),
-          SesionCerrada(:final motivo) => SesionNoAutenticada(motivo: motivo),
-        }));
+    _suscripcion = _sesion.eventos.listen(
+      (evento) => emit(switch (evento) {
+        SesionIniciada(:final usuario) => SesionAutenticada(
+          usuario: usuario,
+          esAdmin: usuario.esAdmin,
+        ),
+        SesionCerrada(:final motivo) => SesionNoAutenticada(motivo: motivo),
+      }),
+    );
   }
 
   static SesionState _estadoInicial(SessionService sesion) {

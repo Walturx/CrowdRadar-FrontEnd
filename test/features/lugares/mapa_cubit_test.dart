@@ -263,23 +263,26 @@ void main() {
       await cubit.close();
     });
 
-    test('a pending camera load is replaced by the filtered load of the camera', () {
-      fakeAsync((reloj) {
-        final repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
-        final cubit = MapaCubit(repo);
-        cubit.cargar(_b1);
-        reloj.flushMicrotasks();
+    test(
+      'a pending camera load is replaced by the filtered load of the camera',
+      () {
+        fakeAsync((reloj) {
+          final repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+          final cubit = MapaCubit(repo);
+          cubit.cargar(_b1);
+          reloj.flushMicrotasks();
 
-        cubit.alMoverCamara(_b2);
-        cubit.aplicarFiltros(categoria: CategoriaLugar.playa);
-        reloj.elapse(const Duration(seconds: 2));
+          cubit.alMoverCamara(_b2);
+          cubit.aplicarFiltros(categoria: CategoriaLugar.playa);
+          reloj.elapse(const Duration(seconds: 2));
 
-        expect(repo.pedidos, hasLength(2));
-        expect(repo.pedidos.last.bbox, _b2);
-        expect(repo.pedidos.last.categoria, CategoriaLugar.playa);
-        cubit.close();
-      });
-    });
+          expect(repo.pedidos, hasLength(2));
+          expect(repo.pedidos.last.bbox, _b2);
+          expect(repo.pedidos.last.categoria, CategoriaLugar.playa);
+          cubit.close();
+        });
+      },
+    );
 
     test('after close nothing is loaded and nothing throws (R3-808)', () async {
       final repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
@@ -322,41 +325,41 @@ void main() {
       await cubit.close();
     });
 
-    test('an empty filtered result explains the filters (HU 3.5/3.6 c3)', () async {
-      final cubit = MapaCubit(RepoLugarFalso(alBuscar: (_) => resultado([])));
-      await cubit.cargar(_b1);
+    test(
+      'an empty filtered result explains the filters (HU 3.5/3.6 c3)',
+      () async {
+        final cubit = MapaCubit(RepoLugarFalso(alBuscar: (_) => resultado([])));
+        await cubit.cargar(_b1);
 
-      await cubit.aplicarFiltros(categoria: CategoriaLugar.playa);
-      expect(
-        cubit.state,
-        const MapaCargado(
-          [],
-          mensajeVacio: MapaCubit.mensajeSinCategoria,
-        ),
-      );
+        await cubit.aplicarFiltros(categoria: CategoriaLugar.playa);
+        expect(
+          cubit.state,
+          const MapaCargado([], mensajeVacio: MapaCubit.mensajeSinCategoria),
+        );
 
-      await cubit.aplicarFiltros(nivel: NivelSaturacion.saturado);
-      expect(
-        cubit.state,
-        const MapaCargado([], mensajeVacio: MapaCubit.mensajeSinNivel),
-      );
+        await cubit.aplicarFiltros(nivel: NivelSaturacion.saturado);
+        expect(
+          cubit.state,
+          const MapaCargado([], mensajeVacio: MapaCubit.mensajeSinNivel),
+        );
 
-      await cubit.aplicarFiltros(
-        categoria: CategoriaLugar.playa,
-        nivel: NivelSaturacion.saturado,
-      );
-      expect(
-        cubit.state,
-        const MapaCargado([], mensajeVacio: MapaCubit.mensajeSinFiltros),
-      );
+        await cubit.aplicarFiltros(
+          categoria: CategoriaLugar.playa,
+          nivel: NivelSaturacion.saturado,
+        );
+        expect(
+          cubit.state,
+          const MapaCargado([], mensajeVacio: MapaCubit.mensajeSinFiltros),
+        );
 
-      await cubit.aplicarFiltros();
-      expect(
-        cubit.state,
-        const MapaCargado([], mensajeVacio: MapaCubit.mensajeZonaVacia),
-      );
-      await cubit.close();
-    });
+        await cubit.aplicarFiltros();
+        expect(
+          cubit.state,
+          const MapaCargado([], mensajeVacio: MapaCubit.mensajeZonaVacia),
+        );
+        await cubit.close();
+      },
+    );
 
     test('a slow answer of the old filters is discarded', () async {
       final lenta = Completer<ResultadoLista<LugarResumen>>();

@@ -16,9 +16,9 @@ class RecuperarPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-        create: (c) => RecuperarCubit(c.read<AuthRepository>()),
-        child: const _RecuperarView(),
-      );
+    create: (c) => RecuperarCubit(c.read<AuthRepository>()),
+    child: const _RecuperarView(),
+  );
 }
 
 class _RecuperarView extends StatefulWidget {
@@ -39,29 +39,30 @@ class _RecuperarViewState extends State<_RecuperarView> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AppColors.bg,
-        appBar: AppBar(title: const Text('Recuperar contraseña')),
-        body: BlocConsumer<RecuperarCubit, RecuperarState>(
-          // An invalid email is shown on the field, not in a snack bar.
-          listenWhen: (_, actual) =>
-              actual is RecuperarFallido &&
-              actual.mensaje != RecuperarCubit.mensajeCorreoInvalido,
-          listener: (context, state) =>
-              mostrarAviso(context, (state as RecuperarFallido).mensaje),
-          builder: (context, state) => Padding(
-            padding: const EdgeInsets.all(24),
-            child: state is RecuperarEnviado
-                ? _Confirmacion(state.mensaje)
-                : _Formulario(
-                    controlador: _emailCtrl,
-                    enviando: state is RecuperarEnviando,
-                    espera:
-                        state is RecuperarFallido ? state.reintentarEnSegundos : null,
-                    error: state is RecuperarFallido ? state.mensaje : null,
-                  ),
-          ),
-        ),
-      );
+    backgroundColor: AppColors.bg,
+    appBar: AppBar(title: const Text('Recuperar contraseña')),
+    body: BlocConsumer<RecuperarCubit, RecuperarState>(
+      // An invalid email is shown on the field, not in a snack bar.
+      listenWhen: (_, actual) =>
+          actual is RecuperarFallido &&
+          actual.mensaje != RecuperarCubit.mensajeCorreoInvalido,
+      listener: (context, state) =>
+          mostrarAviso(context, (state as RecuperarFallido).mensaje),
+      builder: (context, state) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: state is RecuperarEnviado
+            ? _Confirmacion(state.mensaje)
+            : _Formulario(
+                controlador: _emailCtrl,
+                enviando: state is RecuperarEnviando,
+                espera: state is RecuperarFallido
+                    ? state.reintentarEnSegundos
+                    : null,
+                error: state is RecuperarFallido ? state.mensaje : null,
+              ),
+      ),
+    ),
+  );
 }
 
 class _Formulario extends StatelessWidget {
@@ -79,30 +80,33 @@ class _Formulario extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Ingresá el correo de tu cuenta y te enviaremos un enlace para restablecer tu contraseña.',
-            style: TextStyle(color: AppColors.textMuted),
-          ),
-          const SizedBox(height: 20),
-          TextFormField(
-            controller: controlador,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              labelText: 'Correo electrónico',
-              errorText: error == RecuperarCubit.mensajeCorreoInvalido ? error : null,
-            ),
-          ),
-          const SizedBox(height: 24),
-          BotonConEspera(
-            texto: 'Enviar enlace',
-            cargando: enviando,
-            segundos: espera,
-            onPressed: () => context.read<RecuperarCubit>().enviar(controlador.text),
-          ),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Text(
+        'Ingresá el correo de tu cuenta y te enviaremos un enlace para restablecer tu contraseña.',
+        style: TextStyle(color: AppColors.textMuted),
+      ),
+      const SizedBox(height: 20),
+      TextFormField(
+        controller: controlador,
+        keyboardType: TextInputType.emailAddress,
+        decoration: InputDecoration(
+          labelText: 'Correo electrónico',
+          errorText: error == RecuperarCubit.mensajeCorreoInvalido
+              ? error
+              : null,
+        ),
+      ),
+      const SizedBox(height: 24),
+      BotonConEspera(
+        texto: 'Enviar enlace',
+        cargando: enviando,
+        segundos: espera,
+        onPressed: () =>
+            context.read<RecuperarCubit>().enviar(controlador.text),
+      ),
+    ],
+  );
 }
 
 class _Confirmacion extends StatelessWidget {
@@ -112,16 +116,16 @@ class _Confirmacion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Icon(Icons.mark_email_read, size: 56, color: AppColors.primary),
-          const SizedBox(height: 16),
-          Text(mensaje, textAlign: TextAlign.center),
-          const SizedBox(height: 24),
-          TextButton(
-            onPressed: () => context.go(Rutas.login),
-            child: const Text('Volver a iniciar sesión'),
-          ),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Icon(Icons.mark_email_read, size: 56, color: AppColors.primary),
+      const SizedBox(height: 16),
+      Text(mensaje, textAlign: TextAlign.center),
+      const SizedBox(height: 24),
+      TextButton(
+        onPressed: () => context.go(Rutas.login),
+        child: const Text('Volver a iniciar sesión'),
+      ),
+    ],
+  );
 }

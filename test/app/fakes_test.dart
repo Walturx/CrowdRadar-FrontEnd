@@ -320,13 +320,16 @@ void main() {
       const caido = ComportamientoFake(fallo: ApiException.sinConexion());
       final fakes = <Future<Object?> Function()>[
         () => LugarRepositoryFake(comportamiento: caido).buscar(q: 'Pa'),
-        () => AuthRepositoryFake(sesion, comportamiento: caido)
-            .iniciarSesion('ana@test.com', 'Secreta1'),
+        () => AuthRepositoryFake(
+          sesion,
+          comportamiento: caido,
+        ).iniciarSesion('ana@test.com', 'Secreta1'),
         () => PerfilRepositoryFake(sesion, comportamiento: caido).obtener(),
         () => ReporteRepositoryFake(comportamiento: caido).listarMios(),
-        () => AnaliticaRepositoryFake(comportamiento: caido)
-            .historial(1),
-        () => ValidacionRepositoryFake(comportamiento: caido).pendientes(lat: 0, lng: 0),
+        () => AnaliticaRepositoryFake(comportamiento: caido).historial(1),
+        () => ValidacionRepositoryFake(
+          comportamiento: caido,
+        ).pendientes(lat: 0, lng: 0),
         () => FavoritoRepositoryFake(comportamiento: caido).listar(),
         () => ModeracionRepositoryFake(comportamiento: caido).usuarios(),
       ];

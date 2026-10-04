@@ -83,7 +83,8 @@ void main() {
   late _ReceptorFalso receptor;
   late Dependencias deps;
 
-  AlertaRepositoryFake alertas() => deps.alertaRepository as AlertaRepositoryFake;
+  AlertaRepositoryFake alertas() =>
+      deps.alertaRepository as AlertaRepositoryFake;
 
   AlertaRepositoryFake? alertasPropias;
 
@@ -171,18 +172,19 @@ void main() {
   });
 
   group('device registration edge cases', () {
-    testWidgets('a restored session plus SesionIniciada registers once (R4-802)', (
-      tester,
-    ) async {
-      final grabadoras = alertasPropias = _AlertasGrabadoras();
-      await abrir(tester);
+    testWidgets(
+      'a restored session plus SesionIniciada registers once (R4-802)',
+      (tester) async {
+        final grabadoras = alertasPropias = _AlertasGrabadoras();
+        await abrir(tester);
 
-      await sesion.iniciar('token', usuarioPrueba);
-      await tester.pump();
-      await tester.pump();
+        await sesion.iniciar('token', usuarioPrueba);
+        await tester.pump();
+        await tester.pump();
 
-      expect(grabadoras.registros, 1);
-    });
+        expect(grabadoras.registros, 1);
+      },
+    );
 
     testWidgets('an expired session also tries to remove it (R4-803)', (
       tester,
@@ -211,22 +213,23 @@ void main() {
   });
 
   group('push taps', () {
-    testWidgets('a tap before the session is ready opens after sign in (R3-807)', (
-      tester,
-    ) async {
-      await abrir(tester, ruta: '/login', conSesion: false);
+    testWidgets(
+      'a tap before the session is ready opens after sign in (R3-807)',
+      (tester) async {
+        await abrir(tester, ruta: '/login', conSesion: false);
 
-      receptor.toques.add(1);
-      await tester.pumpAndSettle();
-      expect(find.text('Av. Larco 345, Miraflores'), findsNothing);
+        receptor.toques.add(1);
+        await tester.pumpAndSettle();
+        expect(find.text('Av. Larco 345, Miraflores'), findsNothing);
 
-      await sesion.iniciar('token', usuarioPrueba);
-      await tester.pump();
-      await tester.pump();
-      await tester.pumpAndSettle();
+        await sesion.iniciar('token', usuarioPrueba);
+        await tester.pump();
+        await tester.pump();
+        await tester.pumpAndSettle();
 
-      expect(find.text('Av. Larco 345, Miraflores'), findsOneWidget);
-    });
+        expect(find.text('Av. Larco 345, Miraflores'), findsOneWidget);
+      },
+    );
 
     testWidgets('a pending tap is dropped on sign out', (tester) async {
       await abrir(tester, ruta: '/login', conSesion: false);
@@ -243,15 +246,16 @@ void main() {
       expect(find.text('Av. Larco 345, Miraflores'), findsNothing);
     });
 
-    testWidgets('a tap emitted while the receiver initializes is not lost (R3-807)', (
-      tester,
-    ) async {
-      receptor = _ReceptorEmisor();
+    testWidgets(
+      'a tap emitted while the receiver initializes is not lost (R3-807)',
+      (tester) async {
+        receptor = _ReceptorEmisor();
 
-      await abrir(tester);
+        await abrir(tester);
 
-      expect(find.text('Av. Angamos Este 1000, Surquillo'), findsOneWidget);
-    });
+        expect(find.text('Av. Angamos Este 1000, Surquillo'), findsOneWidget);
+      },
+    );
 
     testWidgets('a tap opens that place', (tester) async {
       await abrir(tester);

@@ -66,6 +66,5 @@ class PerfilRepositoryHttp implements PerfilRepository {
     }
   }
 
-  static Usuario _usuario(Object? d) =>
-      Usuario.fromJson(aMapa(d));
+  static Usuario _usuario(Object? d) => Usuario.fromJson(aMapa(d));
 }

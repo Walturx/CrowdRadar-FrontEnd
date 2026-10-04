@@ -63,5 +63,9 @@ class ExplorarCubit extends Cubit<ExplorarState> {
   }
 
   ExplorarCargado _cargado(List<CategoriaResumen> categorias) =>
-      ExplorarCargado(categorias, categoria: _categoria, saturacion: _saturacion);
+      ExplorarCargado(
+        categorias,
+        categoria: _categoria,
+        saturacion: _saturacion,
+      );
 }

@@ -13,7 +13,6 @@ class AppColors {
   static const Color success = Color(0xFF2ECC71);
   static const Color danger = Color(0xFFE74C3C);
   static const Color warning = Color(0xFFF39C12);
-  static const Color onPrimaryMuted =
-      Color(0xFFA9C8EC);
+  static const Color onPrimaryMuted = Color(0xFFA9C8EC);
   static const Color borderNav = Color(0xFFE0EAF5);
 }

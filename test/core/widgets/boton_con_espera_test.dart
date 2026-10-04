@@ -7,14 +7,14 @@ void main() {
   setUp(() => toques = 0);
 
   Widget app(int? segundos) => MaterialApp(
-        home: Scaffold(
-          body: BotonConEspera(
-            texto: 'Enviar',
-            segundos: segundos,
-            onPressed: () => toques++,
-          ),
-        ),
-      );
+    home: Scaffold(
+      body: BotonConEspera(
+        texto: 'Enviar',
+        segundos: segundos,
+        onPressed: () => toques++,
+      ),
+    ),
+  );
 
   Finder boton() => find.byType(ElevatedButton);
   bool habilitado(WidgetTester t) => t.widget<ElevatedButton>(boton()).enabled;

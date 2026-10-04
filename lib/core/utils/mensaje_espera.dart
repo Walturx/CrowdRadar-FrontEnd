@@ -2,6 +2,9 @@ import '../network/api_exception.dart';
 
 const int segundosPorMinuto = 60;
 
+/// Rate-limit subject for user actions (votes, reports).
+const String sujetoAcciones = 'Demasiadas acciones seguidas';
+
 const _codigosLimite = {'DEMASIADOS_INTENTOS', 'DEMASIADAS_SOLICITUDES'};
 
 /// True when the server rejected the call for rate limiting.
@@ -16,11 +19,13 @@ int? esperaDeError(Object error) => esLimiteDeIntentos(error)
 
 /// Wait text for a rate limit: whole minutes rounded up, or a generic one
 /// when the server did not say how long.
-String mensajeEspera(int? segundos) {
+///
+/// [sujeto] is the message subject ("Demasiados intentos" by default).
+String mensajeEspera(int? segundos, {String sujeto = 'Demasiados intentos'}) {
   if (segundos == null || segundos <= 0) {
-    return 'Demasiados intentos, probá más tarde';
+    return '$sujeto, probá más tarde';
   }
   final minutos = (segundos / segundosPorMinuto).ceil();
-  return 'Demasiados intentos, probá en $minutos '
+  return '$sujeto, probá en $minutos '
       '${minutos == 1 ? 'minuto' : 'minutos'}';
 }

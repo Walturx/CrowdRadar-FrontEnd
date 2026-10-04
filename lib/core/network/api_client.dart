@@ -34,53 +34,68 @@ class ApiClient {
     Duration timeout = timeoutPorDefecto,
     RegistroErrores? registro,
     DateTime Function()? ahora,
-  })  : _interceptores = interceptores,
-        _timeout = timeout,
-        _ahora = ahora ?? DateTime.now,
-        _registro = registro ?? const RegistroErroresConsola();
+  }) : _interceptores = interceptores,
+       _timeout = timeout,
+       _ahora = ahora ?? DateTime.now,
+       _registro = registro ?? const RegistroErroresConsola();
 
   Future<RespuestaApi<T>> get<T>(
     String path, {
     required ParserApi<T> parser,
     Map<String, dynamic>? query,
     String? mensajeError,
-  }) =>
-      _enviar('GET', path,
-          parser: parser, query: query, mensajeError: mensajeError);
+  }) => _enviar(
+    'GET',
+    path,
+    parser: parser,
+    query: query,
+    mensajeError: mensajeError,
+  );
 
   Future<RespuestaApi<T>> post<T>(
     String path, {
     Object? body,
     required ParserApi<T> parser,
     String? mensajeError,
-  }) =>
-      _enviar('POST', path,
-          body: body, parser: parser, mensajeError: mensajeError);
+  }) => _enviar(
+    'POST',
+    path,
+    body: body,
+    parser: parser,
+    mensajeError: mensajeError,
+  );
 
   Future<RespuestaApi<T>> put<T>(
     String path, {
     Object? body,
     required ParserApi<T> parser,
     String? mensajeError,
-  }) =>
-      _enviar('PUT', path,
-          body: body, parser: parser, mensajeError: mensajeError);
+  }) => _enviar(
+    'PUT',
+    path,
+    body: body,
+    parser: parser,
+    mensajeError: mensajeError,
+  );
 
   Future<RespuestaApi<T>> patch<T>(
     String path, {
     Object? body,
     required ParserApi<T> parser,
     String? mensajeError,
-  }) =>
-      _enviar('PATCH', path,
-          body: body, parser: parser, mensajeError: mensajeError);
+  }) => _enviar(
+    'PATCH',
+    path,
+    body: body,
+    parser: parser,
+    mensajeError: mensajeError,
+  );
 
   Future<RespuestaApi<T>> delete<T>(
     String path, {
     required ParserApi<T> parser,
     String? mensajeError,
-  }) =>
-      _enviar('DELETE', path, parser: parser, mensajeError: mensajeError);
+  }) => _enviar('DELETE', path, parser: parser, mensajeError: mensajeError);
 
   Future<RespuestaApi<T>> _enviar<T>(
     String metodo,
@@ -93,10 +108,12 @@ class ApiClient {
     final base = Uri.parse('${_entorno.apiUrl}$path');
     final uri = query == null
         ? base
-        : base.replace(queryParameters: {
-            for (final e in query.entries)
-              if (e.value != null) e.key: '${e.value}',
-          });
+        : base.replace(
+            queryParameters: {
+              for (final e in query.entries)
+                if (e.value != null) e.key: '${e.value}',
+            },
+          );
     final solicitud = SolicitudApi(
       metodo: metodo,
       uri: uri,
@@ -176,7 +193,10 @@ class ApiClient {
   }
 
   /// Runs the error chain; a failing interceptor never masks the real error.
-  Future<void> _notificarError(ApiException error, SolicitudApi solicitud) async {
+  Future<void> _notificarError(
+    ApiException error,
+    SolicitudApi solicitud,
+  ) async {
     for (final i in _interceptores) {
       try {
         await i.alRecibirError(error, solicitud);

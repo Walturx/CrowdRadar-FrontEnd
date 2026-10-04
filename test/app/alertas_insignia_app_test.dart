@@ -29,7 +29,8 @@ void main() {
   late SessionService sesion;
   late Dependencias deps;
 
-  AlertaRepositoryFake alertas() => deps.alertaRepository as AlertaRepositoryFake;
+  AlertaRepositoryFake alertas() =>
+      deps.alertaRepository as AlertaRepositoryFake;
 
   Future<void> abrir(WidgetTester tester, {String ruta = '/favoritos'}) async {
     tester.view.physicalSize = const Size(2400, 6000);
@@ -58,28 +59,41 @@ void main() {
 
       expect(insignia(), findsOneWidget);
       expect(
-        tester.widget<Text>(
-          find.descendant(of: insignia(), matching: find.byType(Text)),
-        ).data,
+        tester
+            .widget<Text>(
+              find.descendant(of: insignia(), matching: find.byType(Text)),
+            )
+            .data,
         '1',
       );
     });
 
-    testWidgets('resuming right after a load keeps the count (throttled, R4-806)', (tester) async {
-      await abrir(tester);
-      alertas().emitir(3, NivelSaturacion.tranquilo, NivelSaturacion.saturado);
+    testWidgets(
+      'resuming right after a load keeps the count (throttled, R4-806)',
+      (tester) async {
+        await abrir(tester);
+        alertas().emitir(
+          3,
+          NivelSaturacion.tranquilo,
+          NivelSaturacion.saturado,
+        );
 
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await tester.pumpAndSettle();
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.pumpAndSettle();
 
-      expect(
-        tester.widget<Text>(
-          find.descendant(of: insignia(), matching: find.byType(Text)),
-        ).data,
-        '1',
-      );
-    });
+        expect(
+          tester
+              .widget<Text>(
+                find.descendant(of: insignia(), matching: find.byType(Text)),
+              )
+              .data,
+          '1',
+        );
+      },
+    );
 
     testWidgets('reading the alert from the list clears the badge', (
       tester,

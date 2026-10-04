@@ -12,7 +12,7 @@ class Entorno {
   const Entorno({this.apiUrl = apiUrlPorDefecto, this.usarFakes = false});
 
   factory Entorno.desdeDartDefine() => const Entorno(
-        apiUrl: String.fromEnvironment('API_URL', defaultValue: apiUrlPorDefecto),
-        usarFakes: bool.fromEnvironment('USAR_FAKES'),
-      );
+    apiUrl: String.fromEnvironment('API_URL', defaultValue: apiUrlPorDefecto),
+    usarFakes: bool.fromEnvironment('USAR_FAKES'),
+  );
 }

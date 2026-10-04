@@ -44,7 +44,10 @@ void main() {
   });
 
   test('the byte limit has its own text', () {
-    expect(RequisitoPassword.maximoBytes.texto, isNot(RequisitoPassword.maximo.texto));
+    expect(
+      RequisitoPassword.maximoBytes.texto,
+      isNot(RequisitoPassword.maximo.texto),
+    );
     expect(RequisitoPassword.maximoBytes.texto, contains('72'));
   });
 

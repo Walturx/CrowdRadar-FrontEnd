@@ -12,7 +12,8 @@ void main() {
   late _PerfilRepoMock repo;
   setUp(() => repo = _PerfilRepoMock());
 
-  Future<void> Function() llamada() => () => repo.cambiarPassword(
+  Future<void> Function() llamada() =>
+      () => repo.cambiarPassword(
         actual: any(named: 'actual'),
         nueva: any(named: 'nueva'),
         confirmar: any(named: 'confirmar'),
@@ -20,11 +21,8 @@ void main() {
 
   void falla(ApiException e) => when(llamada()).thenThrow(e);
 
-  Future<void> cambiarValido(CambiarPasswordCubit c) => c.cambiar(
-        actual: 'Vieja123',
-        nueva: 'Nueva1234',
-        confirmar: 'Nueva1234',
-      );
+  Future<void> cambiarValido(CambiarPasswordCubit c) =>
+      c.cambiar(actual: 'Vieja123', nueva: 'Nueva1234', confirmar: 'Nueva1234');
 
   blocTest<CambiarPasswordCubit, CambiarPasswordState>(
     'HU 2.3 c2 success -> Enviando, Exitoso',
@@ -80,11 +78,13 @@ void main() {
   blocTest<CambiarPasswordCubit, CambiarPasswordState>(
     'HU 2.3 c3 422 PASSWORD_ACTUAL_INCORRECTA -> server message and code',
     build: () {
-      falla(const ApiException(
-        status: 422,
-        message: 'La contraseña actual es incorrecta',
-        code: 'PASSWORD_ACTUAL_INCORRECTA',
-      ));
+      falla(
+        const ApiException(
+          status: 422,
+          message: 'La contraseña actual es incorrecta',
+          code: 'PASSWORD_ACTUAL_INCORRECTA',
+        ),
+      );
       return CambiarPasswordCubit(repo);
     },
     act: cambiarValido,
@@ -100,11 +100,13 @@ void main() {
   blocTest<CambiarPasswordCubit, CambiarPasswordState>(
     '422 PASSWORD_REPETIDA -> server message and code',
     build: () {
-      falla(const ApiException(
-        status: 422,
-        message: 'La nueva contraseña debe ser distinta',
-        code: 'PASSWORD_REPETIDA',
-      ));
+      falla(
+        const ApiException(
+          status: 422,
+          message: 'La nueva contraseña debe ser distinta',
+          code: 'PASSWORD_REPETIDA',
+        ),
+      );
       return CambiarPasswordCubit(repo);
     },
     act: cambiarValido,
@@ -120,15 +122,17 @@ void main() {
   blocTest<CambiarPasswordCubit, CambiarPasswordState>(
     '400 errors[] are mapped to requisitosIncumplidos',
     build: () {
-      falla(const ApiException(
-        status: 400,
-        message: 'Validación fallida',
-        code: 'VALIDACION_FALLIDA',
-        errors: [
-          ErrorCampo(campo: 'nuevaPassword', mensaje: 'Falta una mayúscula'),
-          ErrorCampo(campo: 'nuevaPassword', mensaje: 'Falta un número'),
-        ],
-      ));
+      falla(
+        const ApiException(
+          status: 400,
+          message: 'Validación fallida',
+          code: 'VALIDACION_FALLIDA',
+          errors: [
+            ErrorCampo(campo: 'nuevaPassword', mensaje: 'Falta una mayúscula'),
+            ErrorCampo(campo: 'nuevaPassword', mensaje: 'Falta un número'),
+          ],
+        ),
+      );
       return CambiarPasswordCubit(repo);
     },
     act: cambiarValido,
@@ -145,12 +149,14 @@ void main() {
   blocTest<CambiarPasswordCubit, CambiarPasswordState>(
     '429 -> Fallido with the wait text and the seconds to retry',
     build: () {
-      falla(const ApiException(
-        status: 429,
-        message: 'Demasiadas solicitudes',
-        code: 'DEMASIADAS_SOLICITUDES',
-        reintentarEnSegundos: 125,
-      ));
+      falla(
+        const ApiException(
+          status: 429,
+          message: 'Demasiadas solicitudes',
+          code: 'DEMASIADAS_SOLICITUDES',
+          reintentarEnSegundos: 125,
+        ),
+      );
       return CambiarPasswordCubit(repo);
     },
     act: cambiarValido,
