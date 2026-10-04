@@ -22,6 +22,12 @@ class FavoritosCubit extends Cubit<FavoritosState> {
   /// A load while another is in flight is ignored.
   bool _enVuelo = false;
 
+  /// An undo is running: a second tap is ignored.
+  bool _deshaciendo = false;
+
+  /// Bumped by every undo so a refresh that started earlier is discarded.
+  int _version = 0;
+
   FavoritosCargado? get _cargado {
     final actual = state;
     return actual is FavoritosCargado ? actual : null;
@@ -60,7 +66,7 @@ class FavoritosCubit extends Cubit<FavoritosState> {
     // Clears a previous soft error so a repeated failure is reported again.
     emit(actual.copiar());
     try {
-      await _recargar();
+      await _recargar(version: _version);
     } finally {
       _enVuelo = false;
     }
@@ -104,24 +110,45 @@ class FavoritosCubit extends Cubit<FavoritosState> {
     );
   }
 
-  /// Puts back the favorite removed last (and its alert preference).
+  /// Puts back the favorite removed last, alert preference included. A second
+  /// call while one is running is ignored. When the add itself fails the
+  /// removed favorite is kept so the user can retry.
   Future<void> deshacerEliminar() async {
     final eliminado = _cargado?.eliminado;
-    if (eliminado == null) return;
-    String? error;
+    if (eliminado == null || _deshaciendo) return;
+    _deshaciendo = true;
+    _version++;
     try {
       try {
         await _repositorio.agregar(eliminado.lugarId);
-      } on ApiException catch (e) {
-        if (e.code != _codigoDuplicado) rethrow;
+      } catch (e) {
+        if (!(e is ApiException && e.code == _codigoDuplicado)) {
+          _avisarError(mensajeDeError(e));
+          return;
+        }
       }
+      String? error;
       if (!eliminado.alertasActivadas) {
-        await _repositorio.configurarAlertas(eliminado.lugarId, activadas: false);
+        try {
+          await _repositorio.configurarAlertas(
+            eliminado.lugarId,
+            activadas: false,
+          );
+        } catch (e) {
+          error = mensajeDeError(e);
+        }
       }
-    } catch (e) {
-      error = mensajeDeError(e);
+      // The favorite is back: show what the server holds (flag included).
+      await _recargar(error: error);
+    } finally {
+      _deshaciendo = false;
     }
-    await _recargar(error: error);
+  }
+
+  void _avisarError(String error) {
+    final ahora = _cargado;
+    if (isClosed || ahora == null) return;
+    emit(ahora.copiar(error: error));
   }
 
   /// Flips the alert preference of one favorite.
@@ -193,13 +220,16 @@ class FavoritosCubit extends Cubit<FavoritosState> {
   }
 
   /// Reads the list again keeping the data on screen when it fails.
-  Future<void> _recargar({String? error}) async {
+  /// With a [version], a result is dropped when an undo ran meanwhile.
+  Future<void> _recargar({String? error, int? version}) async {
     try {
       final res = await _repositorio.listar();
-      if (isClosed) return;
-      emit(FavoritosCargado(res.items, mensajeVacio: res.mensaje, error: error));
+      if (isClosed || (version != null && version != _version)) return;
+      emit(
+        FavoritosCargado(res.items, mensajeVacio: res.mensaje, error: error),
+      );
     } catch (e) {
-      if (isClosed) return;
+      if (isClosed || (version != null && version != _version)) return;
       final actual = _cargado;
       if (actual == null) {
         emit(
