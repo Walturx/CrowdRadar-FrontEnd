@@ -203,6 +203,36 @@ void main() {
       await expectLater(repo.buscar(), _falla(400, 'VALIDACION_FALLIDA'));
     });
 
+    test('blank q with a bbox is treated as no q', () async {
+      final sinQ = await repo.buscar(bbox: _lima);
+
+      for (final q in ['', '   ']) {
+        final res = await repo.buscar(q: q, bbox: _lima);
+        expect(res.items, sinQ.items, reason: 'q="$q"');
+      }
+    });
+
+    test('blank q without bbox is still a 400', () async {
+      await expectLater(
+        repo.buscar(q: '   '),
+        _falla(400, 'VALIDACION_FALLIDA'),
+      );
+    });
+
+    test('a negative limite is a 400', () async {
+      await expectLater(
+        repo.buscar(bbox: _lima, limite: -1),
+        _falla(400, 'VALIDACION_FALLIDA'),
+      );
+    });
+
+    test('limite 0 is a 400', () async {
+      await expectLater(
+        repo.buscar(bbox: _lima, limite: 0),
+        _falla(400, 'VALIDACION_FALLIDA'),
+      );
+    });
+
     test('a configured failure is thrown', () async {
       final caido = LugarRepositoryFake(
         comportamiento: const ComportamientoFake(

@@ -10,6 +10,7 @@ import 'buscar_lugar_state.dart';
 class BuscarLugarCubit extends Cubit<BuscarLugarState> {
   static const Duration esperaTecleo = Duration(milliseconds: 400);
   static const int minimoCaracteres = 2;
+  static const int limiteResultados = 50;
   static const String mensajeError =
       'No pudimos realizar la búsqueda. Revisa tu conexión e inténtalo de nuevo.';
 
@@ -29,6 +30,9 @@ class BuscarLugarCubit extends Cubit<BuscarLugarState> {
   void alCambiarTexto(String texto) {
     final consulta = texto.trim();
     _temporizador?.cancel();
+    if (consulta.length >= minimoCaracteres && consulta == _ultimaConsulta) {
+      return;
+    }
     if (consulta.length < minimoCaracteres) {
       _solicitud++;
       _ultimaConsulta = null;
@@ -40,6 +44,7 @@ class BuscarLugarCubit extends Cubit<BuscarLugarState> {
 
   /// Repeats the last search; nothing to repeat before the first one.
   Future<void> reintentar() async {
+    _temporizador?.cancel();
     final consulta = _ultimaConsulta;
     if (consulta != null) await _buscar(consulta);
   }
@@ -49,11 +54,17 @@ class BuscarLugarCubit extends Cubit<BuscarLugarState> {
     final solicitud = ++_solicitud;
     emit(const BuscarBuscando());
     try {
-      final res = await _repositorio.buscar(q: consulta);
+      final res = await _repositorio.buscar(
+        q: consulta,
+        limite: limiteResultados,
+      );
       if (_obsoleta(solicitud)) return;
       emit(
         res.estaVacia
-            ? BuscarSinResultados(consulta)
+            ? BuscarSinResultados(
+                consulta,
+                mensajeServidor: res.mensaje.isEmpty ? null : res.mensaje,
+              )
             : BuscarResultados(res.items, consulta: consulta),
       );
     } catch (e) {

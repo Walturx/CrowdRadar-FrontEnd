@@ -7,7 +7,7 @@ import 'package:crowdradar/core/network/respuesta_api.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
 
 /// One recorded `buscar` call.
-typedef PedidoBuscar = ({String? q, LimitesMapa? bbox});
+typedef PedidoBuscar = ({String? q, LimitesMapa? bbox, int? limite});
 
 /// Scriptable [LugarRepository] that records what it was asked.
 class RepoLugarFalso implements LugarRepository {
@@ -34,7 +34,7 @@ class RepoLugarFalso implements LugarRepository {
     NivelSaturacion? nivel,
     int? limite,
   }) {
-    final pedido = (q: q, bbox: bbox);
+    final pedido = (q: q, bbox: bbox, limite: limite);
     pedidos.add(pedido);
     return alBuscar(pedido);
   }

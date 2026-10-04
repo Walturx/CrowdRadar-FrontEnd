@@ -33,6 +33,112 @@ const _espera = Duration(milliseconds: 400);
 const _menos = Duration(milliseconds: 399);
 
 void main() {
+  group('server message and request shape', () {
+    test('an empty result shows the server message when there is one', () {
+      fakeAsync((reloj) {
+        final cubit = BuscarLugarCubit(
+          RepoLugarFalso(
+            alBuscar: (_) => resultado([], mensaje: 'Nada por aquí.'),
+          ),
+        );
+
+        cubit.alCambiarTexto('Zoológico');
+        reloj.elapse(_espera);
+        reloj.flushMicrotasks();
+
+        expect((cubit.state as BuscarSinResultados).mensaje, 'Nada por aquí.');
+        cubit.close();
+      });
+    });
+
+    test(
+      'an empty result without server message falls back to the HU text',
+      () {
+        fakeAsync((reloj) {
+          final cubit = BuscarLugarCubit(
+            RepoLugarFalso(alBuscar: (_) => resultado([])),
+          );
+
+          cubit.alCambiarTexto('Zoológico');
+          reloj.elapse(_espera);
+          reloj.flushMicrotasks();
+
+          expect(
+            (cubit.state as BuscarSinResultados).mensaje,
+            'No encontramos lugares para “Zoológico”. Prueba con otro nombre.',
+          );
+          cubit.close();
+        });
+      },
+    );
+
+    test('always sends the results limit', () {
+      fakeAsync((reloj) {
+        final repo = RepoLugarFalso();
+        final cubit = BuscarLugarCubit(repo);
+
+        cubit.alCambiarTexto('Par');
+        reloj.elapse(_espera);
+
+        expect(BuscarLugarCubit.limiteResultados, 50);
+        expect(repo.pedidos.single.limite, BuscarLugarCubit.limiteResultados);
+        cubit.close();
+      });
+    });
+  });
+
+  group('repeated query and retry', () {
+    test('the same trimmed text as the last query makes no new request', () {
+      fakeAsync((reloj) {
+        final repo = RepoLugarFalso();
+        final cubit = BuscarLugarCubit(repo);
+
+        cubit.alCambiarTexto('Par');
+        reloj.elapse(_espera);
+        reloj.flushMicrotasks();
+        cubit.alCambiarTexto('  Par ');
+        reloj.elapse(_espera);
+        reloj.flushMicrotasks();
+
+        expect(repo.pedidos, hasLength(1));
+        cubit.close();
+      });
+    });
+
+    test('going back to the last query cancels the pending different one', () {
+      fakeAsync((reloj) {
+        final repo = RepoLugarFalso();
+        final cubit = BuscarLugarCubit(repo);
+
+        cubit.alCambiarTexto('Par');
+        reloj.elapse(_espera);
+        cubit.alCambiarTexto('Parq');
+        cubit.alCambiarTexto('Par');
+        reloj.elapse(_espera);
+
+        expect(repo.pedidos.map((p) => p.q), ['Par']);
+        cubit.close();
+      });
+    });
+
+    test('retry cancels a pending debounce timer', () {
+      fakeAsync((reloj) {
+        final repo = RepoLugarFalso();
+        final cubit = BuscarLugarCubit(repo);
+
+        cubit.alCambiarTexto('Par');
+        reloj.elapse(_espera);
+        cubit.alCambiarTexto('Parq');
+        cubit.reintentar();
+        reloj.elapse(_espera);
+        reloj.flushMicrotasks();
+
+        expect(repo.pedidos.map((p) => p.q), ['Par', 'Par']);
+        cubit.close();
+      });
+    });
+  });
+
   group('debounce and minimum length', () {
     test('starts Inicial', () {
       final cubit = BuscarLugarCubit(RepoLugarFalso());

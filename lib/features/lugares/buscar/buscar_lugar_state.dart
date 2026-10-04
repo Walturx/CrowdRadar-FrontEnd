@@ -31,13 +31,18 @@ class BuscarResultados extends BuscarLugarState {
 class BuscarSinResultados extends BuscarLugarState {
   final String consulta;
 
-  const BuscarSinResultados(this.consulta);
+  /// Message sent by the server for the empty result, when there is one.
+  final String? mensajeServidor;
 
-  String get mensaje =>
-      'No encontramos lugares para “$consulta”. Prueba con otro nombre.';
+  const BuscarSinResultados(this.consulta, {this.mensajeServidor});
+
+  /// The server message, else the HU 3.4 text built from [consulta].
+  String get mensaje => (mensajeServidor?.isNotEmpty ?? false)
+      ? mensajeServidor!
+      : 'No encontramos lugares para “$consulta”. Prueba con otro nombre.';
 
   @override
-  List<Object?> get props => [consulta];
+  List<Object?> get props => [consulta, mensajeServidor];
 }
 
 class BuscarError extends BuscarLugarState {

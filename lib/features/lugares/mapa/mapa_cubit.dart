@@ -10,6 +10,7 @@ import 'mapa_state.dart';
 
 /// Loads the places inside the visible map area.
 class MapaCubit extends Cubit<MapaState> {
+  static const int limiteLugares = 200;
   static const Duration esperaCamara = Duration(milliseconds: 500);
   static const String mensajeError =
       'Hubo un error al obtener la información geográfica. Revisa tu conexión e inténtalo de nuevo.';
@@ -53,7 +54,10 @@ class MapaCubit extends Cubit<MapaState> {
       }),
     );
     try {
-      final res = await _repositorio.buscar(bbox: limites);
+      final res = await _repositorio.buscar(
+        bbox: limites,
+        limite: limiteLugares,
+      );
       if (_obsoleta(solicitud)) return;
       emit(
         MapaCargado(

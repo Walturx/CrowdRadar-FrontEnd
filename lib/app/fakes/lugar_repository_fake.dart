@@ -35,8 +35,17 @@ class LugarRepositoryFake implements LugarRepository {
     int? limite,
   }) async {
     await _comportamiento.aplicar();
-    final texto = q?.trim();
-    if ((texto == null || texto.isEmpty) && bbox == null) {
+    final recortado = q?.trim();
+    // A blank q counts as no q, like the API.
+    final texto = (recortado == null || recortado.isEmpty) ? null : recortado;
+    if (limite != null && limite <= 0) {
+      throw errorFake(
+        400,
+        'VALIDACION_FALLIDA',
+        'El límite debe ser mayor que cero',
+      );
+    }
+    if (texto == null && bbox == null) {
       throw errorFake(
         400,
         'VALIDACION_FALLIDA',
