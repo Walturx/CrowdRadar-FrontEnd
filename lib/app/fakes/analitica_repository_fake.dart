@@ -1,6 +1,7 @@
 import '../../core/models/analitica.dart';
 import '../../core/models/nivel_saturacion.dart';
 import '../../core/utils/formato_fecha.dart';
+import '../../features/analitica/analitica_parametros.dart';
 import '../../features/analitica/data/analitica_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
@@ -11,10 +12,13 @@ import 'historial_sintetico.dart';
 /// (seeded by the place id) flagged `sintetico`; unknown places have none.
 class AnaliticaRepositoryFake implements AnaliticaRepository {
   final ComportamientoFake _comportamiento;
+  final DateTime Function() _reloj;
 
   AnaliticaRepositoryFake({
     ComportamientoFake comportamiento = const ComportamientoFake(),
-  }) : _comportamiento = comportamiento;
+    DateTime Function()? reloj,
+  }) : _comportamiento = comportamiento,
+       _reloj = reloj ?? DateTime.now;
 
   static const String _sinHistorial =
       'No existe información histórica disponible para este lugar.';
@@ -22,12 +26,11 @@ class AnaliticaRepositoryFake implements AnaliticaRepository {
       'No existen datos suficientes para realizar la comparación.';
   static const String _sinRecomendacion =
       'No existen datos suficientes para generar la recomendación.';
-  static const String _finDeSemana = 'FIN_DE_SEMANA';
 
   bool _tieneDatos(int lugarId) => lugaresFake.any((l) => l.id == lugarId);
 
   List<PuntoSerie> _horas(int seed, {bool finDeSemana = false}) => [
-    for (var h = 0; h < 24; h++)
+    for (var h = 0; h < AnaliticaParametros.horasPorDia; h++)
       PuntoSerie(
         etiquetaHora(h),
         valorSintetico(seed, h, finDeSemana: finDeSemana),
@@ -45,7 +48,9 @@ class AnaliticaRepositoryFake implements AnaliticaRepository {
     await _comportamiento.aplicar();
     if (desde != null &&
         hasta != null &&
-        (!hasta.isAfter(desde) || hasta.difference(desde).inDays > 31)) {
+        (!hasta.isAfter(desde) ||
+            hasta.difference(desde).inDays >
+                AnaliticaParametros.maxDiasRango)) {
       throw errorFake(
         400,
         'RANGO_FECHAS_INVALIDO',
@@ -58,8 +63,12 @@ class AnaliticaRepositoryFake implements AnaliticaRepository {
     if (agrupacion != AgrupacionHistorial.dia) {
       return SerieSaturacion(puntos: _horas(lugarId), sintetico: true);
     }
-    final fin = hasta ?? DateTime.now();
-    final inicio = desde ?? fin.subtract(const Duration(days: 6));
+    final fin = hasta ?? _reloj();
+    final inicio =
+        desde ??
+        fin.subtract(
+          const Duration(days: AnaliticaParametros.diasHistorialCorto - 1),
+        );
     final dias = DateTime(
       fin.year,
       fin.month,
@@ -76,9 +85,14 @@ class AnaliticaRepositoryFake implements AnaliticaRepository {
 
   PuntoSerie _punto(int lugarId, DateTime dia) {
     final finDe = dia.weekday >= DateTime.saturday;
-    final seed = lugarId * 31 + dia.day + dia.month * 7;
+    final seed = lugarId * 31 + dia.day + dia.month * 7 + dia.year * 373;
     final horas = [
-      for (var h = 8; h < 22; h++) valorSintetico(seed, h, finDeSemana: finDe),
+      for (
+        var h = AnaliticaParametros.horaApertura;
+        h < AnaliticaParametros.horaCierre;
+        h++
+      )
+        valorSintetico(seed, h, finDeSemana: finDe),
     ];
     final media = horas.reduce((a, b) => a + b) / horas.length;
     return PuntoSerie(
@@ -107,16 +121,23 @@ class AnaliticaRepositoryFake implements AnaliticaRepository {
         mensaje: _sinComparacion,
       );
     }
-    final a = _horas(lugarId, finDeSemana: diasA == _finDeSemana);
-    final b = _horas(lugarId, finDeSemana: diasB == _finDeSemana);
+    final a = _horas(
+      lugarId,
+      finDeSemana: diasA == AnaliticaParametros.finDeSemana,
+    );
+    final b = _horas(
+      lugarId,
+      finDeSemana: diasB == AnaliticaParametros.finDeSemana,
+    );
     final diferencias = [
-      for (var h = 0; h < 24; h++) DiferenciaHora(h, b[h].valor - a[h].valor),
+      for (var h = 0; h < AnaliticaParametros.horasPorDia; h++)
+        DiferenciaHora(h, b[h].valor - a[h].valor),
     ];
     return ComparacionPeriodos(
       SerieSaturacion(puntos: a, sintetico: true),
       SerieSaturacion(puntos: b, sintetico: true),
       diferencias: diferencias,
-      resumen: _resumen(diferencias, diasB == _finDeSemana),
+      resumen: _resumen(diferencias, diasB == AnaliticaParametros.finDeSemana),
     );
   }
 
@@ -143,7 +164,7 @@ class AnaliticaRepositoryFake implements AnaliticaRepository {
   Future<MejorHorario> mejorHorario(
     int lugarId, {
     String? dias,
-    int semanas = 4,
+    int semanas = AnaliticaParametros.semanasComparacion,
   }) async {
     await _comportamiento.aplicar();
     if (!_tieneDatos(lugarId)) {
@@ -151,13 +172,17 @@ class AnaliticaRepositoryFake implements AnaliticaRepository {
     }
     final candidatas =
         [
-          for (var h = 8; h < 22; h++)
+          for (
+            var h = AnaliticaParametros.horaApertura;
+            h < AnaliticaParametros.horaCierre;
+            h++
+          )
             (
               hora: h,
               promedio: valorSintetico(
                 lugarId,
                 h,
-                finDeSemana: dias == _finDeSemana,
+                finDeSemana: dias == AnaliticaParametros.finDeSemana,
               ),
               muestras: muestrasSinteticas(lugarId, h),
             ),
@@ -169,15 +194,11 @@ class AnaliticaRepositoryFake implements AnaliticaRepository {
         });
     return MejorHorario(
       franjas: [
-        for (final c in candidatas.take(3))
+        for (final c in candidatas.take(AnaliticaParametros.topFranjas))
           FranjaHoraria(
             c.hora,
             c.hora + 1,
-            c.promedio < 1.67
-                ? NivelSaturacion.tranquilo
-                : c.promedio < 2.34
-                ? NivelSaturacion.moderado
-                : NivelSaturacion.saturado,
+            NivelSaturacion.desdePromedio(c.promedio),
             promedio: c.promedio,
             muestras: c.muestras,
           ),

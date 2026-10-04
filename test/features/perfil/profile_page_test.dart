@@ -159,5 +159,43 @@ void main() {
       expect(find.text('110'), findsOneWidget);
       verify(() => repo.obtener()).called(2);
     });
+
+    for (final (nombre, error) in [
+      (
+        'a server failure',
+        const ApiException(status: 500, message: 'Servidor caído'),
+      ),
+      ('being offline', const ApiException.sinConexion()),
+    ]) {
+      testWidgets('$nombre on re-activation keeps the profile on screen', (
+        tester,
+      ) async {
+        var falla = false;
+        when(() => repo.obtener()).thenAnswer((_) async {
+          if (falla) throw error;
+          return _usuario.copyWith(puntosKarma: 100);
+        });
+        final activa = ValueNotifier(true);
+        await abrir(
+          tester,
+          pantalla: ValueListenableBuilder<bool>(
+            valueListenable: activa,
+            builder: (_, v, _) =>
+                TickerMode(enabled: v, child: const ProfilePage()),
+          ),
+        );
+
+        activa.value = false;
+        await tester.pump();
+        falla = true;
+        activa.value = true;
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('100'), findsOneWidget);
+        expect(find.text('Reintentar'), findsNothing);
+        expect(find.text(error.message), findsOneWidget);
+      });
+    }
   });
 }

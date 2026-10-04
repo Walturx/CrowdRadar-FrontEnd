@@ -15,16 +15,25 @@ class MisReportesCubit extends Cubit<MisReportesState> {
 
   int _pagina = 1;
 
-  /// A load while another is in flight is ignored.
-  bool _enVuelo = false;
+  /// Bumped by every [cargar]; a "load more" that started before it is stale
+  /// (it would append to a list that was just replaced) and is discarded.
+  int _epoca = 0;
 
+  bool _cargando = false;
+  bool _cargandoMas = false;
+
+  /// A load while another load is in flight is ignored; one that arrives
+  /// during a "load more" supersedes it. A refresh over a loaded list keeps it
+  /// visible until the new data arrives.
   Future<void> cargar() async {
-    if (_enVuelo) return;
-    _enVuelo = true;
-    emit(const MisReportesCargando());
+    if (isClosed || _cargando) return;
+    _cargando = true;
+    final epoca = ++_epoca;
+    final actual = state;
+    if (actual is! MisReportesCargado) emit(const MisReportesCargando());
     try {
       final pagina = await _repositorio.listarMios(page: 1, size: _size);
-      if (isClosed) return;
+      if (isClosed || epoca != _epoca) return;
       _pagina = pagina.page;
       emit(
         pagina.items.isEmpty
@@ -34,33 +43,57 @@ class MisReportesCubit extends Cubit<MisReportesState> {
     } catch (e) {
       if (isClosed) return;
       emit(
-        MisReportesError(
-          mensajeDeError(e),
-          codigo: codigoDeError(e),
-          esSinConexion: esErrorSinConexion(e),
-        ),
+        actual is MisReportesCargado
+            ? MisReportesCargado(
+                actual.reportes,
+                hayMas: actual.hayMas,
+                errorMas: mensajeDeError(e),
+              )
+            : MisReportesError(
+                mensajeDeError(e),
+                codigo: codigoDeError(e),
+                esSinConexion: esErrorSinConexion(e),
+              ),
       );
     } finally {
-      _enVuelo = false;
+      _cargando = false;
     }
   }
 
   Future<void> cargarMas() async {
     final actual = state;
-    if (_enVuelo || actual is! MisReportesCargado || !actual.hayMas) return;
-    _enVuelo = true;
+    if (isClosed ||
+        _cargando ||
+        _cargandoMas ||
+        actual is! MisReportesCargado ||
+        !actual.hayMas) {
+      return;
+    }
+    _cargandoMas = true;
+    final epoca = _epoca;
     emit(MisReportesCargado(actual.reportes, hayMas: true, cargandoMas: true));
     try {
       final pagina = await _repositorio.listarMios(
         page: _pagina + 1,
         size: _size,
       );
-      if (isClosed) return;
+      if (isClosed || epoca != _epoca) return;
       _pagina = pagina.page;
-      final todos = <ReporteSaturacion>[...actual.reportes, ...pagina.items];
-      emit(MisReportesCargado(todos, hayMas: pagina.hayMas));
+      final vistos = {for (final r in actual.reportes) r.id};
+      final todos = <ReporteSaturacion>[
+        ...actual.reportes,
+        for (final r in pagina.items)
+          if (vistos.add(r.id)) r,
+      ];
+      // An empty page ends the list even if the server still claims more.
+      emit(
+        MisReportesCargado(
+          todos,
+          hayMas: pagina.hayMas && pagina.items.isNotEmpty,
+        ),
+      );
     } catch (e) {
-      if (isClosed) return;
+      if (isClosed || epoca != _epoca) return;
       emit(
         MisReportesCargado(
           actual.reportes,
@@ -69,7 +102,7 @@ class MisReportesCubit extends Cubit<MisReportesState> {
         ),
       );
     } finally {
-      _enVuelo = false;
+      _cargandoMas = false;
     }
   }
 }

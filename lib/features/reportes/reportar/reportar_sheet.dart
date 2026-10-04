@@ -9,21 +9,27 @@ import '../data/reporte_repository.dart';
 import 'reportar_cubit.dart';
 import 'reportar_state.dart';
 
-/// Opens the report sheet; completes with `true` when a report was sent so the
-/// caller can refresh what it shows.
+/// Opens the report sheet; completes with `true` when a report was sent, however
+/// the sheet was dismissed (Listo, swipe or scrim), so the caller can refresh
+/// what it shows.
 Future<bool?> mostrarReportarSheet(
   BuildContext context, {
   required int lugarId,
   required String lugarNombre,
-}) => showModalBottomSheet<bool>(
-  context: context,
-  isScrollControlled: true,
-  builder: (_) => ReportarSheet(
-    repositorio: context.read<ReporteRepository>(),
-    lugarId: lugarId,
-    lugarNombre: lugarNombre,
-  ),
-);
+}) async {
+  var enviado = false;
+  final resultado = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => ReportarSheet(
+      repositorio: context.read<ReporteRepository>(),
+      lugarId: lugarId,
+      lugarNombre: lugarNombre,
+      onEnviado: () => enviado = true,
+    ),
+  );
+  return enviado ? true : resultado;
+}
 
 /// HU 4.1: choose Tranquilo / Moderado / Saturado and send the report.
 class ReportarSheet extends StatelessWidget {
@@ -37,11 +43,15 @@ class ReportarSheet extends StatelessWidget {
   final int lugarId;
   final String lugarNombre;
 
+  /// Called once the report was accepted.
+  final VoidCallback? onEnviado;
+
   const ReportarSheet({
     super.key,
     required this.repositorio,
     required this.lugarId,
     required this.lugarNombre,
+    this.onEnviado,
   });
 
   @override
@@ -55,7 +65,9 @@ class ReportarSheet extends StatelessWidget {
           20,
           20 + MediaQuery.viewInsetsOf(context).bottom,
         ),
-        child: BlocBuilder<ReportarCubit, ReportarState>(
+        child: BlocConsumer<ReportarCubit, ReportarState>(
+          listenWhen: (_, actual) => actual is ReportarEnviado,
+          listener: (_, _) => onEnviado?.call(),
           builder: (context, state) => switch (state) {
             ReportarEnviado() => _Exito(state),
             _ => _Formulario(lugarNombre, state),
@@ -72,13 +84,6 @@ class _Formulario extends StatelessWidget {
 
   const _Formulario(this.lugarNombre, this.state);
 
-  NivelSaturacion? get _nivel => switch (state) {
-    ReportarEditando(:final nivel) => nivel,
-    ReportarEnviando(:final nivel) => nivel,
-    ReportarFallido(:final nivel) => nivel,
-    _ => null,
-  };
-
   String? get _error => switch (state) {
     ReportarEditando(:final error) => error,
     ReportarFallido(:final mensaje) => mensaje,
@@ -89,6 +94,8 @@ class _Formulario extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<ReportarCubit>();
     final enviando = state is ReportarEnviando;
+    final fallo = state is ReportarFallido ? state as ReportarFallido : null;
+    final bloqueante = fallo?.bloqueante ?? false;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -111,15 +118,22 @@ class _Formulario extends StatelessWidget {
           _Opcion(
             nivel: e.key,
             descripcion: e.value,
-            seleccionada: _nivel == e.key,
+            seleccionada: state.nivel == e.key,
             onTap: enviando ? null : () => cubit.seleccionarNivel(e.key),
           ),
         const SizedBox(height: 8),
         BotonPrincipal(
-          texto: 'Enviar reporte',
+          texto: (fallo?.reintentable ?? false)
+              ? 'Reintentar'
+              : 'Enviar reporte',
           cargando: enviando,
-          onPressed: cubit.enviar,
+          onPressed: bloqueante ? null : cubit.enviar,
         ),
+        if (bloqueante)
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cerrar'),
+          ),
       ],
     );
   }

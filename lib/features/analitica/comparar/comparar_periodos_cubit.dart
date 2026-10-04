@@ -1,13 +1,10 @@
 import '../../../core/models/analitica.dart';
+import '../analitica_parametros.dart';
 import '../carga/analitica_cubit.dart';
 import '../data/analitica_repository.dart';
 
 /// HU 6.2: weekdays against weekends over the last four weeks.
 class CompararPeriodosCubit extends AnaliticaCubit<ComparacionPeriodos> {
-  static const int _diasVentana = 28;
-  static const String _laborables = 'LABORABLES';
-  static const String _finDeSemana = 'FIN_DE_SEMANA';
-
   final AnaliticaRepository _repositorio;
   final int _lugarId;
   final DateTime Function() _reloj;
@@ -25,7 +22,7 @@ class CompararPeriodosCubit extends AnaliticaCubit<ComparacionPeriodos> {
     final desde = DateTime(
       hasta.year,
       hasta.month,
-      hasta.day - _diasVentana + 1,
+      hasta.day - AnaliticaParametros.diasVentanaComparacion + 1,
     );
     return _repositorio.comparar(
       _lugarId,
@@ -33,8 +30,8 @@ class CompararPeriodosCubit extends AnaliticaCubit<ComparacionPeriodos> {
       hastaA: hasta,
       desdeB: desde,
       hastaB: hasta,
-      diasA: _laborables,
-      diasB: _finDeSemana,
+      diasA: AnaliticaParametros.laborables,
+      diasB: AnaliticaParametros.finDeSemana,
     );
   }
 

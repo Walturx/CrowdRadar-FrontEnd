@@ -1,4 +1,5 @@
 import '../../../core/models/analitica.dart';
+import '../analitica_parametros.dart';
 
 /// Frozen contract (M4). "No data" is a 200 with `sinDatos`, not an exception.
 abstract class AnaliticaRepository {
@@ -25,6 +26,6 @@ abstract class AnaliticaRepository {
   Future<MejorHorario> mejorHorario(
     int lugarId, {
     String? dias,
-    int semanas = 4,
+    int semanas = AnaliticaParametros.semanasComparacion,
   });
 }

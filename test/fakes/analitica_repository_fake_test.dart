@@ -2,6 +2,7 @@ import 'package:crowdradar/app/fakes/analitica_repository_fake.dart';
 import 'package:crowdradar/app/fakes/historial_sintetico.dart';
 import 'package:crowdradar/core/models/analitica.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
+import 'package:crowdradar/features/analitica/analitica_parametros.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Matcher _rangoInvalido() => throwsA(
@@ -65,6 +66,29 @@ void main() {
       expect(s.puntos, hasLength(7));
       expect(s.puntos.first.etiqueta, '2026-09-01');
       expect(s.puntos.last.etiqueta, '2026-09-07');
+    });
+
+    test('the daily default window follows the injected clock', () async {
+      final fijo = AnaliticaRepositoryFake(
+        reloj: () => DateTime(2026, 9, 7, 15),
+      );
+
+      final s = await fijo.historial(1, agrupacion: AgrupacionHistorial.dia);
+
+      expect(s.puntos, hasLength(AnaliticaParametros.diasHistorialCorto));
+      expect(s.puntos.first.etiqueta, '2026-09-01');
+      expect(s.puntos.last.etiqueta, '2026-09-07');
+    });
+
+    test('the same day of another year gets another series', () async {
+      Future<List<double>> valores(int anio) async {
+        final repo = AnaliticaRepositoryFake(reloj: () => DateTime(anio, 9, 7));
+        final s = await repo.historial(1, agrupacion: AgrupacionHistorial.dia);
+        return [for (final p in s.puntos) p.valor];
+      }
+
+      expect(await valores(2026), await valores(2026));
+      expect(await valores(2026), isNot(await valores(2027)));
     });
 
     test('invalid ranges are a 400 RANGO_FECHAS_INVALIDO', () async {

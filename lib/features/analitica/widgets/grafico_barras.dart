@@ -18,12 +18,6 @@ class GraficoBarras extends StatelessWidget {
 
   const GraficoBarras({super.key, required this.puntos, this.eje});
 
-  static NivelSaturacion nivelDe(double valor) => valor < 1.67
-      ? NivelSaturacion.tranquilo
-      : valor < 2.34
-      ? NivelSaturacion.moderado
-      : NivelSaturacion.saturado;
-
   @override
   Widget build(BuildContext context) {
     final etiquetas =
@@ -49,7 +43,9 @@ class GraficoBarras extends StatelessWidget {
                       child: Container(
                         key: const Key('barra-saturacion'),
                         height: _alto * (p.valor.clamp(0.0, 3.0) / 3),
-                        color: ChipSaturacion.colorDe(nivelDe(p.valor)),
+                        color: ChipSaturacion.colorDe(
+                          NivelSaturacion.desdePromedio(p.valor),
+                        ),
                       ),
                     ),
                   ),

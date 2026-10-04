@@ -23,7 +23,7 @@ class PuntoSerie extends Equatable {
   /// Accepts `{etiqueta, valor, muestras}` (history) and `{hora, valor,
   /// muestras}` (one of the 24 slots of a comparison period).
   factory PuntoSerie.fromJson(Map<String, dynamic> j) => PuntoSerie(
-    j['etiqueta'] as String? ??
+    aTexto(j['etiqueta']) ??
         (j['hora'] == null ? '' : etiquetaHora(_aHora(j['hora']))),
     aDouble(j['valor']),
     muestras: aInt(j['muestras']),
@@ -52,8 +52,8 @@ class SerieSaturacion extends Equatable {
 
   factory SerieSaturacion.fromJson(Map<String, dynamic> j) => SerieSaturacion(
     puntos: _puntos(j['puntos']),
-    sinDatos: j['sinDatos'] as bool? ?? j['hayDatos'] == false,
-    mensaje: j['mensaje'] as String?,
+    sinDatos: aBool(j['sinDatos']) ?? aBool(j['hayDatos']) == false,
+    mensaje: aTexto(j['mensaje']),
     sintetico: j['sintetico'] == true,
   );
 
@@ -62,14 +62,19 @@ class SerieSaturacion extends Equatable {
 }
 
 List<PuntoSerie> _puntos(Object? lista) => [
-  for (final p in lista as List? ?? const []) PuntoSerie.fromJson(aMapa(p)),
+  for (final p in aLista(lista)) PuntoSerie.fromJson(aMapa(p)),
 ];
 
 class DiferenciaHora extends Equatable {
   final int hora;
+
+  /// Period B minus period A (positive: B is busier than A).
   final double diferencia;
 
   const DiferenciaHora(this.hora, this.diferencia);
+
+  /// Named reading of [diferencia]: how much busier B is than A.
+  double get diferenciaRespectoA => diferencia;
 
   @override
   List<Object?> get props => [hora, diferencia];
@@ -79,7 +84,7 @@ class ComparacionPeriodos extends Equatable {
   final SerieSaturacion periodoA;
   final SerieSaturacion periodoB;
 
-  /// Period B minus period A, per hour.
+  /// Per hour, [DiferenciaHora.diferenciaRespectoA] (B minus A).
   final List<DiferenciaHora> diferencias;
   final String? resumen;
   final bool suficiente;
@@ -107,15 +112,15 @@ class ComparacionPeriodos extends Equatable {
       periodo(j['periodoA']),
       periodo(j['periodoB']),
       diferencias: [
-        for (final d in j['diferencias'] as List? ?? const [])
+        for (final d in aLista(j['diferencias']))
           DiferenciaHora(
             _aHora(aMapa(d)['hora']),
             aDouble(aMapa(d)['diferencia']),
           ),
       ],
-      resumen: j['resumen'] as String?,
-      suficiente: j['suficiente'] as bool? ?? true,
-      mensaje: j['mensaje'] as String?,
+      resumen: aTexto(j['resumen']),
+      suficiente: aBool(j['suficiente']) ?? true,
+      mensaje: aTexto(j['mensaje']),
     );
   }
 
@@ -173,12 +178,11 @@ class MejorHorario extends Equatable {
   /// The backend sends `recomendaciones` + `suficiente`.
   factory MejorHorario.fromJson(Map<String, dynamic> j) => MejorHorario(
     franjas: [
-      for (final f
-          in (j['recomendaciones'] ?? j['franjas']) as List? ?? const [])
+      for (final f in aLista(j['recomendaciones'] ?? j['franjas']))
         FranjaHoraria.fromJson(aMapa(f)),
     ],
-    sinDatos: j['sinDatos'] as bool? ?? j['suficiente'] == false,
-    mensaje: j['mensaje'] as String?,
+    sinDatos: aBool(j['sinDatos']) ?? aBool(j['suficiente']) == false,
+    mensaje: aTexto(j['mensaje']),
     sintetico: j['sintetico'] == true,
   );
 

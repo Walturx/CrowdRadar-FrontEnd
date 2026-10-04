@@ -15,18 +15,25 @@ class DetalleCargando extends DetalleLugarState {
 
 /// [esFavorito] is tracked here (not in [detalle]) so toggling it never
 /// requires rebuilding the shared model; [errorFavorito] is the last toggle failure.
+/// [errorActualizacion] is a failed background refresh: [detalle] is still the
+/// last good data.
 class DetalleCargado extends DetalleLugarState {
   final LugarDetalle detalle;
   final bool esFavorito;
   final bool procesandoFavorito;
   final String? errorFavorito;
+  final String? errorActualizacion;
 
   const DetalleCargado(
     this.detalle, {
     required this.esFavorito,
     this.procesandoFavorito = false,
     this.errorFavorito,
+    this.errorActualizacion,
   });
+
+  /// The soft error to tell the user about, if any.
+  String? get aviso => errorFavorito ?? errorActualizacion;
 
   @override
   List<Object?> get props => [
@@ -34,6 +41,7 @@ class DetalleCargado extends DetalleLugarState {
     esFavorito,
     procesandoFavorito,
     errorFavorito,
+    errorActualizacion,
   ];
 }
 

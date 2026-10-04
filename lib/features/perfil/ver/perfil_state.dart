@@ -13,13 +13,16 @@ class PerfilCargando extends PerfilState {
   const PerfilCargando();
 }
 
+/// [errorActualizacion] is a failed background refresh: [usuario] is still the
+/// last good data, so the screen keeps showing it and only warns.
 class PerfilCargado extends PerfilState {
   final Usuario usuario;
+  final String? errorActualizacion;
 
-  const PerfilCargado(this.usuario);
+  const PerfilCargado(this.usuario, {this.errorActualizacion});
 
   @override
-  List<Object?> get props => [usuario];
+  List<Object?> get props => [usuario, errorActualizacion];
 }
 
 class PerfilError extends PerfilState {
