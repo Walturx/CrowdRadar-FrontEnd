@@ -26,15 +26,25 @@ class MisReportesCargado extends MisReportesState {
   /// Failure of the last "load more"; the list already loaded stays visible.
   final String? errorMas;
 
+  /// Failure of the last full refresh; the list already loaded stays visible.
+  final String? errorActualizacion;
+
   const MisReportesCargado(
     this.reportes, {
     this.hayMas = false,
     this.cargandoMas = false,
     this.errorMas,
+    this.errorActualizacion,
   });
 
   @override
-  List<Object?> get props => [reportes, hayMas, cargandoMas, errorMas];
+  List<Object?> get props => [
+    reportes,
+    hayMas,
+    cargandoMas,
+    errorMas,
+    errorActualizacion,
+  ];
 }
 
 class MisReportesError extends MisReportesState {
