@@ -75,4 +75,27 @@ void main() {
     verifyNever(() => repo.iniciarSesion(any(), any()));
     expect(find.text('Ingresá tu correo'), findsOneWidget);
   });
+
+  testWidgets('"¿Olvidaste tu contraseña?" opens the recovery screen', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      RepositoryProvider<AuthRepository>.value(
+        value: repo,
+        child: MaterialApp.router(
+          routerConfig: enrutadorDe(
+            ruta: '/login',
+            inicial: '/login',
+            pantalla: const LoginPage(),
+            otras: const ['/recuperar'],
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('¿Olvidaste tu contraseña?'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('RUTA /recuperar'), findsOneWidget);
+  });
 }

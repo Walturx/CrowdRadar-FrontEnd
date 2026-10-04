@@ -82,7 +82,7 @@ void main() {
     });
   }
 
-  testWidgets('S9.1 /recuperar is public and renders its placeholder', (
+  testWidgets('S9.1 /recuperar is public and renders the recovery form', (
     tester,
   ) async {
     SessionService.instance.reiniciar();
@@ -99,6 +99,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Recuperar contraseña'), findsWidgets);
+    expect(find.text('Enviar enlace'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
