@@ -73,4 +73,18 @@ void main() {
       const SesionNoAutenticada(motivo: MotivoCierre.usuario),
     ],
   );
+
+  test('R4-103 cerrarSesion with throwing storage still ends closed, no throw',
+      () async {
+    await sesion.iniciar(token, usuarioPrueba);
+    final cubit = SesionCubit(sesion);
+    sesion.configurar(StorageQueFallaAlEscribir(), reloj: () => ahora);
+
+    await cubit.cerrarSesion();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(cubit.state,
+        const SesionNoAutenticada(motivo: MotivoCierre.usuario));
+    await cubit.close();
+  });
 }

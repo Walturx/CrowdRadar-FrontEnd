@@ -29,9 +29,10 @@ class LoginExitoso extends LoginState {
 class LoginFallido extends LoginState {
   final String mensaje;
   final String? codigo;
+  final bool esSinConexion;
 
-  const LoginFallido(this.mensaje, {this.codigo});
+  const LoginFallido(this.mensaje, {this.codigo, this.esSinConexion = false});
 
   @override
-  List<Object?> get props => [mensaje, codigo];
+  List<Object?> get props => [mensaje, codigo, esSinConexion];
 }

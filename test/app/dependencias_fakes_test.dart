@@ -39,4 +39,30 @@ void main() {
     expect(d.authRepository, isA<AuthRepositoryHttp>());
     expect(d.lugarRepository, isA<LugarRepositoryHttp>());
   });
+
+  test('R1-101 fakes in a release build are refused', () {
+    expect(
+      () => Dependencias.crear(
+        const Entorno(usarFakes: true),
+        SessionService.instance,
+        esRelease: true,
+      ),
+      throwsA(isA<StateError>().having(
+          (e) => e.message, 'message', contains('USAR_FAKES'))),
+    );
+  });
+
+  test('R1-101 release without fakes and non-release with fakes still work',
+      () {
+    expect(
+      Dependencias.crear(const Entorno(), SessionService.instance,
+          esRelease: true).authRepository,
+      isA<AuthRepositoryHttp>(),
+    );
+    expect(
+      Dependencias.crear(const Entorno(usarFakes: true),
+          SessionService.instance, esRelease: false).authRepository,
+      isA<FakeAuthRepository>(),
+    );
+  });
 }

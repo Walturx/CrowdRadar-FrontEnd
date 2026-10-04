@@ -57,12 +57,13 @@ void main() {
       act: (c) => c.iniciarSesion('a@b.c', 'x'),
       expect: () => [
         const LoginEnviando(),
-        const LoginFallido('No se pudo conectar con el servidor'),
+        const LoginFallido('No se pudo conectar con el servidor',
+            esSinConexion: true),
       ],
     );
 
     blocTest<LoginCubit, LoginState>(
-      'unexpected error keeps Sprint 1 behavior: message is e.toString()',
+      'R4-101 unexpected error -> generic message, no toString leak',
       build: () {
         when(() => repo.iniciarSesion(any(), any()))
             .thenThrow(StateError('boom'));
@@ -71,9 +72,22 @@ void main() {
       act: (c) => c.iniciarSesion('a@b.c', 'x'),
       expect: () => [
         const LoginEnviando(),
-        LoginFallido(StateError('boom').toString()),
+        const LoginFallido('Ocurrió un error inesperado'),
       ],
     );
+  });
+
+  test('R4-101 FormatException does not leak its text', () async {
+    when(() => repo.iniciarSesion(any(), any()))
+        .thenThrow(const FormatException('token=secreto'));
+    final c = LoginCubit(repo);
+
+    await c.iniciarSesion('a', 'b');
+
+    final estado = c.state as LoginFallido;
+    expect(estado.mensaje, 'Ocurrió un error inesperado');
+    expect(estado.esSinConexion, isFalse);
+    expect(estado.mensaje, isNot(contains('secreto')));
   });
 
   group('RegistroCubit', () {
@@ -138,7 +152,7 @@ void main() {
     );
 
     blocTest<RegistroCubit, RegistroState>(
-      'unexpected error -> Fallido(e.toString())',
+      'R4-101 unexpected error -> generic message',
       build: () {
         cuandoRegistra().thenThrow(StateError('boom'));
         return RegistroCubit(repo);
@@ -146,8 +160,19 @@ void main() {
       act: registrar,
       expect: () => [
         const RegistroEnviando(),
-        RegistroFallido(StateError('boom').toString()),
+        const RegistroFallido('Ocurrió un error inesperado'),
       ],
+    );
+
+    blocTest<RegistroCubit, RegistroState>(
+      'R4-101 sinConexion flag is exposed',
+      build: () {
+        cuandoRegistra().thenThrow(const ApiException.sinConexion());
+        return RegistroCubit(repo);
+      },
+      act: registrar,
+      verify: (c) =>
+          expect((c.state as RegistroFallido).esSinConexion, isTrue),
     );
   });
 }

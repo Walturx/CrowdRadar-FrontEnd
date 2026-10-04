@@ -240,10 +240,8 @@ class _ProfileViewState extends State<_ProfileView> {
                   borderRadius: BorderRadius.circular(12),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      context.read<SesionCubit>().cerrarSesion();
-                      context.go(Rutas.login);
-                    },
+                    // The router redirects to /login on SesionNoAutenticada.
+                    onTap: () => context.read<SesionCubit>().cerrarSesion(),
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),

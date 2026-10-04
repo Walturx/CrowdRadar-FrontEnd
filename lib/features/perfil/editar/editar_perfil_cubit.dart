@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/utils/http_error_util.dart';
+import '../../../core/utils/mensaje_error.dart';
 import '../data/perfil_repository.dart';
 import 'editar_perfil_state.dart';
 
@@ -14,7 +14,11 @@ class EditarPerfilCubit extends Cubit<EditarPerfilState> {
     try {
       emit(EditarPerfilGuardado(await _repositorio.actualizar(cambios)));
     } catch (e) {
-      emit(EditarPerfilFallido(mensajeDeError(e)));
+      emit(EditarPerfilFallido(
+        mensajeDeError(e),
+        codigo: codigoDeError(e),
+        esSinConexion: esErrorSinConexion(e),
+      ));
     }
   }
 }

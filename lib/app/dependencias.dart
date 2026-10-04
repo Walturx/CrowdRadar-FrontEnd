@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../core/config/entorno.dart';
@@ -69,12 +70,20 @@ class Dependencias {
   });
 
   /// [mapaAdapter] and [receptorPush] can be overridden (tests, M3).
+  /// [esRelease] defaults to `kReleaseMode`; fakes are refused in release.
   factory Dependencias.crear(
     Entorno entorno,
     SessionService sesion, {
     MapaAdapter? mapaAdapter,
     ReceptorPush? receptorPush,
+    bool esRelease = kReleaseMode,
   }) {
+    if (esRelease && entorno.usarFakes) {
+      throw StateError(
+        'USAR_FAKES must not be enabled in a release build: fake repositories '
+        'and seed credentials are for development only.',
+      );
+    }
     final api = ApiClient(
       http.Client(),
       entorno,

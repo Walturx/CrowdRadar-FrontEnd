@@ -54,21 +54,40 @@ void main() {
       act: (c) => c.cargar(),
       expect: () => [
         const PerfilCargando(),
-        const PerfilError('No se pudo conectar con el servidor'),
+        const PerfilError('No se pudo conectar con el servidor',
+            esSinConexion: true),
       ],
     );
 
     blocTest<PerfilCubit, PerfilState>(
-      'unexpected error -> Error(e.toString())',
+      'R4-101 unexpected error -> generic message',
       build: () {
         when(() => repo.obtener()).thenThrow(StateError('boom'));
         return PerfilCubit(repo);
       },
       act: (c) => c.cargar(),
       expect: () =>
-          [const PerfilCargando(), PerfilError(StateError('boom').toString())],
+          [
+            const PerfilCargando(),
+            const PerfilError('Ocurrió un error inesperado'),
+          ],
     );
   });
+
+  blocTest<EditarPerfilCubit, EditarPerfilState>(
+    'R4-101 sinConexion and codigo are exposed',
+    build: () {
+      when(() => repo.actualizar(any())).thenThrow(
+          const ApiException(status: 0, message: 'x', code: 'C1'));
+      return EditarPerfilCubit(repo);
+    },
+    act: (c) => c.guardar({}),
+    verify: (c) {
+      final e = c.state as EditarPerfilFallido;
+      expect(e.codigo, 'C1');
+      expect(e.esSinConexion, isTrue);
+    },
+  );
 
   group('EditarPerfilCubit', () {
     test('starts in Editando', () {
@@ -102,7 +121,7 @@ void main() {
     );
 
     blocTest<EditarPerfilCubit, EditarPerfilState>(
-      'unexpected error -> Fallido(e.toString())',
+      'R4-101 unexpected error -> generic message',
       build: () {
         when(() => repo.actualizar(any())).thenThrow(StateError('boom'));
         return EditarPerfilCubit(repo);
@@ -110,7 +129,7 @@ void main() {
       act: (c) => c.guardar({'nombre': 'x'}),
       expect: () => [
         const EditarPerfilGuardando(),
-        EditarPerfilFallido(StateError('boom').toString()),
+        const EditarPerfilFallido('Ocurrió un error inesperado'),
       ],
     );
   });

@@ -24,9 +24,11 @@ class PerfilCargado extends PerfilState {
 
 class PerfilError extends PerfilState {
   final String mensaje;
+  final String? codigo;
+  final bool esSinConexion;
 
-  const PerfilError(this.mensaje);
+  const PerfilError(this.mensaje, {this.codigo, this.esSinConexion = false});
 
   @override
-  List<Object?> get props => [mensaje];
+  List<Object?> get props => [mensaje, codigo, esSinConexion];
 }
