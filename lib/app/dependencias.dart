@@ -15,6 +15,8 @@ import '../features/analitica/data/analitica_repository.dart';
 import '../features/analitica/data/analitica_repository_http.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../features/auth/data/auth_repository_http.dart';
+import '../features/exploracion/data/exploracion_repository.dart';
+import '../features/exploracion/data/exploracion_repository_http.dart';
 import '../features/favoritos/data/favorito_repository.dart';
 import '../features/favoritos/data/favorito_repository_http.dart';
 import '../features/lugares/data/lugar_repository.dart';
@@ -31,6 +33,7 @@ import 'fakes/alerta_repository_fake.dart';
 import 'fakes/analitica_repository_fake.dart';
 import 'fakes/comportamiento_fake.dart';
 import 'fakes/auth_repository_fake.dart';
+import 'fakes/exploracion_repository_fake.dart';
 import 'fakes/favorito_repository_fake.dart';
 import 'fakes/karma_fake.dart';
 import 'fakes/lugar_repository_fake.dart';
@@ -57,6 +60,7 @@ class Dependencias {
   final ValidacionRepository validacionRepository;
   final FavoritoRepository favoritoRepository;
   final AlertaRepository alertaRepository;
+  final ExploracionRepository exploracionRepository;
   final ModeracionRepository moderacionRepository;
 
   Dependencias._({
@@ -73,6 +77,7 @@ class Dependencias {
     required this.validacionRepository,
     required this.favoritoRepository,
     required this.alertaRepository,
+    required this.exploracionRepository,
     required this.moderacionRepository,
   });
 
@@ -113,6 +118,7 @@ class Dependencias {
       validacionRepository: repos.validacion,
       favoritoRepository: repos.favorito,
       alertaRepository: repos.alerta,
+      exploracionRepository: repos.exploracion,
       moderacionRepository: repos.moderacion,
     );
   }
@@ -132,6 +138,7 @@ class Dependencias {
     validacion: ValidacionRepositoryHttp(api),
     favorito: FavoritoRepositoryHttp(api),
     alerta: AlertaRepositoryHttp(api),
+    exploracion: ExploracionRepositoryHttp(api),
     moderacion: ModeracionRepositoryHttp(api),
   );
 
@@ -160,6 +167,10 @@ class Dependencias {
       sesion: sesion,
     ),
     alerta: AlertaRepositoryFake(comportamiento: comportamiento, sesion: sesion),
+    exploracion: ExploracionRepositoryFake(
+      comportamiento: comportamiento,
+      sesion: sesion,
+    ),
     moderacion: ModeracionRepositoryFake(comportamiento: comportamiento),
     );
   }
@@ -174,5 +185,6 @@ typedef _Repositorios = ({
   ValidacionRepository validacion,
   FavoritoRepository favorito,
   AlertaRepository alerta,
+  ExploracionRepository exploracion,
   ModeracionRepository moderacion,
 });

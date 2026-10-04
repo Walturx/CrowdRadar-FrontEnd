@@ -3,6 +3,7 @@ import 'package:crowdradar/app/dependencias.dart';
 import 'package:crowdradar/app/fakes/analitica_repository_fake.dart';
 import 'package:crowdradar/app/fakes/auth_repository_fake.dart';
 import 'package:crowdradar/app/fakes/alerta_repository_fake.dart';
+import 'package:crowdradar/app/fakes/exploracion_repository_fake.dart';
 import 'package:crowdradar/app/fakes/favorito_repository_fake.dart';
 import 'package:crowdradar/app/fakes/lugar_repository_fake.dart';
 import 'package:crowdradar/app/fakes/moderacion_repository_fake.dart';
@@ -32,6 +33,7 @@ void main() {
     expect(d.validacionRepository, isA<ValidacionRepositoryFake>());
     expect(d.favoritoRepository, isA<FavoritoRepositoryFake>());
     expect(d.alertaRepository, isA<AlertaRepositoryFake>());
+    expect(d.exploracionRepository, isA<ExploracionRepositoryFake>());
     expect(d.moderacionRepository, isA<ModeracionRepositoryFake>());
   });
 

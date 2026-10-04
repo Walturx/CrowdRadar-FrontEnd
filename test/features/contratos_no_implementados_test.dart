@@ -9,6 +9,7 @@ import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/features/alertas/data/alerta_repository_http.dart';
 import 'package:crowdradar/features/analitica/data/analitica_repository_http.dart';
+import 'package:crowdradar/features/exploracion/data/exploracion_repository_http.dart';
 import 'package:crowdradar/features/favoritos/data/favorito_repository_http.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository_http.dart';
 import 'package:crowdradar/features/moderacion/data/moderacion_repository.dart';
@@ -77,6 +78,7 @@ void main() {
       expect(d.validacionRepository, isA<ValidacionRepositoryHttp>());
       expect(d.favoritoRepository, isA<FavoritoRepositoryHttp>());
       expect(d.alertaRepository, isA<AlertaRepositoryHttp>());
+      expect(d.exploracionRepository, isA<ExploracionRepositoryHttp>());
       expect(d.moderacionRepository, isA<ModeracionRepositoryHttp>());
     });
   });
