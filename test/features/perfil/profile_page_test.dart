@@ -35,9 +35,15 @@ void main() {
     when(() => sesion.cerrarSesion()).thenAnswer((_) async {});
   });
 
-  Future<void> abrir(WidgetTester tester) async {
+  Future<void> abrir(
+    WidgetTester tester, {
+    Widget pantalla = const ProfilePage(),
+    List<String> otras = const ['/mapa', '/inicio'],
+  }) async {
     tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       RepositoryProvider<PerfilRepository>.value(
         value: repo,
@@ -47,7 +53,8 @@ void main() {
             routerConfig: enrutadorDe(
               ruta: '/perfil',
               inicial: '/perfil',
-              pantalla: const ProfilePage(),
+              pantalla: pantalla,
+              otras: otras,
             ),
           ),
         ),
@@ -96,5 +103,61 @@ void main() {
     await tester.pump();
 
     verify(() => sesion.cerrarSesion()).called(1);
+  });
+
+  group('karma and reports (HU 4.2 / 4.3)', () {
+    testWidgets('shows the accumulated karma points', (tester) async {
+      when(() => repo.obtener())
+          .thenAnswer((_) async => _usuario.copyWith(puntosKarma: 1280));
+      await abrir(tester);
+
+      expect(find.text('Karma'), findsOneWidget);
+      expect(find.text('1280'), findsOneWidget);
+    });
+
+    testWidgets('a user without karma data shows 0', (tester) async {
+      when(() => repo.obtener()).thenAnswer((_) async => _usuario);
+      await abrir(tester);
+
+      expect(find.text('0'), findsOneWidget);
+    });
+
+    testWidgets('Mis reportes opens /perfil/reportes', (tester) async {
+      when(() => repo.obtener()).thenAnswer((_) async => _usuario);
+      await abrir(tester, otras: const ['/perfil/reportes']);
+
+      await tester.ensureVisible(find.text('Mis reportes'));
+      await tester.tap(find.text('Mis reportes'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('RUTA /perfil/reportes'), findsOneWidget);
+    });
+
+    testWidgets('reloads when its tab becomes active again', (tester) async {
+      var karma = 100;
+      when(() => repo.obtener()).thenAnswer(
+        (_) async => _usuario.copyWith(puntosKarma: karma),
+      );
+      final activa = ValueNotifier(true);
+      await abrir(
+        tester,
+        pantalla: ValueListenableBuilder<bool>(
+          valueListenable: activa,
+          builder: (_, v, _) =>
+              TickerMode(enabled: v, child: const ProfilePage()),
+        ),
+      );
+      expect(find.text('100'), findsOneWidget);
+
+      activa.value = false;
+      await tester.pump();
+      karma = 110;
+      activa.value = true;
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('110'), findsOneWidget);
+      verify(() => repo.obtener()).called(2);
+    });
   });
 }

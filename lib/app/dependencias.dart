@@ -29,6 +29,7 @@ import 'fakes/analitica_repository_fake.dart';
 import 'fakes/comportamiento_fake.dart';
 import 'fakes/auth_repository_fake.dart';
 import 'fakes/favorito_repository_fake.dart';
+import 'fakes/karma_fake.dart';
 import 'fakes/lugar_repository_fake.dart';
 import 'fakes/moderacion_repository_fake.dart';
 import 'fakes/perfil_repository_fake.dart';
@@ -130,16 +131,26 @@ class Dependencias {
   static _Repositorios _repositoriosFake(
     SessionService sesion,
     ComportamientoFake comportamiento,
-  ) => (
+  ) {
+    final karma = KarmaFake();
+    return (
     auth: AuthRepositoryFake(sesion, comportamiento: comportamiento),
-    perfil: PerfilRepositoryFake(sesion, comportamiento: comportamiento),
+    perfil: PerfilRepositoryFake(
+      sesion,
+      comportamiento: comportamiento,
+      karma: karma,
+    ),
     lugar: LugarRepositoryFake(comportamiento: comportamiento),
-    reporte: ReporteRepositoryFake(comportamiento: comportamiento),
+    reporte: ReporteRepositoryFake(
+      comportamiento: comportamiento,
+      karma: karma,
+    ),
     analitica: AnaliticaRepositoryFake(comportamiento: comportamiento),
     validacion: ValidacionRepositoryFake(comportamiento: comportamiento),
     favorito: FavoritoRepositoryFake(comportamiento: comportamiento),
     moderacion: ModeracionRepositoryFake(comportamiento: comportamiento),
-  );
+    );
+  }
 }
 
 typedef _Repositorios = ({

@@ -33,6 +33,18 @@ class _ProfileView extends StatefulWidget {
 }
 
 class _ProfileViewState extends State<_ProfileView> {
+  bool? _activa;
+
+  /// Reloads when the tab becomes active again, so the karma earned by a
+  /// report sent elsewhere shows up (HU 4.2 c2).
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final activa = TickerMode.valuesOf(context).enabled;
+    if (_activa == false && activa) context.read<PerfilCubit>().cargar();
+    _activa = activa;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -232,6 +244,24 @@ class _ProfileViewState extends State<_ProfileView> {
                   Icons.location_city, 'Distrito', user.distrito ?? '-'),
               infoCard(Icons.verified_user, 'Rol', user.rol ?? '-'),
               infoCard(Icons.info_outline, 'Estado', user.status ?? '-'),
+              infoCard(Icons.star, 'Karma', '${user.puntosKarma ?? 0}'),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                child: Material(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  child: ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: AppColors.border),
+                    ),
+                    leading: const Icon(Icons.history, color: AppColors.primary),
+                    title: const Text('Mis reportes'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push(Rutas.perfilReportes),
+                  ),
+                ),
+              ),
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),

@@ -13,6 +13,9 @@ class Usuario extends Equatable {
   final String? createdAt;
   final String? updatedAt;
 
+  /// Accumulated karma (`GET /api/users/profile`); null when not reported.
+  final int? puntosKarma;
+
   const Usuario({
     this.id,
     this.nombre,
@@ -24,6 +27,7 @@ class Usuario extends Equatable {
     this.status,
     this.createdAt,
     this.updatedAt,
+    this.puntosKarma,
   });
 
   factory Usuario.fromJson(Map<String, dynamic> json) => Usuario(
@@ -37,6 +41,9 @@ class Usuario extends Equatable {
         status: json['status'] as String?,
         createdAt: json['createdAt'] as String?,
         updatedAt: json['updatedAt'] as String?,
+        puntosKarma: json['puntosKarma'] is num
+            ? (json['puntosKarma'] as num).toInt()
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -50,6 +57,7 @@ class Usuario extends Equatable {
         'status': status,
         'createdAt': createdAt,
         'updatedAt': updatedAt,
+        'puntosKarma': puntosKarma,
       };
 
   @override
@@ -64,6 +72,7 @@ class Usuario extends Equatable {
         status,
         createdAt,
         updatedAt,
+        puntosKarma,
       ];
 
   Usuario copyWith({
@@ -77,6 +86,7 @@ class Usuario extends Equatable {
     String? status,
     String? createdAt,
     String? updatedAt,
+    int? puntosKarma,
   }) {
     return Usuario(
       id: id ?? this.id,
@@ -89,6 +99,7 @@ class Usuario extends Equatable {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      puntosKarma: puntosKarma ?? this.puntosKarma,
     );
   }
 }

@@ -4,6 +4,7 @@ import '../../core/session/usuario_sesion.dart';
 import '../../features/perfil/data/perfil_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
+import 'karma_fake.dart';
 
 class PerfilRepositoryFake implements PerfilRepository {
   final SessionService _sesion;
@@ -11,17 +12,21 @@ class PerfilRepositoryFake implements PerfilRepository {
   String _password = passwordFake;
 
   final ComportamientoFake _comportamiento;
+  final KarmaFake _karma;
 
+  /// [karma] is shared with the report fake so both show the same total.
   PerfilRepositoryFake(
     this._sesion, {
     ComportamientoFake comportamiento = const ComportamientoFake(),
-  }) : _comportamiento = comportamiento;
+    KarmaFake? karma,
+  }) : _comportamiento = comportamiento,
+       _karma = karma ?? KarmaFake();
 
   @override
   Future<Usuario> obtener() async {
     await _comportamiento.aplicar();
     _exigirSesion();
-    return _perfil;
+    return _perfil.copyWith(puntosKarma: _karma.total);
   }
 
   @override
@@ -35,7 +40,7 @@ class PerfilRepositoryFake implements PerfilRepository {
       distrito: cambios['distrito'] as String?,
     );
     await _sesion.actualizarUsuario(UsuarioSesion.desdeUsuario(_perfil));
-    return _perfil;
+    return _perfil.copyWith(puntosKarma: _karma.total);
   }
 
   @override
