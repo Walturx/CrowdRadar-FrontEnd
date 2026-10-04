@@ -1,6 +1,7 @@
 import 'receptor_push.dart';
 
-/// Change-0 implementation: no push, nothing emitted.
+/// Null Object pattern: a [ReceptorPush] that does nothing (no token, no
+/// taps), so the app never checks whether push exists.
 class ReceptorPushNulo implements ReceptorPush {
   @override
   Future<void> inicializar() async {}

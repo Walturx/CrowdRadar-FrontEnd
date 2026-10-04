@@ -22,6 +22,5 @@ void main() {
 
     expect(await a, [4, 9]);
     expect(await b, [4, 9]);
-    await receptor.cerrar();
   });
 }
