@@ -7,6 +7,11 @@ import '../../../core/widgets/cargando.dart';
 import '../../../core/widgets/chip_saturacion.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../theme/app_colors.dart';
+import '../../../core/models/validacion.dart';
+import '../../validacion/data/validacion_repository.dart';
+import '../../validacion/estado/estado_validacion_cubit.dart';
+import '../../validacion/estado/estado_validacion_state.dart';
+import '../../validacion/widgets/chip_estado_validacion.dart';
 import '../data/reporte_repository.dart';
 import 'mis_reportes_cubit.dart';
 import 'mis_reportes_state.dart';
@@ -19,15 +24,28 @@ class MisReportesPage extends StatelessWidget {
 
   final int tamanoPagina;
 
-  const MisReportesPage({super.key, this.tamanoPagina = 20});
+  /// When given, each row shows its validation status (M5 chip).
+  final ValidacionRepository? validacion;
+
+  const MisReportesPage({super.key, this.tamanoPagina = 20, this.validacion});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => MisReportesCubit(
-        context.read<ReporteRepository>(),
-        size: tamanoPagina,
-      )..cargar(),
+    final repositorioValidacion = validacion;
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => MisReportesCubit(
+            context.read<ReporteRepository>(),
+            size: tamanoPagina,
+          )..cargar(),
+        ),
+        if (repositorioValidacion != null)
+          BlocProvider(
+            create: (_) =>
+                EstadoValidacionCubit(repositorioValidacion)..cargar(),
+          ),
+      ],
       child: Scaffold(
         appBar: AppBar(title: const Text('Mis reportes')),
         body: BlocBuilder<MisReportesCubit, MisReportesState>(
@@ -41,7 +59,10 @@ class MisReportesPage extends StatelessWidget {
               mensaje: state.mensaje,
               onReintentar: () => context.read<MisReportesCubit>().cargar(),
             ),
-            MisReportesCargado() => _Lista(state),
+            MisReportesCargado() => _Lista(
+              state,
+              conEstados: repositorioValidacion != null,
+            ),
           },
         ),
       ),
@@ -52,14 +73,26 @@ class MisReportesPage extends StatelessWidget {
 class _Lista extends StatelessWidget {
   final MisReportesCargado estado;
 
-  const _Lista(this.estado);
+  /// The validation statuses are available in the context (M5).
+  final bool conEstados;
+
+  const _Lista(this.estado, {this.conEstados = false});
 
   @override
   Widget build(BuildContext context) {
+    final estados = conEstados
+        ? context.watch<EstadoValidacionCubit>().state
+        : null;
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: [
-        for (final r in estado.reportes) _Fila(r),
+        for (final r in estado.reportes)
+          _Fila(
+            r,
+            validacion: estados is EstadoValidacionCargado
+                ? estados.estadoDe(r.id)
+                : null,
+          ),
         for (final error in [estado.errorActualizacion, estado.errorMas])
           if (error != null)
             Padding(
@@ -91,8 +124,9 @@ class _Fila extends StatelessWidget {
   };
 
   final ReporteSaturacion reporte;
+  final EstadoValidacion? validacion;
 
-  const _Fila(this.reporte);
+  const _Fila(this.reporte, {this.validacion});
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +140,7 @@ class _Fila extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           ChipSaturacion(nivel: reporte.nivel),
+          if (validacion != null) ChipEstadoValidacion(estado: validacion!),
           if (fecha != null) Text(haceCuanto(fecha)),
           if (puntos == 0 && motivo != null)
             Text(

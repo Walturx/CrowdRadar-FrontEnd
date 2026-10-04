@@ -105,6 +105,31 @@ state. `widgets/` has `GraficoBarras` (plain bars, no chart dependency),
 `FIN_DE_SEMANA`). `NivelSaturacion.desdePromedio` is the only place the
 1.67 / 2.34 cutoffs live.
 
+## Validation (M5)
+
+`features/validacion/`: `data/` (`ValidacionRepository` + HTTP; fake in
+`app/fakes/validacion_repository_fake.dart`, which shares `KarmaFake` and the
+session checks), and one folder per screen. The models in
+`core/models/validacion.dart` mirror the backend DTOs (`lugar{}` and
+`confiabilidad{}` are nested; counts live inside `confiabilidad`).
+
+- **Pending list** (`/validar`, `PendientesCubit`): reports around the last map
+  centre (`CentroMapaCompartido`, written by `MapPage`, Lima by default). A vote
+  is optimistic: the report leaves the list at once and comes back if the call
+  fails; 404 / 409 / 422 keep it removed (409 reads "Ya participaste...").
+  Success shows the thanks and "+2 karma" with the choice just made.
+- **Detail** (`/validar/reportes/:id`, `DetalleReporteCubit`): reliability badge
+  (`InsigniaConfiabilidad`), raw counts, the BAJA warning, the INSUFICIENTE text,
+  my vote and the vote / report actions (hidden on my own reports).
+- **Report a report** (`mostrarDenunciarSheet`, `DenunciarCubit`): motivo
+  required, description for `OTRO` (280 max); 409 / 422 / 404 end in a blocking
+  message, a network failure returns to the form. Completes with `true` when it
+  was registered (or already was).
+- **Status of my reports** (`/perfil/validaciones`, `EstadoValidacionCubit`):
+  first 50 reports, filtered client-side. `ChipEstadoValidacion` is also shown
+  by `MisReportesPage` when it is given a `ValidacionRepository` (merged by
+  report id, best effort).
+
 ## Favorites, alerts and filters (M3)
 
 `features/favoritos/`: `data/` (`FavoritoRepository` + HTTP; fake in

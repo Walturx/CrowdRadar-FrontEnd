@@ -6,22 +6,33 @@ import 'package:crowdradar/core/network/respuesta_api.dart';
 import 'package:crowdradar/core/models/reporte_saturacion.dart';
 import 'package:crowdradar/features/reportes/data/reporte_repository.dart';
 import 'package:crowdradar/features/reportes/mis_reportes/mis_reportes_page.dart';
+import 'package:crowdradar/core/models/validacion.dart';
+import 'package:crowdradar/features/validacion/data/validacion_repository.dart';
+import 'package:crowdradar/features/validacion/widgets/chip_estado_validacion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+import '../validacion/json_validacion.dart';
+
+class _MockValidacion extends Mock implements ValidacionRepository {}
 
 void main() {
   Future<void> abrir(
     WidgetTester tester,
     ReporteRepository repo, {
     int size = 20,
+    ValidacionRepository? validacion,
   }) async {
     tester.view.physicalSize = const Size(800, 3200);
     addTearDown(tester.view.resetPhysicalSize);
     await tester.pumpWidget(
       RepositoryProvider<ReporteRepository>.value(
         value: repo,
-        child: MaterialApp(home: MisReportesPage(tamanoPagina: size)),
+        child: MaterialApp(
+          home: MisReportesPage(tamanoPagina: size, validacion: validacion),
+        ),
       ),
     );
     await tester.pump();
@@ -38,13 +49,43 @@ void main() {
 
     expect(find.text('Mis reportes'), findsOneWidget);
     for (final id in [1, 2]) {
-      expect(find.text(lugaresFake.firstWhere((l) => l.id == id).nombre),
-          findsOneWidget);
+      expect(
+        find.text(lugaresFake.firstWhere((l) => l.id == id).nombre),
+        findsOneWidget,
+      );
     }
     expect(find.text('Saturado'), findsOneWidget);
     expect(find.text('Moderado'), findsOneWidget);
     expect(find.text('ahora'), findsNWidgets(2));
     expect(find.text('+10'), findsNWidgets(2));
+  });
+
+  testWidgets('each row shows its validation chip, matched by report id', (
+    tester,
+  ) async {
+    final repo = ReporteRepositoryFake();
+    await repo.reportar(1, NivelSaturacion.moderado);
+    await repo.reportar(2, NivelSaturacion.saturado);
+    final validacion = _MockValidacion();
+    when(
+      () => validacion.estadoMisReportes(size: any(named: 'size')),
+    ).thenAnswer(
+      (_) async => Pagina(
+        items: [
+          EstadoReporteValidacion.fromJson(
+            estadoMioJson(id: 2, estado: 'VALIDADO'),
+          ),
+        ],
+        page: 1,
+        size: 50,
+        total: 1,
+        totalPaginas: 1,
+      ),
+    );
+    await abrir(tester, repo, validacion: validacion);
+
+    expect(find.byType(ChipEstadoValidacion), findsOneWidget);
+    expect(find.text('Validado'), findsOneWidget);
   });
 
   testWidgets('a report without karma shows +0 and the reason', (tester) async {
@@ -109,7 +150,10 @@ class _Intermitente extends ReporteRepositoryFake {
   int _llamadas = 0;
 
   @override
-  Future<Pagina<ReporteSaturacion>> listarMios({int page = 1, int size = 20}) async {
+  Future<Pagina<ReporteSaturacion>> listarMios({
+    int page = 1,
+    int size = 20,
+  }) async {
     if (_llamadas++ == 0) {
       throw const ApiException(status: 500, message: 'Servidor caído');
     }
