@@ -18,6 +18,13 @@ class AlertasCubit extends Cubit<AlertasState> {
   /// A load while another is in flight is ignored.
   bool _enVuelo = false;
 
+  /// Alerts whose read mark is on its way to the server.
+  final Set<int> _marcando = {};
+
+  /// Alerts marked since the running reload started (the server may have
+  /// answered before seeing them).
+  final Set<int> _marcadasEnRefresco = {};
+
   /// Unread alerts; zero until the first successful load.
   int get noLeidas {
     final actual = state;
@@ -48,32 +55,24 @@ class AlertasCubit extends Cubit<AlertasState> {
 
   /// The app came back to the foreground (or the list was opened): reloads in
   /// the background, keeping the alerts on screen and only adding a soft error
-  /// when it fails. Without alerts it is a regular [cargar].
-  Future<void> alAbrirApp() async {
+  /// when it fails. Marks made while it ran are kept over the fresh list.
+  /// Without alerts it is a regular [cargar].
+  Future<void> refrescar() async {
     final actual = state;
     if (actual is! AlertasCargado) return cargar();
     if (isClosed || _enVuelo) return;
     _enVuelo = true;
     // Clears a previous soft error so a repeated failure is reported again.
-    emit(AlertasCargado(
-      actual.alertas,
-      noLeidas: actual.noLeidas,
-      mensajeVacio: actual.mensajeVacio,
-    ));
+    emit(_conError(actual, null));
+    _marcadasEnRefresco.clear();
     try {
-      final nuevo = await _leer();
+      final nuevo = _conMarcasPendientes(await _leer());
       if (isClosed) return;
       emit(nuevo);
     } catch (e) {
-      if (isClosed) return;
-      emit(
-        AlertasCargado(
-          actual.alertas,
-          noLeidas: actual.noLeidas,
-          mensajeVacio: actual.mensajeVacio,
-          error: mensajeDeError(e),
-        ),
-      );
+      final ahora = state;
+      if (isClosed || ahora is! AlertasCargado) return;
+      emit(_conError(ahora, mensajeDeError(e)));
     } finally {
       _enVuelo = false;
     }
@@ -85,30 +84,54 @@ class AlertasCubit extends Cubit<AlertasState> {
     final actual = state;
     if (actual is! AlertasCargado) return;
     final alerta = actual.alertas.where((a) => a.id == id);
-    if (alerta.isEmpty || alerta.first.leida) return;
+    if (alerta.isEmpty || alerta.first.leida || !_marcando.add(id)) return;
     emit(_cambiar(actual, id, leida: true));
+    _marcadasEnRefresco.add(id);
     try {
       await _repositorio.marcarLeida(id);
     } on ApiException catch (e) {
       if (e.code != _codigoNoEncontrada) _restaurar(id, mensajeDeError(e));
     } catch (e) {
       _restaurar(id, mensajeDeError(e));
+    } finally {
+      _marcando.remove(id);
     }
   }
 
+  /// Puts back the unread mark of [id] only if the list still shows it read,
+  /// so the counter never drifts from what the list says.
   void _restaurar(int id, String error) {
+    _marcadasEnRefresco.remove(id);
     final ahora = state;
     if (isClosed || ahora is! AlertasCargado) return;
-    final cambiada = _cambiar(ahora, id, leida: false);
-    emit(
-      AlertasCargado(
-        cambiada.alertas,
-        noLeidas: cambiada.noLeidas,
-        mensajeVacio: cambiada.mensajeVacio,
-        error: error,
-      ),
-    );
+    final alerta = ahora.alertas.where((a) => a.id == id);
+    if (alerta.isEmpty || !alerta.first.leida) {
+      emit(_conError(ahora, error));
+      return;
+    }
+    emit(_conError(_cambiar(ahora, id, leida: false), error));
   }
+
+  /// A fresh list the server computed before it saw the marks in flight: those
+  /// alerts stay read and leave the unread counter.
+  AlertasCargado _conMarcasPendientes(AlertasCargado nuevo) {
+    var resultado = nuevo;
+    for (final id in {..._marcando, ..._marcadasEnRefresco}) {
+      final alerta = resultado.alertas.where((a) => a.id == id);
+      if (alerta.isNotEmpty && !alerta.first.leida) {
+        resultado = _cambiar(resultado, id, leida: true);
+      }
+    }
+    return resultado;
+  }
+
+  static AlertasCargado _conError(AlertasCargado e, String? error) =>
+      AlertasCargado(
+        e.alertas,
+        noLeidas: e.noLeidas,
+        mensajeVacio: e.mensajeVacio,
+        error: error,
+      );
 
   Future<AlertasCargado> _leer() async {
     final res = await _repositorio.listar();
