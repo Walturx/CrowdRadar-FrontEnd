@@ -1,26 +1,20 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/network/api_exception.dart';
 import '../../../core/utils/mensaje_error.dart';
+import '../../../core/utils/mensaje_espera.dart';
 import '../data/auth_repository.dart';
 import 'login_state.dart';
 
 /// Login failure text by backend `code` (HU 1.1 c2/c3); unknown codes keep the
 /// API message.
 String mensajeDeLogin(Object error) {
-  final espera = error is ApiException ? error.reintentarEnSegundos : null;
   return switch (codigoDeError(error)) {
     'CREDENCIALES_INVALIDAS' => 'Correo o contraseña incorrectos',
     'CUENTA_NO_EXISTE' => 'No existe una cuenta con este correo',
     'CUENTA_SUSPENDIDA' => 'Tu cuenta está suspendida',
-    'DEMASIADOS_INTENTOS' || 'DEMASIADAS_SOLICITUDES' =>
-      espera == null || espera <= 0
-          ? 'Demasiados intentos, probá más tarde'
-          : () {
-              final minutos = (espera / 60).ceil();
-              return 'Demasiados intentos, probá en $minutos '
-                  '${minutos == 1 ? 'minuto' : 'minutos'}';
-            }(),
+    'DEMASIADOS_INTENTOS' ||
+    'DEMASIADAS_SOLICITUDES' =>
+      mensajeEspera(esperaDeError(error)),
     _ => mensajeDeError(error),
   };
 }
@@ -44,6 +38,7 @@ class LoginCubit extends Cubit<LoginState> {
         mensajeDeLogin(e),
         codigo: codigoDeError(e),
         esSinConexion: esErrorSinConexion(e),
+        reintentarEnSegundos: esperaDeError(e),
       ));
     } finally {
       _enVuelo = false;

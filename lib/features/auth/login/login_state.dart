@@ -31,8 +31,17 @@ class LoginFallido extends LoginState {
   final String? codigo;
   final bool esSinConexion;
 
-  const LoginFallido(this.mensaje, {this.codigo, this.esSinConexion = false});
+  /// Seconds before another attempt is allowed (rate limit), when known.
+  final int? reintentarEnSegundos;
+
+  const LoginFallido(
+    this.mensaje, {
+    this.codigo,
+    this.esSinConexion = false,
+    this.reintentarEnSegundos,
+  });
 
   @override
-  List<Object?> get props => [mensaje, codigo, esSinConexion];
+  List<Object?> get props =>
+      [mensaje, codigo, esSinConexion, reintentarEnSegundos];
 }

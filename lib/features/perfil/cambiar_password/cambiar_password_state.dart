@@ -32,11 +32,19 @@ class CambiarPasswordFallido extends CambiarPasswordState {
   final String? codigo;
   final bool esSinConexion;
 
+  /// The request may have been applied: the outcome is unknown (timeout).
+  final bool resultadoIncierto;
+
+  /// Seconds before another attempt is allowed (rate limit), when known.
+  final int? reintentarEnSegundos;
+
   const CambiarPasswordFallido(
     this.mensaje, {
     this.requisitosIncumplidos = const [],
     this.codigo,
     this.esSinConexion = false,
+    this.resultadoIncierto = false,
+    this.reintentarEnSegundos,
   });
 
   @override
@@ -45,5 +53,7 @@ class CambiarPasswordFallido extends CambiarPasswordState {
         requisitosIncumplidos,
         codigo,
         esSinConexion,
+        resultadoIncierto,
+        reintentarEnSegundos,
       ];
 }

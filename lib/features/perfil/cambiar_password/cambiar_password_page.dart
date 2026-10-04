@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/session/motivo_cierre.dart';
 import '../../../core/session/sesion_cubit.dart';
-import '../../../core/widgets/boton_principal.dart';
+import '../../../core/widgets/boton_con_espera.dart';
 import '../../../core/widgets/mostrar_aviso.dart';
 import '../../../theme/app_colors.dart';
 import '../data/perfil_repository.dart';
@@ -120,9 +120,12 @@ class _CambiarPasswordViewState extends State<_CambiarPasswordView> {
                       Text(r, style: const TextStyle(color: AppColors.danger)),
                   ],
                   const SizedBox(height: 24),
-                  BotonPrincipal(
+                  BotonConEspera(
                     texto: 'Cambiar contraseña',
                     cargando: state is CambiarPasswordEnviando,
+                    segundos: state is CambiarPasswordFallido
+                        ? state.reintentarEnSegundos
+                        : null,
                     onPressed: () => _enviar(context),
                   ),
                 ],

@@ -29,8 +29,17 @@ class RecuperarFallido extends RecuperarState {
   final String? codigo;
   final bool esSinConexion;
 
-  const RecuperarFallido(this.mensaje, {this.codigo, this.esSinConexion = false});
+  /// Seconds before another attempt is allowed (rate limit), when known.
+  final int? reintentarEnSegundos;
+
+  const RecuperarFallido(
+    this.mensaje, {
+    this.codigo,
+    this.esSinConexion = false,
+    this.reintentarEnSegundos,
+  });
 
   @override
-  List<Object?> get props => [mensaje, codigo, esSinConexion];
+  List<Object?> get props =>
+      [mensaje, codigo, esSinConexion, reintentarEnSegundos];
 }

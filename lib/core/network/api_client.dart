@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show HttpDate, HttpException;
 
 import 'package:http/http.dart' as http;
 
@@ -16,11 +17,15 @@ typedef ParserApi<T> = T Function(Object? datos);
 class ApiClient {
   static const Duration timeoutPorDefecto = Duration(seconds: 15);
 
+  /// Longest wait honored from `Retry-After` (a hostile value must not lock the UI).
+  static const int _esperaMaxima = 3600;
+
   final http.Client _cliente;
   final Entorno _entorno;
   final List<InterceptorApi> _interceptores;
   final Duration _timeout;
   final RegistroErrores _registro;
+  final DateTime Function() _ahora;
 
   ApiClient(
     this._cliente,
@@ -28,8 +33,10 @@ class ApiClient {
     List<InterceptorApi> interceptores = const [],
     Duration timeout = timeoutPorDefecto,
     RegistroErrores? registro,
+    DateTime Function()? ahora,
   })  : _interceptores = interceptores,
         _timeout = timeout,
+        _ahora = ahora ?? DateTime.now,
         _registro = registro ?? const RegistroErroresConsola();
 
   Future<RespuestaApi<T>> get<T>(
@@ -125,7 +132,7 @@ class ApiClient {
         res.statusCode,
         _decodificarONulo(texto),
         mensajePorDefecto: mensajeError,
-        reintentarEnSegundos: int.tryParse(res.headers['retry-after'] ?? ''),
+        reintentarEnSegundos: _segundosDeEspera(res.headers['retry-after']),
       );
       await _notificarError(error, solicitud);
       throw error;
@@ -150,6 +157,22 @@ class ApiClient {
         code: ApiException.codigoRespuestaInvalida,
       );
     }
+  }
+
+  /// `Retry-After` is delta-seconds or an HTTP-date; clamped to 0..[_esperaMaxima].
+  int? _segundosDeEspera(String? cabecera) {
+    if (cabecera == null) return null;
+    var segundos = int.tryParse(cabecera.trim());
+    if (segundos == null) {
+      try {
+        segundos = HttpDate.parse(cabecera).difference(_ahora()).inSeconds;
+      } on HttpException {
+        return null;
+      } on FormatException {
+        return null;
+      }
+    }
+    return segundos.clamp(0, _esperaMaxima);
   }
 
   /// Runs the error chain; a failing interceptor never masks the real error.

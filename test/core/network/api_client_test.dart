@@ -26,6 +26,7 @@ ApiClient _cliente(
   List<InterceptorApi> interceptores = const [],
   Duration timeout = const Duration(seconds: 15),
   RegistroFalso? registro,
+  DateTime Function()? ahora,
 }) =>
     ApiClient(
       MockClient(handler),
@@ -33,6 +34,7 @@ ApiClient _cliente(
       interceptores: interceptores,
       timeout: timeout,
       registro: registro,
+      ahora: ahora,
     );
 
 class _InterceptorQueFalla extends InterceptorApi {
@@ -155,17 +157,51 @@ void main() {
       expect(e.reintentarEnSegundos, 120);
     });
 
-    test('a failure without a numeric Retry-After has none', () async {
-      final api = _cliente((_) async => http.Response.bytes(
+    group('Retry-After', () {
+      final ahora = DateTime.utc(2026, 10, 4, 12);
+
+      Future<int?> espera(String? cabecera) async {
+        final api = _cliente(
+          (_) async => http.Response.bytes(
             utf8.encode(jsonEncode({'code': 'X'})),
             429,
-            headers: {'retry-after': 'Wed, 21 Oct 2026 07:28:00 GMT'},
-          ));
+            headers: {'retry-after': ?cabecera},
+          ),
+          ahora: () => ahora,
+        );
+        final e = await _capturar(
+            () => api.get<Object?>('/api/x', parser: _identidad));
+        return e.reintentarEnSegundos;
+      }
 
-      final e = await _capturar(
-          () => api.get<Object?>('/api/x', parser: _identidad));
+      test('an HTTP-date is the difference from now', () async {
+        final fecha = HttpDate.format(ahora.add(const Duration(seconds: 90)));
 
-      expect(e.reintentarEnSegundos, isNull);
+        expect(await espera(fecha), 90);
+      });
+
+      test('an HTTP-date in the past clamps to zero', () async {
+        final fecha = HttpDate.format(ahora.subtract(const Duration(hours: 1)));
+
+        expect(await espera(fecha), 0);
+      });
+
+      test('a negative number of seconds clamps to zero', () async {
+        expect(await espera('-5'), 0);
+      });
+
+      test('a huge wait is capped at one hour', () async {
+        expect(await espera('86400'), 3600);
+        expect(
+          await espera(HttpDate.format(ahora.add(const Duration(days: 2)))),
+          3600,
+        );
+      });
+
+      test('a missing or unparseable header has none', () async {
+        expect(await espera(null), isNull);
+        expect(await espera('pronto'), isNull);
+      });
     });
 
     test('S3.6 non-JSON failure falls back to the provided message', () async {

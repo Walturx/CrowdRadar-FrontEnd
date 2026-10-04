@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/widgets/boton_principal.dart';
+import '../../../core/widgets/boton_con_espera.dart';
 import '../../../core/widgets/cargando.dart';
 import '../data/auth_repository.dart';
 import 'login_cubit.dart';
@@ -132,7 +132,13 @@ class _LoginViewState extends State<_LoginView> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  BotonPrincipal(texto: 'Iniciar sesión', onPressed: () => _onLogin(context)),
+                  BotonConEspera(
+                    key: const Key('boton-iniciar-sesion'),
+                    texto: 'Iniciar sesión',
+                    segundos:
+                        state is LoginFallido ? state.reintentarEnSegundos : null,
+                    onPressed: () => _onLogin(context),
+                  ),
                   const SizedBox(height: 4),
                   Center(
                     child: TextButton(

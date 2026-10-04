@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/mensaje_error.dart';
+import '../../../core/utils/mensaje_espera.dart';
 import '../data/perfil_repository.dart';
 import 'cambiar_password_state.dart';
 import '../../../core/utils/politica_password.dart';
@@ -12,6 +13,9 @@ class CambiarPasswordCubit extends Cubit<CambiarPasswordState> {
   static const String mensajeExito =
       'Contraseña actualizada. Inicia sesión con tu nueva contraseña.';
   static const String mensajeNoCoinciden = 'Las contraseñas no coinciden';
+  static const String mensajeResultadoIncierto =
+      'No pudimos confirmar el cambio. Si no podés entrar con la contraseña '
+      'actual, probá con la nueva.';
   static const String mensajeNoCumple =
       'La nueva contraseña no cumple los requisitos';
 
@@ -51,14 +55,22 @@ class CambiarPasswordCubit extends Cubit<CambiarPasswordState> {
       );
       _emitir(const CambiarPasswordExitoso(mensajeExito));
     } catch (e) {
+      // Offline or timed out after sending: the server may have applied it.
+      final incierto = esErrorSinConexion(e);
       _emitir(CambiarPasswordFallido(
-        mensajeDeError(e),
+        incierto
+            ? mensajeResultadoIncierto
+            : esLimiteDeIntentos(e)
+                ? mensajeEspera(esperaDeError(e))
+                : mensajeDeError(e),
         // Not `erroresPorCampo`: several unmet rules share one field.
         requisitosIncumplidos: e is ApiException
             ? [for (final error in e.errors) error.mensaje]
             : const [],
         codigo: codigoDeError(e),
-        esSinConexion: esErrorSinConexion(e),
+        esSinConexion: incierto,
+        resultadoIncierto: incierto,
+        reintentarEnSegundos: esperaDeError(e),
       ));
     } finally {
       _enVuelo = false;
