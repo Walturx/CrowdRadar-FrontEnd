@@ -7,7 +7,9 @@ import 'package:crowdradar/core/map/tipos_mapa.dart';
 import 'package:crowdradar/core/models/categoria_lugar.dart';
 import 'package:crowdradar/core/models/lugar_detalle.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
+import 'package:crowdradar/core/models/reporte_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
+import 'package:crowdradar/core/network/respuesta_api.dart';
 import 'package:crowdradar/core/widgets/cargando.dart';
 import 'package:crowdradar/features/favoritos/data/favorito_repository.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
@@ -45,9 +47,31 @@ LugarDetalle _detalle({
   ),
 );
 
+/// Reporting waits on [puerta]; it then succeeds or throws [error].
+class _ReporteLento implements ReporteRepository {
+  final Completer<void> puerta = Completer<void>();
+  final ApiException? error;
+  final ReporteRepositoryFake _real = ReporteRepositoryFake();
+
+  _ReporteLento({this.error});
+
+  @override
+  Future<ReporteCreado> reportar(int lugarId, NivelSaturacion nivel) async {
+    await puerta.future;
+    if (error != null) throw error!;
+    return _real.reportar(lugarId, nivel);
+  }
+
+  @override
+  Future<Pagina<ReporteSaturacion>> listarMios({int page = 1, int size = 20}) =>
+      _real.listarMios(page: page, size: size);
+}
+
 void main() {
   late RepoLugarFalso repo;
   late FavoritoRepositoryFake favoritos;
+
+  ReporteRepository reportes = ReporteRepositoryFake();
 
   Future<void> abrir(
     WidgetTester tester, {
@@ -60,9 +84,7 @@ void main() {
         providers: [
           RepositoryProvider<LugarRepository>.value(value: repo),
           RepositoryProvider<FavoritoRepository>.value(value: favoritos),
-          RepositoryProvider<ReporteRepository>.value(
-            value: ReporteRepositoryFake(),
-          ),
+          RepositoryProvider<ReporteRepository>.value(value: reportes),
         ],
         child: MaterialApp(
           home: DetalleLugarPage(lugarId: 1, centroMapa: centro),
@@ -73,7 +95,10 @@ void main() {
     await tester.pump();
   }
 
-  setUp(() => favoritos = FavoritoRepositoryFake());
+  setUp(() {
+    favoritos = FavoritoRepositoryFake();
+    reportes = ReporteRepositoryFake();
+  });
 
   group('reportar', () {
     testWidgets(
@@ -125,6 +150,52 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Saturado'), findsOneWidget);
+    });
+
+    Future<void> enviarYDescartar(WidgetTester tester) async {
+      await tester.tap(find.text('Reportar saturación'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Saturado'));
+      await tester.pump();
+      await tester.tap(find.text('Enviar reporte'));
+      await tester.pump();
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+      expect(find.text('¿Qué tan lleno está?'), findsNothing);
+    }
+
+    testWidgets('a report that succeeds after the sheet was dismissed still '
+        'refreshes the detail and thanks the user', (tester) async {
+      final lento = _ReporteLento();
+      reportes = lento;
+      repo = RepoLugarFalso(alObtener: (_) async => _detalle());
+      await abrir(tester);
+
+      await enviarYDescartar(tester);
+      expect(repo.detallesPedidos, [1]);
+
+      lento.puerta.complete();
+      await tester.pumpAndSettle();
+
+      expect(repo.detallesPedidos, [1, 1]);
+      expect(find.text('Reporte enviado, +10 puntos'), findsOneWidget);
+    });
+
+    testWidgets('a report that fails after the sheet was dismissed stays '
+        'silent', (tester) async {
+      final lento = _ReporteLento(
+        error: const ApiException(status: 500, message: 'caído'),
+      );
+      reportes = lento;
+      repo = RepoLugarFalso(alObtener: (_) async => _detalle());
+      await abrir(tester);
+
+      await enviarYDescartar(tester);
+      lento.puerta.complete();
+      await tester.pumpAndSettle();
+
+      expect(repo.detallesPedidos, [1]);
+      expect(find.byType(SnackBar), findsNothing);
     });
 
     testWidgets('dismissing the sheet without sending does not reload', (
