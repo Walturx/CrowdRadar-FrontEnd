@@ -3,8 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../login/login_cubit.dart';
-import '../login/login_state.dart';
+import '../data/auth_repository.dart';
+import 'registro_cubit.dart';
+import 'registro_state.dart';
 
 import '../../../theme/app_colors.dart';
 
@@ -13,7 +14,10 @@ class RegisterPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _RegisterView();
+    return BlocProvider(
+      create: (c) => RegistroCubit(c.read<AuthRepository>()),
+      child: const _RegisterView(),
+    );
   }
 }
 
@@ -46,7 +50,7 @@ class _RegisterViewState extends State<_RegisterView> {
 
   void _onRegister(BuildContext context) {
     if (_formKey.currentState?.validate() ?? false) {
-      context.read<AuthCubit>().register(
+      context.read<RegistroCubit>().registrar(
             nombre: _nombreCtrl.text.trim(),
             apellido: _apellidoCtrl.text.trim(),
             email: _emailCtrl.text.trim(),
@@ -76,21 +80,21 @@ class _RegisterViewState extends State<_RegisterView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AuthCubit, AuthState>(
+    return BlocConsumer<RegistroCubit, RegistroState>(
       listener: (context, state) {
-        if (state is AuthRegistered) {
+        if (state is RegistroExitoso) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Usuario registrado correctamente')),
           );
           context.pop();
-        } else if (state is AuthError) {
+        } else if (state is RegistroFallido) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.error)),
+            SnackBar(content: Text(state.mensaje)),
           );
         }
       },
       builder: (context, state) {
-        if (state is AuthLoading) {
+        if (state is RegistroEnviando) {
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(color: AppColors.primary),

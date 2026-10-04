@@ -1,24 +1,37 @@
+import 'package:equatable/equatable.dart';
+
 import '../../../core/models/user_model.dart';
 
-abstract class AuthState {}
+sealed class LoginState extends Equatable {
+  const LoginState();
 
-class AuthInitial extends AuthState {}
-
-class AuthLoading extends AuthState {}
-
-class AuthLoggedIn extends AuthState {
-  final String token;
-  final UserModel user;
-
-  AuthLoggedIn({required this.token, required this.user});
+  @override
+  List<Object?> get props => const [];
 }
 
-class AuthRegistered extends AuthState {}
+class LoginInicial extends LoginState {
+  const LoginInicial();
+}
 
-class AuthLoggedOut extends AuthState {}
+class LoginEnviando extends LoginState {
+  const LoginEnviando();
+}
 
-class AuthError extends AuthState {
-  final String error;
+class LoginExitoso extends LoginState {
+  final UserModel usuario;
 
-  AuthError({required this.error});
+  const LoginExitoso(this.usuario);
+
+  @override
+  List<Object?> get props => [usuario];
+}
+
+class LoginFallido extends LoginState {
+  final String mensaje;
+  final String? codigo;
+
+  const LoginFallido(this.mensaje, {this.codigo});
+
+  @override
+  List<Object?> get props => [mensaje, codigo];
 }

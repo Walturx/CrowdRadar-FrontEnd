@@ -3,9 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/session/sesion_cubit.dart';
-import '../features/auth/data/auth_service.dart';
-import '../features/auth/login/login_cubit.dart';
-import '../features/perfil/data/user_service.dart';
+import '../features/auth/data/auth_repository.dart';
+import '../features/perfil/data/perfil_repository.dart';
 import '../theme/app_theme.dart';
 import 'app_router.dart';
 import 'dependencias.dart';
@@ -42,13 +41,12 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
     final deps = widget.dependencias;
     return MultiRepositoryProvider(
       providers: [
-        RepositoryProvider<AuthService>.value(value: deps.authService),
-        RepositoryProvider<UserService>.value(value: deps.userService),
+        RepositoryProvider<AuthRepository>.value(value: deps.authRepository),
+        RepositoryProvider<PerfilRepository>.value(value: deps.perfilRepository),
       ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider<SesionCubit>.value(value: _sesion),
-          BlocProvider(create: (c) => AuthCubit(c.read<AuthService>())),
         ],
         child: MaterialApp.router(
           title: 'CrowdRadar',

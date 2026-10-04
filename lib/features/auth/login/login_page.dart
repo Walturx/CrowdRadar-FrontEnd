@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/auth_repository.dart';
 import 'login_cubit.dart';
 import 'login_state.dart';
 
@@ -13,7 +14,10 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _LoginView();
+    return BlocProvider(
+      create: (c) => LoginCubit(c.read<AuthRepository>()),
+      child: const _LoginView(),
+    );
   }
 }
 
@@ -38,24 +42,24 @@ class _LoginViewState extends State<_LoginView> {
 
   void _onLogin(BuildContext context) {
     if (_formKey.currentState?.validate() ?? false) {
-      context.read<AuthCubit>().login(_emailCtrl.text.trim(), _passwordCtrl.text);
+      context.read<LoginCubit>().iniciarSesion(_emailCtrl.text.trim(), _passwordCtrl.text);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AuthCubit, AuthState>(
+    return BlocConsumer<LoginCubit, LoginState>(
       listener: (context, state) {
-        if (state is AuthLoggedIn) {
+        if (state is LoginExitoso) {
           context.go(Rutas.mapa);
-        } else if (state is AuthError) {
+        } else if (state is LoginFallido) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.error)),
+            SnackBar(content: Text(state.mensaje)),
           );
         }
       },
       builder: (context, state) {
-        if (state is AuthLoading) {
+        if (state is LoginEnviando) {
           return const Scaffold(
             backgroundColor: AppColors.bg,
             body: Center(

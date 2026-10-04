@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import 'profile_cubit.dart';
-import 'profile_state.dart';
-import '../../auth/login/login_cubit.dart';
+import '../../../core/session/sesion_cubit.dart';
+import 'perfil_cubit.dart';
+import 'perfil_state.dart';
 
-import '../data/user_service.dart';
+import '../data/perfil_repository.dart';
 
 import '../../../app/rutas.dart';
 import '../../../theme/app_colors.dart';
@@ -17,7 +17,7 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => ProfileCubit(context.read<UserService>())..loadProfile(),
+      create: (_) => PerfilCubit(context.read<PerfilRepository>())..cargar(),
       child: const _ProfileView(),
     );
   }
@@ -35,22 +35,22 @@ class _ProfileViewState extends State<_ProfileView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Perfil')),
-      body: BlocBuilder<ProfileCubit, ProfileState>(
+      body: BlocBuilder<PerfilCubit, PerfilState>(
         builder: (context, state) {
-          if (state is ProfileLoading || state is ProfileInitial) {
+          if (state is PerfilCargando) {
             return const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             );
           }
-          if (state is ProfileError) {
+          if (state is PerfilError) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(state.message),
+                  Text(state.mensaje),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () => context.read<ProfileCubit>().loadProfile(),
+                    onPressed: () => context.read<PerfilCubit>().cargar(),
                     child: const Text('Reintentar'),
                   ),
                 ],
@@ -58,8 +58,8 @@ class _ProfileViewState extends State<_ProfileView> {
             );
           }
 
-          final loaded = state as ProfileLoaded;
-          final user = loaded.user;
+          final loaded = state as PerfilCargado;
+          final user = loaded.usuario;
 
           final nombre = (user.nombre ?? '').trim();
           final apellido = (user.apellido ?? '').trim();
@@ -192,9 +192,9 @@ class _ProfileViewState extends State<_ProfileView> {
                     borderRadius: BorderRadius.circular(12),
                     onTap: () async {
                       await context.push(Rutas.perfilEditar,
-                          extra: loaded.user.toJson());
+                          extra: loaded.usuario.toJson());
                       if (context.mounted) {
-                        context.read<ProfileCubit>().loadProfile();
+                        context.read<PerfilCubit>().cargar();
                       }
                     },
                     child: Container(
@@ -250,7 +250,7 @@ class _ProfileViewState extends State<_ProfileView> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
                     onTap: () {
-                      context.read<AuthCubit>().logout();
+                      context.read<SesionCubit>().cerrarSesion();
                       context.go(Rutas.login);
                     },
                     child: Container(
