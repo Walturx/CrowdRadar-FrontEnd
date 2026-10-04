@@ -8,6 +8,8 @@ import 'package:crowdradar/core/config/entorno.dart';
 import 'package:crowdradar/core/map/mapa_adapter.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
 import 'package:crowdradar/core/push/receptor_push.dart';
+import 'package:crowdradar/core/session/motivo_cierre.dart';
+import 'package:crowdradar/features/alertas/data/alerta_repository.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,6 +26,39 @@ class _MapaVacio implements MapaAdapter {
     EventosMapa eventos = const EventosMapa(),
     PuntoGeografico? ubicacionUsuario,
   }) => const SizedBox.expand();
+}
+
+/// Records device calls without needing a session.
+class _AlertasGrabadoras extends AlertaRepositoryFake {
+  int registros = 0;
+  int borrados = 0;
+
+  _AlertasGrabadoras() : super(sembrar: false);
+
+  @override
+  Future<void> registrarDispositivo(String token, PlataformaPush p) async {
+    registros++;
+    return super.registrarDispositivo(token, p);
+  }
+
+  @override
+  Future<void> eliminarDispositivo(String token) async {
+    borrados++;
+    return super.eliminarDispositivo(token);
+  }
+}
+
+/// Emits a tap while it initializes, on a stream nobody buffers.
+class _ReceptorEmisor extends _ReceptorFalso {
+  final StreamController<int> directo = StreamController<int>.broadcast();
+
+  @override
+  Future<void> inicializar() async {
+    directo.add(2);
+  }
+
+  @override
+  Stream<int> get lugarAbierto => directo.stream;
 }
 
 /// Push receiver double: a buffered stream, so a tap that happened before the
@@ -50,6 +85,8 @@ void main() {
 
   AlertaRepositoryFake alertas() => deps.alertaRepository as AlertaRepositoryFake;
 
+  AlertaRepositoryFake? alertasPropias;
+
   Future<void> abrir(
     WidgetTester tester, {
     String ruta = '/favoritos',
@@ -63,6 +100,7 @@ void main() {
       sesion,
       mapaAdapter: _MapaVacio(),
       receptorPush: receptor,
+      alertaRepository: alertasPropias,
     );
     await tester.pumpWidget(
       CrowdRadarApp(dependencias: deps, ubicacionInicial: ruta),
@@ -73,6 +111,7 @@ void main() {
   setUp(() {
     sesion = SessionService.instance..reiniciar();
     receptor = _ReceptorFalso();
+    alertasPropias = null;
   });
 
   tearDown(() {
@@ -129,7 +168,87 @@ void main() {
     });
   });
 
+  group('device registration edge cases', () {
+    testWidgets('a restored session plus SesionIniciada registers once (R4-802)', (
+      tester,
+    ) async {
+      final grabadoras = alertasPropias = _AlertasGrabadoras();
+      await abrir(tester);
+
+      await sesion.iniciar('token', usuarioPrueba);
+      await tester.pump();
+      await tester.pump();
+
+      expect(grabadoras.registros, 1);
+    });
+
+    testWidgets('an expired session also tries to remove it (R4-803)', (
+      tester,
+    ) async {
+      final grabadoras = alertasPropias = _AlertasGrabadoras();
+      await abrir(tester);
+
+      await sesion.expirar(MotivoCierre.sesionExpirada);
+      await tester.pump();
+      await tester.pump();
+
+      expect(grabadoras.borrados, 1);
+    });
+
+    testWidgets('a user sign out removes it once, not twice', (tester) async {
+      final grabadoras = alertasPropias = _AlertasGrabadoras();
+      await abrir(tester, ruta: '/perfil');
+
+      await tester.tap(find.text('Cerrar sesión'));
+      await tester.pumpAndSettle();
+
+      expect(grabadoras.borrados, 1);
+    });
+  });
+
   group('push taps', () {
+    testWidgets('a tap before the session is ready opens after sign in (R3-807)', (
+      tester,
+    ) async {
+      await abrir(tester, ruta: '/login', conSesion: false);
+
+      receptor.toques.add(1);
+      await tester.pumpAndSettle();
+      expect(find.text('Av. Larco 345, Miraflores'), findsNothing);
+
+      await sesion.iniciar('token', usuarioPrueba);
+      await tester.pump();
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Av. Larco 345, Miraflores'), findsOneWidget);
+    });
+
+    testWidgets('a pending tap is dropped on sign out', (tester) async {
+      await abrir(tester, ruta: '/login', conSesion: false);
+      receptor.toques.add(1);
+      await tester.pumpAndSettle();
+
+      await sesion.cerrar(MotivoCierre.usuario);
+      await tester.pumpAndSettle();
+      await sesion.iniciar('token', usuarioPrueba);
+      // The map landing animates forever: pump instead of settling.
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.text('Av. Larco 345, Miraflores'), findsNothing);
+    });
+
+    testWidgets('a tap emitted while the receiver initializes is not lost (R3-807)', (
+      tester,
+    ) async {
+      receptor = _ReceptorEmisor();
+
+      await abrir(tester);
+
+      expect(find.text('Av. Angamos Este 1000, Surquillo'), findsOneWidget);
+    });
+
     testWidgets('a tap opens that place', (tester) async {
       await abrir(tester);
 

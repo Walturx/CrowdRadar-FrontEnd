@@ -82,7 +82,8 @@ class Dependencias {
     required this.moderacionRepository,
   });
 
-  /// [mapaAdapter] and [receptorPush] can be overridden (tests). By default the
+  /// [mapaAdapter], [receptorPush] and [alertaRepository] can be overridden
+  /// (tests). By default the
   /// receiver is the development console one with fakes and the no-op one
   /// otherwise (real push delivery is not part of this build).
   /// [esRelease] defaults to `kReleaseMode`; fakes are refused in release.
@@ -91,6 +92,7 @@ class Dependencias {
     SessionService sesion, {
     MapaAdapter? mapaAdapter,
     ReceptorPush? receptorPush,
+    AlertaRepository? alertaRepository,
     bool esRelease = kReleaseMode,
   }) {
     if (esRelease && entorno.usarFakes) {
@@ -122,7 +124,7 @@ class Dependencias {
       analiticaRepository: repos.analitica,
       validacionRepository: repos.validacion,
       favoritoRepository: repos.favorito,
-      alertaRepository: repos.alerta,
+      alertaRepository: alertaRepository ?? repos.alerta,
       exploracionRepository: repos.exploracion,
       moderacionRepository: repos.moderacion,
     );

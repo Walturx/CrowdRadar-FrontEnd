@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:crowdradar/core/session/motivo_cierre.dart';
 import 'package:crowdradar/core/session/sesion_cubit.dart';
 import 'package:crowdradar/core/session/sesion_state.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/core/storage/memoria_token_storage.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../fakes/jwt_falso.dart';
@@ -103,6 +106,31 @@ void main() {
       expect(sesion.token, isNull);
       expect(cubit.state, const SesionNoAutenticada(motivo: MotivoCierre.usuario));
       await cubit.close();
+    });
+
+    test('a hook that never answers is abandoned after the timeout (R3-806)', () {
+      fakeAsync((reloj) {
+        final tokenCerrado = Completer<void>();
+        sesion.iniciar(token, usuarioPrueba);
+        reloj.flushMicrotasks();
+        final cubit = SesionCubit(
+          sesion,
+          antesDeCerrar: () => tokenCerrado.future,
+        );
+
+        cubit.cerrarSesion();
+        reloj.elapse(SesionCubit.plazoAntesDeCerrar - const Duration(milliseconds: 1));
+        expect(sesion.token, token);
+
+        reloj.elapse(const Duration(milliseconds: 2));
+        reloj.flushMicrotasks();
+
+        expect(sesion.token, isNull);
+        expect(
+          cubit.state,
+          const SesionNoAutenticada(motivo: MotivoCierre.usuario),
+        );
+      });
     });
 
     test('a failing hook never keeps the user signed in', () async {
