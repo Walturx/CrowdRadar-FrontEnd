@@ -3,6 +3,7 @@ import '../../core/network/respuesta_api.dart';
 import '../../features/favoritos/data/favorito_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
+import 'datos_lugares_fake.dart';
 
 class FavoritoRepositoryFake implements FavoritoRepository {
   final ComportamientoFake _comportamiento;

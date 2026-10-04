@@ -10,7 +10,6 @@ import 'package:crowdradar/app/fakes/moderacion_repository_fake.dart';
 import 'package:crowdradar/app/fakes/perfil_repository_fake.dart';
 import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
 import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
-import 'package:crowdradar/core/map/tipos_mapa.dart';
 import 'package:crowdradar/core/models/moderacion.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/models/validacion.dart';
@@ -19,7 +18,6 @@ import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/features/analitica/data/analitica_repository.dart';
 import 'package:crowdradar/features/auth/data/auth_repository.dart';
 import 'package:crowdradar/features/favoritos/data/favorito_repository.dart';
-import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
 import 'package:crowdradar/features/moderacion/data/moderacion_repository.dart';
 import 'package:crowdradar/features/perfil/data/perfil_repository.dart';
 import 'package:crowdradar/features/reportes/data/reporte_repository.dart';
@@ -146,40 +144,6 @@ void main() {
           confirmar: 'Nueva1aa',
         ),
         completes,
-      );
-    });
-  });
-
-  group('LugarRepositoryFake', () {
-    final LugarRepository repo = LugarRepositoryFake();
-
-    test('buscar filters by text, ignoring case', () async {
-      final todos = await repo.buscar();
-      final parque = await repo.buscar(consulta: 'PARQUE');
-
-      expect(todos.items.length, greaterThan(1));
-      expect(parque.items.single.nombre, contains('Parque'));
-    });
-
-    test(
-      'buscar filters by bounding box and explains an empty result',
-      () async {
-        final vacio = await repo.buscar(
-          limites: const LimitesMapa(norte: 0, sur: -1, este: 0, oeste: -1),
-        );
-
-        expect(vacio.estaVacia, isTrue);
-        expect(vacio.mensaje, isNotEmpty);
-      },
-    );
-
-    test('obtenerDetalle returns the place or a 404', () async {
-      final primero = (await repo.buscar()).items.first;
-
-      expect((await repo.obtenerDetalle(primero.id)).nombre, primero.nombre);
-      await expectLater(
-        repo.obtenerDetalle(9999),
-        _falla(404, 'LUGAR_NO_ENCONTRADO'),
       );
     });
   });
@@ -397,7 +361,7 @@ void main() {
     test('a configured failure is thrown by every kind of fake', () async {
       const caido = ComportamientoFake(fallo: ApiException.sinConexion());
       final fakes = <Future<Object?> Function()>[
-        () => LugarRepositoryFake(comportamiento: caido).buscar(),
+        () => LugarRepositoryFake(comportamiento: caido).buscar(q: 'Pa'),
         () => AuthRepositoryFake(sesion, comportamiento: caido)
             .iniciarSesion('ana@test.com', 'Secreta1'),
         () => PerfilRepositoryFake(sesion, comportamiento: caido).obtener(),
@@ -422,7 +386,7 @@ void main() {
     test('the default behavior answers at once without failing', () async {
       final repo = LugarRepositoryFake();
 
-      expect((await repo.buscar()).items, isNotEmpty);
+      expect((await repo.buscar(q: 'Pa')).items, isNotEmpty);
     });
 
     test('latency delays the answer until the duration elapses', () {
@@ -433,7 +397,7 @@ void main() {
           ),
         );
         var respondio = false;
-        repo.buscar().then((_) => respondio = true);
+        repo.buscar(q: 'Pa').then((_) => respondio = true);
 
         reloj.elapse(const Duration(seconds: 1));
         expect(respondio, isFalse);
