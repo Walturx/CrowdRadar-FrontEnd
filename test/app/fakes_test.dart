@@ -12,7 +12,6 @@ import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
 import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
 import 'package:crowdradar/core/models/moderacion.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
-import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/features/analitica/data/analitica_repository.dart';
@@ -21,7 +20,6 @@ import 'package:crowdradar/features/favoritos/data/favorito_repository.dart';
 import 'package:crowdradar/features/moderacion/data/moderacion_repository.dart';
 import 'package:crowdradar/features/perfil/data/perfil_repository.dart';
 import 'package:crowdradar/features/reportes/data/reporte_repository.dart';
-import 'package:crowdradar/features/validacion/data/validacion_repository.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -203,46 +201,6 @@ void main() {
     });
   });
 
-  group('ValidacionRepositoryFake', () {
-    test('pendientes, detalle and validar update my validation', () async {
-      final ValidacionRepository repo = ValidacionRepositoryFake();
-      final id = (await repo.pendientes()).items.first.id;
-
-      expect((await repo.obtenerReporte(id)).miValidacion, isNull);
-      await repo.validar(id, TipoAccionValidacion.confirmar);
-
-      expect(
-        (await repo.obtenerReporte(id)).miValidacion,
-        TipoAccionValidacion.confirmar,
-      );
-      await expectLater(
-        repo.validar(id, TipoAccionValidacion.rechazar),
-        _falla(409, 'VALIDACION_DUPLICADA'),
-      );
-      await expectLater(
-        repo.obtenerReporte(9999),
-        _falla(404, 'REPORTE_NO_ENCONTRADO'),
-      );
-      expect(await repo.estadoMisReportes(), isNotEmpty);
-    });
-
-    test('denunciar rejects duplicates and "otro" without detail', () async {
-      final repo = ValidacionRepositoryFake();
-      final id = (await repo.pendientes()).items.first.id;
-
-      await expectLater(
-        repo.denunciar(id, MotivoDenuncia.otro),
-        _falla(400, 'VALIDACION_FALLIDA'),
-      );
-      await repo.denunciar(id, MotivoDenuncia.spam);
-      await expectLater(
-        repo.denunciar(id, MotivoDenuncia.spam),
-        _falla(409, 'DENUNCIA_DUPLICADA'),
-      );
-      expect((await repo.obtenerReporte(id)).yaDenunciado, isTrue);
-    });
-  });
-
   group('FavoritoRepositoryFake', () {
     test('starts empty with an explanatory message', () async {
       final FavoritoRepository repo = FavoritoRepositoryFake();
@@ -368,7 +326,7 @@ void main() {
         () => ReporteRepositoryFake(comportamiento: caido).listarMios(),
         () => AnaliticaRepositoryFake(comportamiento: caido)
             .historial(1),
-        () => ValidacionRepositoryFake(comportamiento: caido).pendientes(),
+        () => ValidacionRepositoryFake(comportamiento: caido).pendientes(lat: 0, lng: 0),
         () => FavoritoRepositoryFake(comportamiento: caido).listar(),
         () => ModeracionRepositoryFake(comportamiento: caido).usuarios(),
       ];

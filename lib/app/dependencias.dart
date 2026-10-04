@@ -168,7 +168,11 @@ class Dependencias {
       sesion: sesion,
     ),
     analitica: AnaliticaRepositoryFake(comportamiento: comportamiento),
-    validacion: ValidacionRepositoryFake(comportamiento: comportamiento),
+    validacion: ValidacionRepositoryFake(
+      comportamiento: comportamiento,
+      karma: karma,
+      sesion: sesion,
+    ),
     favorito: FavoritoRepositoryFake(
       comportamiento: comportamiento,
       sesion: sesion,
