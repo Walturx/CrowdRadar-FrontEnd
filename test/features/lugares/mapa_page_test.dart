@@ -268,6 +268,49 @@ void main() {
     });
   });
 
+  group('search hook', () {
+    testWidgets(
+      'the search field opens the search and a chosen place opens its detail',
+      (tester) async {
+        repo = RepoLugarFalso(
+          alBuscar: (p) => resultado(p.q == null ? [_kennedy] : [_mercado]),
+        );
+        await abrir(tester);
+        await alCamaraQuieta(tester);
+
+        await tester.tap(find.text('Buscar lugares'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField), 'Merc');
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.pump();
+        expect(repo.pedidos.last.q, 'Merc');
+        expect(repo.pedidos.last.bbox, isNull);
+
+        await tester.tap(find.text('Mercado de Surquillo'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('DETALLE 2'), findsOneWidget);
+        expect(extraDetalle, isA<PuntoGeografico>());
+      },
+    );
+
+    testWidgets('going back from the search without choosing keeps the map', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      await abrir(tester);
+      await alCamaraQuieta(tester);
+
+      await tester.tap(find.text('Buscar lugares'));
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PinSaturacion), findsOneWidget);
+      expect(find.textContaining('DETALLE'), findsNothing);
+    });
+  });
+
   group('tile errors (R4-104)', () {
     testWidgets('the first tile error shows the banner and keeps the markers', (
       tester,
