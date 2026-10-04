@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../core/models/user_model.dart';
+import '../../../core/models/usuario.dart';
 
 sealed class LoginState extends Equatable {
   const LoginState();
@@ -18,7 +18,7 @@ class LoginEnviando extends LoginState {
 }
 
 class LoginExitoso extends LoginState {
-  final UserModel usuario;
+  final Usuario usuario;
 
   const LoginExitoso(this.usuario);
 

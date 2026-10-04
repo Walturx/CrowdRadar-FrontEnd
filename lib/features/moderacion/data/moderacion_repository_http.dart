@@ -2,7 +2,9 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/repositorio_no_implementado.dart';
 import 'moderacion_repository.dart';
 
-/// Stub owned by M6: replace the mixin with real calls through [_api].
+/// Repository pattern: HTTP implementation of the [ModeracionRepository] port (stub owned by M6).
+///
+/// Replace the `RepositorioNoImplementado` mixin with real calls through [_api].
 class ModeracionRepositoryHttp
     with RepositorioNoImplementado
     implements ModeracionRepository {

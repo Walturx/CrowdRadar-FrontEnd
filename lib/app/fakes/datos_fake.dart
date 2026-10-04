@@ -1,7 +1,7 @@
 import '../../core/models/categoria_lugar.dart';
 import '../../core/models/lugar_resumen.dart';
 import '../../core/models/nivel_saturacion.dart';
-import '../../core/models/user_model.dart';
+import '../../core/models/usuario.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/network/respuesta_api.dart';
 
@@ -9,7 +9,7 @@ import '../../core/network/respuesta_api.dart';
 const String emailFake = 'ana@test.com';
 const String passwordFake = 'Secreta1';
 
-const UserModel usuarioFake = UserModel(
+const Usuario usuarioFake = Usuario(
   id: 1,
   nombre: 'Ana',
   apellido: 'Paz',

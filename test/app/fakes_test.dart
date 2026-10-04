@@ -2,14 +2,14 @@
 // the API contract for its main success and failure paths.
 import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
 import 'package:crowdradar/app/fakes/datos_fake.dart';
-import 'package:crowdradar/app/fakes/fake_analitica_repository.dart';
-import 'package:crowdradar/app/fakes/fake_auth_repository.dart';
-import 'package:crowdradar/app/fakes/fake_favorito_repository.dart';
-import 'package:crowdradar/app/fakes/fake_lugar_repository.dart';
-import 'package:crowdradar/app/fakes/fake_moderacion_repository.dart';
-import 'package:crowdradar/app/fakes/fake_perfil_repository.dart';
-import 'package:crowdradar/app/fakes/fake_reporte_repository.dart';
-import 'package:crowdradar/app/fakes/fake_validacion_repository.dart';
+import 'package:crowdradar/app/fakes/analitica_repository_fake.dart';
+import 'package:crowdradar/app/fakes/auth_repository_fake.dart';
+import 'package:crowdradar/app/fakes/favorito_repository_fake.dart';
+import 'package:crowdradar/app/fakes/lugar_repository_fake.dart';
+import 'package:crowdradar/app/fakes/moderacion_repository_fake.dart';
+import 'package:crowdradar/app/fakes/perfil_repository_fake.dart';
+import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
+import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
 import 'package:crowdradar/core/models/moderacion.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
@@ -38,9 +38,9 @@ void main() {
   setUp(() => sesion = SessionService.instance..reiniciar());
   tearDown(() => sesion.reiniciar());
 
-  group('FakeAuthRepository', () {
+  group('AuthRepositoryFake', () {
     test('valid credentials start the session', () async {
-      final AuthRepository repo = FakeAuthRepository(sesion);
+      final AuthRepository repo = AuthRepositoryFake(sesion);
 
       final user = await repo.iniciarSesion('ana@test.com', 'Secreta1');
 
@@ -50,7 +50,7 @@ void main() {
     });
 
     test('wrong password is a 401 and leaves the session closed', () async {
-      final repo = FakeAuthRepository(sesion);
+      final repo = AuthRepositoryFake(sesion);
 
       await expectLater(
         repo.iniciarSesion('ana@test.com', 'mala'),
@@ -62,7 +62,7 @@ void main() {
     test(
       'registering an existing email is a 409, a new one succeeds',
       () async {
-        final repo = FakeAuthRepository(sesion);
+        final repo = AuthRepositoryFake(sesion);
         Future<Object?> registrar(String email) => repo.registrar(
           nombre: 'Luz',
           apellido: 'Vega',
@@ -96,18 +96,18 @@ void main() {
     );
   });
 
-  group('FakePerfilRepository', () {
+  group('PerfilRepositoryFake', () {
     test('without session it reports "No hay sesión activa"', () async {
-      final PerfilRepository repo = FakePerfilRepository(sesion);
+      final PerfilRepository repo = PerfilRepositoryFake(sesion);
 
       await expectLater(repo.obtener(), _falla(401, 'NO_AUTENTICADO'));
     });
 
     test('obtener and actualizar follow the session user', () async {
-      await FakeAuthRepository(
+      await AuthRepositoryFake(
         sesion,
       ).iniciarSesion('ana@test.com', 'Secreta1');
-      final repo = FakePerfilRepository(sesion);
+      final repo = PerfilRepositoryFake(sesion);
 
       expect((await repo.obtener()).nombre, 'Ana');
       final editado = await repo.actualizar({'nombre': 'Beatriz'});
@@ -118,10 +118,10 @@ void main() {
     });
 
     test('cambiarPassword validates current and repeated passwords', () async {
-      await FakeAuthRepository(
+      await AuthRepositoryFake(
         sesion,
       ).iniciarSesion('ana@test.com', 'Secreta1');
-      final repo = FakePerfilRepository(sesion);
+      final repo = PerfilRepositoryFake(sesion);
 
       await expectLater(
         repo.cambiarPassword(
@@ -150,8 +150,8 @@ void main() {
     });
   });
 
-  group('FakeLugarRepository', () {
-    final LugarRepository repo = FakeLugarRepository();
+  group('LugarRepositoryFake', () {
+    final LugarRepository repo = LugarRepositoryFake();
 
     test('buscar filters by text, ignoring case', () async {
       final todos = await repo.buscar();
@@ -184,9 +184,9 @@ void main() {
     });
   });
 
-  group('FakeReporteRepository', () {
+  group('ReporteRepositoryFake', () {
     test('reportar awards karma and enforces the cooldown per place', () async {
-      final ReporteRepository repo = FakeReporteRepository();
+      final ReporteRepository repo = ReporteRepositoryFake();
 
       final primero = await repo.reportar(1, NivelSaturacion.saturado);
       final otroLugar = await repo.reportar(2, NivelSaturacion.tranquilo);
@@ -200,7 +200,7 @@ void main() {
     });
 
     test('listarMios paginates what was reported', () async {
-      final repo = FakeReporteRepository();
+      final repo = ReporteRepositoryFake();
       await repo.reportar(1, NivelSaturacion.saturado);
       await repo.reportar(2, NivelSaturacion.tranquilo);
 
@@ -215,8 +215,8 @@ void main() {
     });
   });
 
-  group('FakeAnaliticaRepository', () {
-    final AnaliticaRepository repo = FakeAnaliticaRepository();
+  group('AnaliticaRepositoryFake', () {
+    final AnaliticaRepository repo = AnaliticaRepositoryFake();
     final d = DateTime.utc(2026, 10, 1);
 
     test('known places return data for every query', () async {
@@ -239,9 +239,9 @@ void main() {
     });
   });
 
-  group('FakeValidacionRepository', () {
+  group('ValidacionRepositoryFake', () {
     test('pendientes, detalle and validar update my validation', () async {
-      final ValidacionRepository repo = FakeValidacionRepository();
+      final ValidacionRepository repo = ValidacionRepositoryFake();
       final id = (await repo.pendientes()).items.first.id;
 
       expect((await repo.obtenerReporte(id)).miValidacion, isNull);
@@ -263,7 +263,7 @@ void main() {
     });
 
     test('denunciar rejects duplicates and "otro" without detail', () async {
-      final repo = FakeValidacionRepository();
+      final repo = ValidacionRepositoryFake();
       final id = (await repo.pendientes()).items.first.id;
 
       await expectLater(
@@ -279,9 +279,9 @@ void main() {
     });
   });
 
-  group('FakeFavoritoRepository', () {
+  group('FavoritoRepositoryFake', () {
     test('starts empty with an explanatory message', () async {
-      final FavoritoRepository repo = FakeFavoritoRepository();
+      final FavoritoRepository repo = FavoritoRepositoryFake();
 
       final r = await repo.listar();
 
@@ -290,7 +290,7 @@ void main() {
     });
 
     test('agregar, duplicate, alertas and eliminar', () async {
-      final repo = FakeFavoritoRepository();
+      final repo = FavoritoRepositoryFake();
 
       await repo.agregar(1);
       await expectLater(repo.agregar(1), _falla(409, 'FAVORITO_DUPLICADO'));
@@ -306,9 +306,9 @@ void main() {
     });
   });
 
-  group('FakeModeracionRepository', () {
+  group('ModeracionRepositoryFake', () {
     test('resolver removes the reported report from the queue', () async {
-      final ModeracionRepository repo = FakeModeracionRepository();
+      final ModeracionRepository repo = ModeracionRepositoryFake();
       final antes = await repo.reportesDenunciados();
       final id = antes.items.first.reporteId;
 
@@ -326,7 +326,7 @@ void main() {
     });
 
     test('usuarios filters by text and status', () async {
-      final repo = FakeModeracionRepository();
+      final repo = ModeracionRepositoryFake();
 
       final todos = await repo.usuarios();
       final activos = await repo.usuarios(status: 'ACTIVO');
@@ -340,7 +340,7 @@ void main() {
     test(
       'suspender and reactivar toggle the account with 409 on repeats',
       () async {
-        final repo = FakeModeracionRepository();
+        final repo = ModeracionRepositoryFake();
         final id = (await repo.usuarios(status: 'ACTIVO')).items.first.id;
 
         await expectLater(
@@ -397,16 +397,16 @@ void main() {
     test('a configured failure is thrown by every kind of fake', () async {
       const caido = ComportamientoFake(fallo: ApiException.sinConexion());
       final fakes = <Future<Object?> Function()>[
-        () => FakeLugarRepository(comportamiento: caido).buscar(),
-        () => FakeAuthRepository(sesion, comportamiento: caido)
+        () => LugarRepositoryFake(comportamiento: caido).buscar(),
+        () => AuthRepositoryFake(sesion, comportamiento: caido)
             .iniciarSesion('ana@test.com', 'Secreta1'),
-        () => FakePerfilRepository(sesion, comportamiento: caido).obtener(),
-        () => FakeReporteRepository(comportamiento: caido).listarMios(),
-        () => FakeAnaliticaRepository(comportamiento: caido)
+        () => PerfilRepositoryFake(sesion, comportamiento: caido).obtener(),
+        () => ReporteRepositoryFake(comportamiento: caido).listarMios(),
+        () => AnaliticaRepositoryFake(comportamiento: caido)
             .historial(1),
-        () => FakeValidacionRepository(comportamiento: caido).pendientes(),
-        () => FakeFavoritoRepository(comportamiento: caido).listar(),
-        () => FakeModeracionRepository(comportamiento: caido).usuarios(),
+        () => ValidacionRepositoryFake(comportamiento: caido).pendientes(),
+        () => FavoritoRepositoryFake(comportamiento: caido).listar(),
+        () => ModeracionRepositoryFake(comportamiento: caido).usuarios(),
       ];
 
       for (final llamar in fakes) {
@@ -420,14 +420,14 @@ void main() {
     });
 
     test('the default behavior answers at once without failing', () async {
-      final repo = FakeLugarRepository();
+      final repo = LugarRepositoryFake();
 
       expect((await repo.buscar()).items, isNotEmpty);
     });
 
     test('latency delays the answer until the duration elapses', () {
       fakeAsync((reloj) {
-        final repo = FakeLugarRepository(
+        final repo = LugarRepositoryFake(
           comportamiento: const ComportamientoFake(
             latencia: Duration(seconds: 2),
           ),

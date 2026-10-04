@@ -6,10 +6,10 @@ import '../../features/lugares/data/lugar_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 
-class FakeLugarRepository implements LugarRepository {
+class LugarRepositoryFake implements LugarRepository {
   final ComportamientoFake _comportamiento;
 
-  FakeLugarRepository({
+  LugarRepositoryFake({
     ComportamientoFake comportamiento = const ComportamientoFake(),
   }) : _comportamiento = comportamiento;
 

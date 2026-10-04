@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/models/user_model.dart';
+import '../core/models/usuario.dart';
 import '../core/session/sesion_cubit.dart';
 import '../core/session/sesion_state.dart';
 import '../features/auth/login/login_page.dart';
@@ -124,7 +124,7 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
                   builder: (_, state) {
                     final extra = state.extra as Map<String, dynamic>?;
                     return EditProfilePage(
-                      user: extra != null ? UserModel.fromJson(extra) : null,
+                      user: extra != null ? Usuario.fromJson(extra) : null,
                     );
                   },
                 ),

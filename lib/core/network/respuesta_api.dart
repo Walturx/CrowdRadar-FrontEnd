@@ -1,3 +1,5 @@
+import '../utils/lectura_json.dart';
+
 /// Successful API envelope `{message, data}` with parsed data.
 class RespuestaApi<T> {
   final String mensaje;
@@ -23,7 +25,7 @@ class Pagina<T> {
   });
 
   factory Pagina.fromJson(Object? json, T Function(Object? item) parser) {
-    final mapa = json is Map<String, dynamic> ? json : const <String, dynamic>{};
+    final mapa = aMapa(json);
     int entero(String clave, int porDefecto) {
       final v = mapa[clave];
       return v is num ? v.toInt() : porDefecto;

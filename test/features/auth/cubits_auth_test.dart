@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
-import 'package:crowdradar/core/models/user_model.dart';
+import 'package:crowdradar/core/models/usuario.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/features/auth/data/auth_repository.dart';
 import 'package:crowdradar/features/auth/login/login_cubit.dart';
@@ -14,7 +14,7 @@ import 'package:mocktail/mocktail.dart';
 
 class _AuthRepoMock extends Mock implements AuthRepository {}
 
-const _user = UserModel(id: 1, nombre: 'Ana');
+const _user = Usuario(id: 1, nombre: 'Ana');
 
 void main() {
   late _AuthRepoMock repo;
@@ -103,7 +103,7 @@ void main() {
           distrito: 'Lima',
         );
 
-    When<Future<UserModel>> cuandoRegistra() => when(() => repo.registrar(
+    When<Future<Usuario>> cuandoRegistra() => when(() => repo.registrar(
           nombre: any(named: 'nombre'),
           apellido: any(named: 'apellido'),
           email: any(named: 'email'),
@@ -181,8 +181,8 @@ void main() {
 
   group('R3-101 value equality of states holding a user', () {
     test('two separately built identical users give equal LoginExitoso', () {
-      final a = UserModel.fromJson(const {'id': 1, 'nombre': 'Ana'});
-      final b = UserModel.fromJson(const {'id': 1, 'nombre': 'Ana'});
+      final a = Usuario.fromJson(const {'id': 1, 'nombre': 'Ana'});
+      final b = Usuario.fromJson(const {'id': 1, 'nombre': 'Ana'});
 
       expect(identical(a, b), isFalse);
       expect(LoginExitoso(a), LoginExitoso(b));
@@ -191,8 +191,8 @@ void main() {
 
     test('users that differ in one field are not equal', () {
       expect(
-        const UserModel(id: 1, nombre: 'Ana'),
-        isNot(const UserModel(id: 1, nombre: 'Beatriz')),
+        const Usuario(id: 1, nombre: 'Ana'),
+        isNot(const Usuario(id: 1, nombre: 'Beatriz')),
       );
     });
   });
@@ -214,7 +214,7 @@ void main() {
 
   group('R3-109 a second submit while a request is in flight is ignored', () {
     test('LoginCubit sends one request for a double submit', () async {
-      final pendiente = Completer<UserModel>();
+      final pendiente = Completer<Usuario>();
       when(() => repo.iniciarSesion(any(), any()))
           .thenAnswer((_) => pendiente.future);
       final cubit = LoginCubit(repo);
@@ -240,7 +240,7 @@ void main() {
     });
 
     test('RegistroCubit sends one request for a double submit', () async {
-      final pendiente = Completer<UserModel>();
+      final pendiente = Completer<Usuario>();
       when(
         () => repo.registrar(
           nombre: any(named: 'nombre'),

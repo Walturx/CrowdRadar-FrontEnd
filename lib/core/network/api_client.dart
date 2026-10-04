@@ -7,6 +7,7 @@ import '../config/entorno.dart';
 import '../logging/registro_errores.dart';
 import 'api_exception.dart';
 import 'interceptores/interceptor_api.dart';
+import '../utils/lectura_json.dart';
 import 'respuesta_api.dart';
 
 typedef ParserApi<T> = T Function(Object? datos);
@@ -131,7 +132,7 @@ class ApiClient {
 
     try {
       final json = _decodificar(texto);
-      final mapa = json is Map<String, dynamic> ? json : const <String, dynamic>{};
+      final mapa = aMapa(json);
       final mensaje = mapa['message'];
       return RespuestaApi<T>(
         mensaje: mensaje is String ? mensaje : '',

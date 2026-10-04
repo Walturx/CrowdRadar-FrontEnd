@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
-import 'package:crowdradar/core/models/user_model.dart';
+import 'package:crowdradar/core/models/usuario.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/features/perfil/data/perfil_repository.dart';
 import 'package:crowdradar/features/perfil/editar/editar_perfil_cubit.dart';
@@ -13,8 +13,8 @@ import 'package:mocktail/mocktail.dart';
 
 class _PerfilRepoMock extends Mock implements PerfilRepository {}
 
-const _user = UserModel(id: 1, nombre: 'Ana');
-const _editado = UserModel(id: 1, nombre: 'Beatriz');
+const _user = Usuario(id: 1, nombre: 'Ana');
+const _editado = Usuario(id: 1, nombre: 'Beatriz');
 
 void main() {
   late _PerfilRepoMock repo;
@@ -138,7 +138,7 @@ void main() {
 
   group('R3-109 a second submit while a request is in flight is ignored', () {
     test('PerfilCubit.cargar sends one request for a double call', () async {
-      final pendiente = Completer<UserModel>();
+      final pendiente = Completer<Usuario>();
       when(() => repo.obtener()).thenAnswer((_) => pendiente.future);
       final cubit = PerfilCubit(repo);
 
@@ -163,7 +163,7 @@ void main() {
 
     test('EditarPerfilCubit.guardar sends one request for a double tap',
         () async {
-      final pendiente = Completer<UserModel>();
+      final pendiente = Completer<Usuario>();
       when(() => repo.actualizar(any())).thenAnswer((_) => pendiente.future);
       final cubit = EditarPerfilCubit(repo);
 

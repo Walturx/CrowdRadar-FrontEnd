@@ -4,10 +4,10 @@ import '../../features/analitica/data/analitica_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 
-class FakeAnaliticaRepository implements AnaliticaRepository {
+class AnaliticaRepositoryFake implements AnaliticaRepository {
   final ComportamientoFake _comportamiento;
 
-  FakeAnaliticaRepository({
+  AnaliticaRepositoryFake({
     ComportamientoFake comportamiento = const ComportamientoFake(),
   }) : _comportamiento = comportamiento;
 

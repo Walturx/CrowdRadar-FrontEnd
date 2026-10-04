@@ -1,10 +1,12 @@
-import '../../../core/models/user_model.dart';
+import '../../../core/models/usuario.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/session/session_service.dart';
 import '../../../core/session/usuario_sesion.dart';
+import '../../../core/utils/lectura_json.dart';
 import 'perfil_repository.dart';
 
+/// Repository pattern: HTTP implementation of the [PerfilRepository] port.
 class PerfilRepositoryHttp implements PerfilRepository {
   static const String rutaPerfil = '/api/users/profile';
   static const String rutaPassword = '/api/users/password';
@@ -16,9 +18,9 @@ class PerfilRepositoryHttp implements PerfilRepository {
   PerfilRepositoryHttp(this._api, this._sesion);
 
   @override
-  Future<UserModel> obtener() async {
+  Future<Usuario> obtener() async {
     _exigirSesion();
-    final res = await _api.get<UserModel>(
+    final res = await _api.get<Usuario>(
       rutaPerfil,
       mensajeError: 'Error al obtener el perfil',
       parser: _usuario,
@@ -27,15 +29,15 @@ class PerfilRepositoryHttp implements PerfilRepository {
   }
 
   @override
-  Future<UserModel> actualizar(Map<String, dynamic> cambios) async {
+  Future<Usuario> actualizar(Map<String, dynamic> cambios) async {
     _exigirSesion();
-    final res = await _api.put<UserModel>(
+    final res = await _api.put<Usuario>(
       rutaPerfil,
       body: cambios,
       mensajeError: 'Error al actualizar el perfil',
       parser: _usuario,
     );
-    await _sesion.actualizarUsuario(UsuarioSesion.desdeUserModel(res.datos));
+    await _sesion.actualizarUsuario(UsuarioSesion.desdeUsuario(res.datos));
     return res.datos;
   }
 
@@ -64,6 +66,6 @@ class PerfilRepositoryHttp implements PerfilRepository {
     }
   }
 
-  static UserModel _usuario(Object? d) =>
-      UserModel.fromJson(d is Map<String, dynamic> ? d : const {});
+  static Usuario _usuario(Object? d) =>
+      Usuario.fromJson(aMapa(d));
 }
