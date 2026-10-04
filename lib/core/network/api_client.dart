@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../config/entorno.dart';
+import '../logging/registro_errores.dart';
 import 'api_exception.dart';
 import 'interceptores/interceptor_api.dart';
 import 'respuesta_api.dart';
@@ -18,14 +19,17 @@ class ApiClient {
   final Entorno _entorno;
   final List<InterceptorApi> _interceptores;
   final Duration _timeout;
+  final RegistroErrores _registro;
 
   ApiClient(
     this._cliente,
     this._entorno, {
     List<InterceptorApi> interceptores = const [],
     Duration timeout = timeoutPorDefecto,
+    RegistroErrores? registro,
   })  : _interceptores = interceptores,
-        _timeout = timeout;
+        _timeout = timeout,
+        _registro = registro ?? const RegistroErroresConsola();
 
   Future<RespuestaApi<T>> get<T>(
     String path, {
@@ -91,19 +95,25 @@ class ApiClient {
       headers: {'Content-Type': 'application/json'},
       body: body,
     );
-    for (final i in _interceptores) {
-      i.antesDeEnviar(solicitud);
+    try {
+      for (final i in _interceptores) {
+        i.antesDeEnviar(solicitud);
+      }
+    } catch (e, pila) {
+      _registro.registrar('ApiClient.interceptor', e, pila);
+      throw const ApiException(
+        status: -1,
+        message: ApiException.mensajePorDefecto,
+        code: ApiException.codigoInterceptor,
+      );
     }
 
     final http.Response res;
     try {
       res = await _transmitir(solicitud).timeout(_timeout);
-    } on TimeoutException {
-      throw const ApiException.sinConexion();
-    } on http.ClientException {
-      throw const ApiException.sinConexion();
-    } on Exception {
-      // SocketException and other transport failures
+    } on Exception catch (e, pila) {
+      // Timeout, ClientException, SocketException and other transport errors.
+      _registro.registrar('ApiClient.transporte', e, pila);
       throw const ApiException.sinConexion();
     }
 
@@ -115,9 +125,7 @@ class ApiClient {
         _decodificarONulo(texto),
         mensajePorDefecto: mensajeError,
       );
-      for (final i in _interceptores) {
-        i.alRecibirError(error, solicitud);
-      }
+      await _notificarError(error, solicitud);
       throw error;
     }
 
@@ -129,16 +137,27 @@ class ApiClient {
         mensaje: mensaje is String ? mensaje : '',
         datos: parser(mapa['data']),
       );
-    } on FormatException {
+    } on ApiException {
+      rethrow;
+    } catch (e, pila) {
+      // FormatException, TypeError, StateError, ArgumentError, RangeError...
+      _registro.registrar('ApiClient.respuesta', e, pila);
       throw ApiException(
         status: res.statusCode,
         message: mensajeError ?? ApiException.mensajePorDefecto,
+        code: ApiException.codigoRespuestaInvalida,
       );
-    } on TypeError {
-      throw ApiException(
-        status: res.statusCode,
-        message: mensajeError ?? ApiException.mensajePorDefecto,
-      );
+    }
+  }
+
+  /// Runs the error chain; a failing interceptor never masks the real error.
+  Future<void> _notificarError(ApiException error, SolicitudApi solicitud) async {
+    for (final i in _interceptores) {
+      try {
+        await i.alRecibirError(error, solicitud);
+      } catch (e, pila) {
+        _registro.registrar('ApiClient.interceptor', e, pila);
+      }
     }
   }
 

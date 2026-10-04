@@ -30,21 +30,8 @@ import '../features/validacion/estado/estado_validacion_page.dart';
 import '../features/validacion/pendientes/validar_page.dart';
 import '../layout/admin_layout.dart';
 import '../layout/main_layout.dart';
+import 'guards.dart';
 import 'rutas.dart';
-
-/// Session guard. Returns the redirect target or null to stay.
-String? redirigirPorSesion(SesionState sesion, String ubicacion) {
-  final esPublica = Rutas.publicas.contains(ubicacion);
-  return switch (sesion) {
-    SesionNoAutenticada() => esPublica ? null : Rutas.login,
-    SesionAutenticada(:final esAdmin) when esPublica =>
-      esAdmin ? Rutas.adminReportes : Rutas.mapa,
-    SesionAutenticada(:final esAdmin)
-        when !esAdmin && ubicacion.startsWith(Rutas.admin) =>
-      Rutas.mapa,
-    SesionAutenticada() => null,
-  };
-}
 
 /// Re-evaluates router redirects on every session change.
 class _RefrescoPorSesion extends ChangeNotifier {

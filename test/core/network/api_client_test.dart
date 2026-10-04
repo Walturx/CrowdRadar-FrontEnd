@@ -9,6 +9,7 @@ import 'package:crowdradar/core/network/interceptores/interceptor_api.dart';
 import 'package:crowdradar/core/network/interceptores/sesion_expirada_interceptor.dart';
 import 'package:crowdradar/core/session/motivo_cierre.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../fakes/registro_falso.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -24,13 +25,31 @@ ApiClient _cliente(
   MockClientHandler handler, {
   List<InterceptorApi> interceptores = const [],
   Duration timeout = const Duration(seconds: 15),
+  RegistroFalso? registro,
 }) =>
     ApiClient(
       MockClient(handler),
       _entorno,
       interceptores: interceptores,
       timeout: timeout,
+      registro: registro,
     );
+
+class _InterceptorQueFalla extends InterceptorApi {
+  final bool alEnviar;
+
+  _InterceptorQueFalla({this.alEnviar = false});
+
+  @override
+  void antesDeEnviar(SolicitudApi solicitud) {
+    if (alEnviar) throw StateError('boom antes');
+  }
+
+  @override
+  Future<void> alRecibirError(ApiException error, SolicitudApi solicitud) async {
+    if (!alEnviar) throw StateError('boom despues');
+  }
+}
 
 Object? _identidad(Object? d) => d;
 
@@ -187,6 +206,105 @@ void main() {
     });
   });
 
+  group('ApiClient review fixes', () {
+    test('R3-006 interceptor failing before send becomes INTERCEPTOR', () async {
+      final api = _cliente((_) async => _json(200, {}),
+          interceptores: [_InterceptorQueFalla(alEnviar: true)]);
+
+      final e = await _capturar(
+          () => api.get<Object?>('/api/x', parser: _identidad));
+
+      expect(e.code, ApiException.codigoInterceptor);
+    });
+
+    test('R3-006 interceptor failing on error does not mask the original',
+        () async {
+      final api = _cliente((_) async => _json(500, {'message': 'real'}),
+          interceptores: [_InterceptorQueFalla()]);
+
+      final e = await _capturar(
+          () => api.get<Object?>('/api/x', parser: _identidad));
+
+      expect(e.status, 500);
+      expect(e.message, 'real');
+    });
+
+    test('R3-006 SesionExpiradaInterceptor awaits expirar', () async {
+      var terminado = false;
+      final api = _cliente(
+        (_) async => _json(401, {'message': 'x'}),
+        interceptores: [
+          SesionExpiradaInterceptor((_) async {
+            await Future<void>.delayed(const Duration(milliseconds: 20));
+            terminado = true;
+          }),
+        ],
+      );
+
+      await _capturar(() => api.get<Object?>('/api/users/p', parser: _identidad));
+
+      expect(terminado, isTrue);
+    });
+
+    test('R3-006 SesionExpiradaInterceptor swallows and logs expirar failure',
+        () async {
+      final registro = RegistroFalso();
+      final api = _cliente(
+        (_) async => _json(401, {'message': 'x'}),
+        registro: registro,
+        interceptores: [
+          SesionExpiradaInterceptor((_) async => throw StateError('x'),
+              registro: registro),
+        ],
+      );
+
+      final e = await _capturar(
+          () => api.get<Object?>('/api/users/p', parser: _identidad));
+
+      expect(e.status, 401);
+      expect(registro.registros, isNotEmpty);
+    });
+
+    for (final (nombre, error) in <(String, Object)>[
+      ('StateError', StateError('x')),
+      ('ArgumentError', ArgumentError('x')),
+      ('RangeError', RangeError('x')),
+    ]) {
+      test('R3-006 parser throwing $nombre becomes RESPUESTA_INVALIDA',
+          () async {
+        final registro = RegistroFalso();
+        final api = _cliente((_) async => _json(200, {'data': 1}),
+            registro: registro);
+
+        final e = await _capturar(() => api.get<Object?>('/api/x',
+            parser: (_) => throw error, mensajeError: 'Fallo'));
+
+        expect(e.code, ApiException.codigoRespuestaInvalida);
+        expect(e.message, 'Fallo');
+        expect(registro.registros, hasLength(1));
+      });
+    }
+
+    test('parser ApiException passes through untouched', () async {
+      final api = _cliente((_) async => _json(200, {'data': 1}));
+
+      final e = await _capturar(() => api.get<Object?>('/api/x',
+          parser: (_) => throw const ApiException(status: 7, message: 'm')));
+
+      expect(e.status, 7);
+    });
+
+    test('R4-007 transport failure is reported', () async {
+      final registro = RegistroFalso();
+      final api = _cliente((_) async => throw http.ClientException('x'),
+          registro: registro);
+
+      await _capturar(() => api.get<Object?>('/api/x', parser: _identidad));
+
+      expect(registro.registros, hasLength(1));
+    });
+  });
+
   group('Interceptors', () {
     test('S3.7 Bearer header present with token, absent without', () async {
       final headers = <Map<String, String>>[];
@@ -211,7 +329,7 @@ void main() {
       final motivos = <MotivoCierre>[];
       final api = _cliente(
         (_) async => _json(401, {'message': 'No autenticado'}),
-        interceptores: [SesionExpiradaInterceptor(motivos.add)],
+        interceptores: [SesionExpiradaInterceptor((m) async => motivos.add(m))],
       );
 
       final e = await _capturar(
@@ -225,7 +343,7 @@ void main() {
       final motivos = <MotivoCierre>[];
       final api = _cliente(
         (_) async => _json(401, {'message': 'Credenciales inválidas'}),
-        interceptores: [SesionExpiradaInterceptor(motivos.add)],
+        interceptores: [SesionExpiradaInterceptor((m) async => motivos.add(m))],
       );
 
       final e = await _capturar(() => api.post<Object?>('/api/auth/login',
@@ -240,7 +358,7 @@ void main() {
       final api = _cliente(
         (_) async => _json(
             403, {'message': 'Suspendida', 'code': 'CUENTA_SUSPENDIDA'}),
-        interceptores: [SesionExpiradaInterceptor(motivos.add)],
+        interceptores: [SesionExpiradaInterceptor((m) async => motivos.add(m))],
       );
 
       await _capturar(
@@ -253,7 +371,7 @@ void main() {
       final motivos = <MotivoCierre>[];
       final api = _cliente(
         (_) async => _json(500, {'message': 'x'}),
-        interceptores: [SesionExpiradaInterceptor(motivos.add)],
+        interceptores: [SesionExpiradaInterceptor((m) async => motivos.add(m))],
       );
 
       await _capturar(

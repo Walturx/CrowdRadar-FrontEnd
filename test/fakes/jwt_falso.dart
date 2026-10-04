@@ -34,3 +34,20 @@ class StorageQueFalla extends MemoriaTokenStorage {
   @override
   Future<String?> leerToken() async => throw StateError('keystore');
 }
+
+/// Storage whose writes and deletes fail (R3-002/R3-003).
+class StorageQueFallaAlEscribir extends MemoriaTokenStorage {
+  @override
+  Future<void> guardar(String token, UsuarioSesion usuario) async =>
+      throw StateError('keystore write');
+
+  @override
+  Future<void> borrar() async => throw StateError('keystore delete');
+}
+
+/// Storage whose reads never answer within the restore timeout (R3-007).
+class StorageLento extends MemoriaTokenStorage {
+  @override
+  Future<String?> leerToken() =>
+      Future.delayed(const Duration(milliseconds: 300), () => token);
+}

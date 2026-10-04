@@ -76,6 +76,25 @@ void main() {
             .having((e) => e.message, 'message', 'Error al iniciar sesión')),
       );
     });
+
+    for (final (nombre, data) in <(String, Object?)>[
+      ('null token', {'token': null, 'user': _usuarioJson}),
+      ('empty token', {'token': '', 'user': _usuarioJson}),
+      ('missing user', {'token': 'tkn'}),
+      ('null data', null),
+    ]) {
+      test('R3-004 2xx with $nombre is rejected without starting a session',
+          () async {
+        final r = repo(200, {'message': 'ok', 'data': data});
+
+        await expectLater(
+          r.iniciarSesion('a@b.c', 'x'),
+          throwsA(isA<ApiException>()
+              .having((e) => e.message, 'message', 'Error al iniciar sesión')),
+        );
+        expect(sesion.token, isNull);
+      });
+    }
   });
 
   group('registrar', () {
@@ -111,6 +130,16 @@ void main() {
       });
       expect(user.email, 'ana@test.com');
       expect(sesion.token, isNull);
+    });
+
+    test('R3-004 2xx without a user body is rejected', () async {
+      final r = repo(201, {'message': 'creado', 'data': null});
+
+      await expectLater(
+        registrar(r),
+        throwsA(isA<ApiException>()
+            .having((e) => e.message, 'message', 'Error al registrar usuario')),
+      );
     });
 
     test('S8.3 409 shows the backend message', () async {

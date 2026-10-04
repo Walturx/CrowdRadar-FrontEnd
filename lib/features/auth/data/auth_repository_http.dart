@@ -22,10 +22,12 @@ class AuthRepositoryHttp implements AuthRepository {
       mensajeError: 'Error al iniciar sesión',
       parser: (d) {
         final data = _mapa(d);
-        return (
-          token: data['token'] as String? ?? '',
-          user: UserModel.fromJson(_mapa(data['user'])),
-        );
+        final token = data['token'];
+        final user = data['user'];
+        if (token is! String || token.isEmpty || user is! Map<String, dynamic>) {
+          throw const FormatException('Login response lacks token or user');
+        }
+        return (token: token, user: UserModel.fromJson(user));
       },
     );
     await _sesion.iniciar(
@@ -55,7 +57,13 @@ class AuthRepositoryHttp implements AuthRepository {
         'distrito': distrito,
       },
       mensajeError: 'Error al registrar usuario',
-      parser: (d) => UserModel.fromJson(_mapa(d)),
+      parser: (d) {
+        final data = _mapa(d);
+        if (data.isEmpty) {
+          throw const FormatException('Register response lacks the user');
+        }
+        return UserModel.fromJson(data);
+      },
     );
     return res.datos;
   }
