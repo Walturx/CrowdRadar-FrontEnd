@@ -142,7 +142,7 @@ void main() {
             centro: _centro,
             zoom: 16,
             alTocarMarcador: (_) {},
-            alMoverCamara: (l) => limites = l,
+            eventos: EventosMapa(alMoverCamara: (l) => limites = l),
           ),
         ),
       ),
@@ -167,7 +167,7 @@ void main() {
             centro: _centro,
             zoom: 16,
             alTocarMarcador: (_) {},
-            alCamaraQuieta: alCamaraQuieta,
+            eventos: EventosMapa(alCamaraQuieta: alCamaraQuieta),
           ),
         ),
       ),
@@ -215,15 +215,19 @@ void main() {
     Future<void> montar(
       WidgetTester tester,
       TileProvider tiles,
-      VoidCallback alError,
-    ) => tester.pumpWidget(
+      VoidCallback alError, [
+      VoidCallback? alCargado,
+    ]) => tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: FlutterMapAdapter(tileProvider: tiles).construirMapa(
             centro: _centro,
             zoom: 16,
             alTocarMarcador: (_) {},
-            alErrorTile: alError,
+            eventos: EventosMapa(
+              alErrorTile: alError,
+              alTileCargado: alCargado,
+            ),
           ),
         ),
       ),
@@ -246,6 +250,24 @@ void main() {
 
       expect(find.byType(TileLayer), findsOneWidget);
       expect(errores, 0);
+    });
+
+    testWidgets('tiles that load are reported as loaded', (tester) async {
+      var cargados = 0;
+      await montar(tester, _TileProviderLocal(), () {}, () => cargados++);
+      await tester.pump();
+      await tester.pump();
+
+      expect(cargados, greaterThan(0));
+    });
+
+    testWidgets('tiles that fail are not reported as loaded', (tester) async {
+      var cargados = 0;
+      await montar(tester, _TileProviderFallido(), () {}, () => cargados++);
+      await tester.pump();
+      await tester.pump();
+
+      expect(cargados, 0);
     });
   });
 }

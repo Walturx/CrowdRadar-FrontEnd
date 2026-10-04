@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/rutas.dart';
 import '../../../core/map/mapa_adapter.dart';
 import '../../../core/map/tipos_mapa.dart';
-import '../../../core/widgets/estado_error.dart';
+import '../../../core/widgets/tarjeta_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
 import '../../../theme/app_colors.dart';
 import '../buscar/buscar_lugar_page.dart';
@@ -41,14 +41,15 @@ class _MapViewState extends State<_MapView> {
   );
   static const String _tituloError = 'No pudimos cargar el mapa';
 
-  /// The offline banner is shown once per session: tiles fail in bursts.
+  /// The offline banner is shown once per outage: tiles fail in bursts.
   bool _avisoMostrado = false;
   bool _avisoVisible = false;
+  bool _errorDescartado = false;
 
   void _alCamaraQuieta(LimitesMapa limites) {
     final cubit = context.read<MapaCubit>();
     // The first report loads at once; later ones wait for the camera to settle.
-    if (cubit.centro == null) {
+    if (!cubit.yaCargo) {
       cubit.cargar(limites);
     } else {
       cubit.alMoverCamara(limites);
@@ -73,6 +74,15 @@ class _MapViewState extends State<_MapView> {
     setState(() {
       _avisoMostrado = true;
       _avisoVisible = true;
+    });
+  }
+
+  /// Tiles load again: the outage is over, so the banner may return in the next one.
+  void _alTileCargado() {
+    if (!_avisoMostrado || !mounted) return;
+    setState(() {
+      _avisoMostrado = false;
+      _avisoVisible = false;
     });
   }
 
@@ -118,7 +128,11 @@ class _MapViewState extends State<_MapView> {
             ),
           ),
           Expanded(
-            child: BlocBuilder<MapaCubit, MapaState>(
+            child: BlocConsumer<MapaCubit, MapaState>(
+              listenWhen: (_, actual) => actual is! MapaError,
+              listener: (_, _) {
+                if (_errorDescartado) setState(() => _errorDescartado = false);
+              },
               builder: (context, state) => Stack(
                 children: [
                   Positioned.fill(
@@ -132,8 +146,12 @@ class _MapViewState extends State<_MapView> {
                       }),
                       alTocarMarcador: (id) =>
                           context.push(Rutas.lugar(id), extra: cubit.centro),
-                      alCamaraQuieta: _alCamaraQuieta,
-                      alErrorTile: _alErrorTile,
+                      eventos: EventosMapa(
+                        alMoverCamara: cubit.alMoverCamara,
+                        alCamaraQuieta: _alCamaraQuieta,
+                        alErrorTile: _alErrorTile,
+                        alTileCargado: _alTileCargado,
+                      ),
                     ),
                   ),
                   if (state is MapaCargando)
@@ -166,15 +184,16 @@ class _MapViewState extends State<_MapView> {
                         ),
                       ),
                     ),
-                  if (state is MapaError)
-                    Positioned.fill(
-                      child: ColoredBox(
-                        color: AppColors.surface,
-                        child: EstadoError(
-                          titulo: _tituloError,
-                          mensaje: state.mensaje,
-                          onReintentar: cubit.reintentar,
-                        ),
+                  if (state is MapaError && !_errorDescartado)
+                    Positioned(
+                      left: 12,
+                      right: 12,
+                      bottom: 12,
+                      child: TarjetaError(
+                        titulo: _tituloError,
+                        mensaje: state.mensaje,
+                        onReintentar: cubit.reintentar,
+                        onCerrar: () => setState(() => _errorDescartado = true),
                       ),
                     ),
                   if (_avisoVisible)

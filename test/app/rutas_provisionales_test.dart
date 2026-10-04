@@ -18,9 +18,7 @@ class _MapaVacio implements MapaAdapter {
     double zoom = 13,
     List<MarcadorLugar> marcadores = const [],
     required void Function(int lugarId) alTocarMarcador,
-    void Function(LimitesMapa limites)? alMoverCamara,
-    void Function(LimitesMapa limites)? alCamaraQuieta,
-    VoidCallback? alErrorTile,
+    EventosMapa eventos = const EventosMapa(),
     PuntoGeografico? ubicacionUsuario,
   }) => const SizedBox.expand();
 }

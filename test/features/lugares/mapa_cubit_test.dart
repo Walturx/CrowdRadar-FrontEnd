@@ -126,10 +126,7 @@ void main() {
       act: (c) => c.cargar(_b1),
       expect: () => const [
         MapaCargando(),
-        MapaError(
-          'Hubo un error al obtener la información geográfica. Revisa tu conexión e inténtalo de nuevo.',
-          codigo: 'ERROR_INTERNO',
-        ),
+        MapaError(MapaCubit.mensajeError, codigo: 'ERROR_INTERNO'),
       ],
     );
 
@@ -265,7 +262,60 @@ void main() {
     });
   });
 
+  group('error message', () {
+    test('only an offline failure asks to check the connection', () {
+      expect(MapaCubit.mensajeError, 'No pudimos cargar los lugares');
+      expect(MapaCubit.mensajeSinConexion, contains('Revisa tu conexión'));
+      expect(MapaCubit.mensajeError, isNot(contains('conexión')));
+    });
+  });
+
   group('centro', () {
+    test('follows the live camera before the debounce fires', () {
+      fakeAsync((reloj) {
+        final repo = RepoLugarFalso();
+        final cubit = MapaCubit(repo);
+
+        cubit.alMoverCamara(_b1);
+        expect(cubit.centro!.latitud, closeTo(-12.12, 1e-9));
+        expect(repo.pedidos, isEmpty);
+
+        reloj.elapse(const Duration(milliseconds: 100));
+        cubit.alMoverCamara(_b2);
+        expect(cubit.centro!.latitud, closeTo(-12.02, 1e-9));
+        cubit.close();
+      });
+    });
+
+    test('is the new camera, not the last requested bbox, while pending', () {
+      fakeAsync((reloj) {
+        final cubit = MapaCubit(RepoLugarFalso());
+        cubit.cargar(_b1);
+        reloj.flushMicrotasks();
+
+        cubit.alMoverCamara(_b2);
+
+        expect(cubit.centro!.latitud, closeTo(-12.02, 1e-9));
+        cubit.close();
+      });
+    });
+
+    test('a retry still repeats the last requested area', () {
+      fakeAsync((reloj) {
+        final repo = RepoLugarFalso();
+        final cubit = MapaCubit(repo);
+        cubit.cargar(_b1);
+        reloj.flushMicrotasks();
+
+        cubit.alMoverCamara(_b2);
+        cubit.reintentar();
+        reloj.flushMicrotasks();
+
+        expect(repo.pedidos.map((p) => p.bbox), [_b1, _b1]);
+        cubit.close();
+      });
+    });
+
     test(
       'is unknown until the camera reports and then is the bbox middle',
       () async {
@@ -276,7 +326,7 @@ void main() {
 
         expect(cubit.centro!.latitud, closeTo(-12.12, 1e-9));
         expect(cubit.centro!.longitud, closeTo(-77.03, 1e-9));
-        await cubit.cargar(_b2);
+        cubit.alMoverCamara(_b2);
         expect(cubit.centro!.latitud, closeTo(-12.02, 1e-9));
         await cubit.close();
       },
