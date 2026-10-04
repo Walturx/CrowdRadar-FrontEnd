@@ -1,3 +1,4 @@
+import 'package:crowdradar/core/models/usuario.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/features/auth/data/auth_repository.dart';
 import 'package:crowdradar/features/auth/registro/register_page.dart';
@@ -6,20 +7,40 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../fakes/enrutador_falso.dart';
+
 class _AuthRepoMock extends Mock implements AuthRepository {}
 
 void main() {
   late _AuthRepoMock repo;
   setUp(() => repo = _AuthRepoMock());
 
+  /// Opens the page on top of `/inicio` so a successful `pop` is observable.
   Future<void> abrir(WidgetTester tester) async {
+    final router = enrutadorDe(
+      ruta: '/registro',
+      pantalla: const RegisterPage(),
+    );
     await tester.pumpWidget(
       RepositoryProvider<AuthRepository>.value(
         value: repo,
-        child: const MaterialApp(home: RegisterPage()),
+        child: MaterialApp.router(routerConfig: router),
       ),
     );
+    router.push('/registro');
+    await tester.pumpAndSettle();
   }
+
+  When<Future<Usuario>> registrarLlamada() => when(
+    () => repo.registrar(
+      nombre: any(named: 'nombre'),
+      apellido: any(named: 'apellido'),
+      email: any(named: 'email'),
+      password: any(named: 'password'),
+      telefono: any(named: 'telefono'),
+      distrito: any(named: 'distrito'),
+    ),
+  );
 
   Future<void> llenarYEnviar(WidgetTester tester) async {
     Future<void> escribir(String campo, String texto) =>
@@ -39,16 +60,7 @@ void main() {
   testWidgets('R3-103 a backend field error shows under its field', (
     tester,
   ) async {
-    when(
-      () => repo.registrar(
-        nombre: any(named: 'nombre'),
-        apellido: any(named: 'apellido'),
-        email: any(named: 'email'),
-        password: any(named: 'password'),
-        telefono: any(named: 'telefono'),
-        distrito: any(named: 'distrito'),
-      ),
-    ).thenThrow(
+    registrarLlamada().thenThrow(
       const ApiException(
         status: 400,
         message: 'Datos inválidos',
@@ -73,5 +85,32 @@ void main() {
       ),
       findsNothing,
     );
+  });
+
+  testWidgets('a failed registration shows the message in a snackbar', (
+    tester,
+  ) async {
+    registrarLlamada().thenThrow(
+      const ApiException(status: 409, message: 'El email ya está registrado'),
+    );
+    await abrir(tester);
+
+    await llenarYEnviar(tester);
+
+    expect(find.text('El email ya está registrado'), findsOneWidget);
+    expect(find.text('Crear cuenta'), findsOneWidget);
+  });
+
+  testWidgets('a successful registration confirms and goes back', (
+    tester,
+  ) async {
+    registrarLlamada().thenAnswer((_) async => const Usuario(id: 2));
+    await abrir(tester);
+
+    await llenarYEnviar(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('RUTA /inicio'), findsOneWidget);
+    expect(find.text('Usuario registrado correctamente'), findsOneWidget);
   });
 }
