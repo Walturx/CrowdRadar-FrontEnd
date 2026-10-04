@@ -159,4 +159,52 @@ void main() {
 
     expect(campo.autofillHints, [AutofillHints.newPassword]);
   });
+
+  testWidgets('contract parity: telefono and distrito are validated client side', (
+    tester,
+  ) async {
+    await abrir(tester);
+    await tester.enterText(find.byKey(const Key('campo-telefono')), '812345678');
+    await tester.enterText(find.byKey(const Key('campo-distrito')), 'A');
+    await tester.ensureVisible(find.text('Registrarme'));
+    await tester.tap(find.text('Registrarme'));
+    await tester.pump();
+
+    expect(
+      find.text('Ingresá un celular de 9 dígitos que empiece en 9'),
+      findsOneWidget,
+    );
+    expect(find.text('Ingresá tu distrito'), findsOneWidget);
+  });
+
+  testWidgets('a server 400 errors[] for telefono and distrito show inline', (
+    tester,
+  ) async {
+    registrarLlamada().thenThrow(
+      const ApiException(
+        status: 400,
+        message: 'Datos inválidos',
+        errors: [
+          ErrorCampo(campo: 'telefono', mensaje: 'Teléfono inválido'),
+          ErrorCampo(campo: 'distrito', mensaje: 'Distrito muy corto'),
+        ],
+      ),
+    );
+    await abrir(tester);
+
+    await llenarYEnviar(tester);
+
+    for (final (campo, texto) in [
+      ('campo-telefono', 'Teléfono inválido'),
+      ('campo-distrito', 'Distrito muy corto'),
+    ]) {
+      expect(
+        find.descendant(
+          of: find.byKey(Key(campo)),
+          matching: find.text(texto),
+        ),
+        findsOneWidget,
+      );
+    }
+  });
 }

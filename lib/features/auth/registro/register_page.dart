@@ -172,7 +172,7 @@ class _RegisterViewState extends State<_RegisterView> {
                       counterText: '',
                       errorText: errores['telefono'],
                     ),
-                    validator: Validadores.requerido,
+                    validator: Validadores.telefono,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -182,7 +182,7 @@ class _RegisterViewState extends State<_RegisterView> {
                       labelText: 'Distrito',
                       errorText: errores['distrito'],
                     ),
-                    validator: Validadores.requerido,
+                    validator: Validadores.distrito,
                   ),
                   const SizedBox(height: 24),
                   BotonPrincipal(texto: 'Registrarme', onPressed: () => _onRegister(context)),
