@@ -42,6 +42,45 @@ DetalleLugarCubit _cubit(
 );
 
 void main() {
+  group('closing during a load', () {
+    test('a detail arriving after close neither throws nor emits', () async {
+      final espera = Completer<LugarDetalle>();
+      final cubit = DetalleLugarCubit(
+        RepoLugarFalso(alObtener: (_) => espera.future),
+        FavoritoRepositoryFake(),
+        1,
+      );
+      final estados = <DetalleLugarState>[];
+      cubit.stream.listen(estados.add);
+
+      final carga = cubit.cargar();
+      await cubit.close();
+      final antes = estados.length;
+      espera.complete(_detalle);
+
+      await expectLater(carga, completes);
+      expect(estados, hasLength(antes));
+      expect(estados.whereType<DetalleCargado>(), isEmpty);
+    });
+
+    test('an error arriving after close neither throws nor emits', () async {
+      final espera = Completer<LugarDetalle>();
+      final cubit = DetalleLugarCubit(
+        RepoLugarFalso(alObtener: (_) => espera.future),
+        FavoritoRepositoryFake(),
+        1,
+      );
+
+      final carga = cubit.cargar();
+      await cubit.close();
+      espera.completeError(
+        const ApiException(status: 500, message: 'boom', code: 'ERROR'),
+      );
+
+      await expectLater(carga, completes);
+    });
+  });
+
   group('cargar', () {
     blocTest<DetalleLugarCubit, DetalleLugarState>(
       'emits Cargando then Cargado with the place',

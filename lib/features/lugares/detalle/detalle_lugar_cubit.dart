@@ -30,8 +30,10 @@ class DetalleLugarCubit extends Cubit<DetalleLugarState> {
     emit(const DetalleCargando());
     try {
       final detalle = await _lugares.obtener(_lugarId);
+      if (isClosed) return;
       emit(DetalleCargado(detalle, esFavorito: detalle.esFavorito));
     } catch (e) {
+      if (isClosed) return;
       final codigo = codigoDeError(e);
       emit(
         DetalleError(

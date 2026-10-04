@@ -50,6 +50,17 @@ const _b3 = LimitesMapa(
 );
 
 void main() {
+  test('always sends the places limit', () async {
+    final repo = RepoLugarFalso();
+    final cubit = MapaCubit(repo);
+
+    await cubit.cargar(_b1);
+
+    expect(MapaCubit.limiteLugares, 200);
+    expect(repo.pedidos.single.limite, MapaCubit.limiteLugares);
+    await cubit.close();
+  });
+
   group('cargar', () {
     blocTest<MapaCubit, MapaState>(
       'emits Cargando then Cargado with the places and no empty message',
