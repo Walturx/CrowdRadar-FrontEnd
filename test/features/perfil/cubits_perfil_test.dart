@@ -76,6 +76,28 @@ void main() {
     );
   });
 
+  group('PerfilCubit on a closed cubit', () {
+    test('cargar and refrescar after close neither throw nor call the repo',
+        () async {
+      final c = PerfilCubit(repo);
+      await c.close();
+
+      await expectLater(c.cargar(), completes);
+      await expectLater(c.refrescar(), completes);
+      verifyNever(() => repo.obtener());
+    });
+
+    test('refrescar on loaded data closed before entry does not throw',
+        () async {
+      when(() => repo.obtener()).thenAnswer((_) async => _user);
+      final c = PerfilCubit(repo);
+      await c.cargar();
+      await c.close();
+
+      await expectLater(c.refrescar(), completes);
+    });
+  });
+
   group('PerfilCubit.refrescar (stale-while-revalidate)', () {
     blocTest<PerfilCubit, PerfilState>(
       'success keeps the data visible and swaps it for the new one',

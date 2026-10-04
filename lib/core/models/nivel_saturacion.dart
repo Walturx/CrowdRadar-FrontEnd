@@ -16,8 +16,10 @@ enum NivelSaturacion {
   static const double corteSaturado = 2.34;
 
   /// Level of an average crowding value; the single place the cutoffs live.
-  static NivelSaturacion desdePromedio(double promedio) =>
-      promedio < corteModerado
+  /// NaN means there is no usable information.
+  static NivelSaturacion desdePromedio(double promedio) => promedio.isNaN
+      ? sinInformacion
+      : promedio < corteModerado
       ? tranquilo
       : promedio < corteSaturado
       ? moderado

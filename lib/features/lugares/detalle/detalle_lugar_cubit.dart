@@ -24,6 +24,10 @@ class DetalleLugarCubit extends Cubit<DetalleLugarState> {
   /// A load while another is in flight is ignored.
   bool _enVuelo = false;
 
+  /// Counts favorite toggles; a refresh that overlapped one must not bring
+  /// back the favorite flag the server had before it.
+  int _alternancias = 0;
+
   Future<void> cargar() async {
     if (isClosed || _enVuelo) return;
     _enVuelo = true;
@@ -57,18 +61,37 @@ class DetalleLugarCubit extends Cubit<DetalleLugarState> {
     if (actual is! DetalleCargado) return cargar();
     if (isClosed || _enVuelo) return;
     _enVuelo = true;
+    final alternanciasAlInicio = _alternancias;
     // Clears a previous soft error so a repeated failure is reported again.
     emit(DetalleCargado(actual.detalle, esFavorito: actual.esFavorito));
     try {
       final detalle = await _lugares.obtener(_lugarId);
       if (isClosed) return;
-      emit(DetalleCargado(detalle, esFavorito: detalle.esFavorito));
+      final ahora = state;
+      if (ahora is DetalleCargado && _alternancias != alternanciasAlInicio) {
+        // A toggle overlapped: its flag (optimistic or final) wins.
+        emit(
+          DetalleCargado(
+            detalle,
+            esFavorito: ahora.esFavorito,
+            procesandoFavorito: ahora.procesandoFavorito,
+            errorFavorito: ahora.errorFavorito,
+          ),
+        );
+      } else {
+        emit(DetalleCargado(detalle, esFavorito: detalle.esFavorito));
+      }
     } catch (e) {
       if (isClosed) return;
+      final ahora = state;
       emit(
         DetalleCargado(
-          actual.detalle,
-          esFavorito: actual.esFavorito,
+          ahora is DetalleCargado ? ahora.detalle : actual.detalle,
+          esFavorito: ahora is DetalleCargado
+              ? ahora.esFavorito
+              : actual.esFavorito,
+          procesandoFavorito:
+              ahora is DetalleCargado && ahora.procesandoFavorito,
           errorActualizacion: mensajeDeError(e),
         ),
       );
@@ -80,6 +103,7 @@ class DetalleLugarCubit extends Cubit<DetalleLugarState> {
   Future<void> alternarFavorito() async {
     final actual = state;
     if (actual is! DetalleCargado || actual.procesandoFavorito) return;
+    _alternancias++;
     emit(
       DetalleCargado(
         actual.detalle,
@@ -109,9 +133,11 @@ class DetalleLugarCubit extends Cubit<DetalleLugarState> {
       error = mensajeDeError(e);
     }
     if (isClosed) return;
+    // A refresh may have swapped the detail while the toggle was in flight.
+    final ahora = state;
     emit(
       DetalleCargado(
-        actual.detalle,
+        ahora is DetalleCargado ? ahora.detalle : actual.detalle,
         esFavorito: esFavorito,
         errorFavorito: error,
       ),

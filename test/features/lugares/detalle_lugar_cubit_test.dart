@@ -9,7 +9,9 @@ import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/features/lugares/detalle/detalle_lugar_cubit.dart';
 import 'package:crowdradar/features/lugares/detalle/detalle_lugar_state.dart';
+import 'package:crowdradar/features/favoritos/data/favorito_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
 import '../../fakes/lugar_repo_falso.dart';
 
@@ -29,6 +31,8 @@ const _favorito = LugarDetalle(
   longitud: -77.0297,
   esFavorito: true,
 );
+
+class _FavoritosMock extends Mock implements FavoritoRepository {}
 
 const _errorGenerico =
     'No pudimos obtener la información de este lugar. Inténtalo más tarde.';
@@ -300,6 +304,93 @@ void main() {
       await primera;
 
       expect(repo.detallesPedidos, hasLength(1));
+      await cubit.close();
+    });
+  });
+
+  group('refrescar coordinated with alternarFavorito', () {
+    const nuevo = LugarDetalle(
+      id: 1,
+      nombre: 'Parque Kennedy',
+      categoria: CategoriaLugar.parque,
+      latitud: -12.1219,
+      longitud: -77.0297,
+      saturacion: SaturacionLugar(nivel: NivelSaturacion.saturado),
+    );
+
+    test('a refresh resolving mid-toggle keeps the toggle state, then its '
+        'outcome', () async {
+      final favoritos = _FavoritosMock();
+      final toggle = Completer<void>();
+      when(() => favoritos.agregar(1)).thenAnswer((_) => toggle.future);
+      final refresco = Completer<LugarDetalle>();
+      var n = 0;
+      final cubit = DetalleLugarCubit(
+        RepoLugarFalso(
+          alObtener: (_) => n++ == 0 ? Future.value(_detalle) : refresco.future,
+        ),
+        favoritos,
+        1,
+      );
+      await cubit.cargar();
+
+      final r = cubit.refrescar();
+      final t = cubit.alternarFavorito();
+      refresco.complete(nuevo); // stale server snapshot: esFavorito false
+      await r;
+
+      expect(
+        cubit.state,
+        const DetalleCargado(
+          nuevo,
+          esFavorito: false,
+          procesandoFavorito: true,
+        ),
+      );
+
+      toggle.complete();
+      await t;
+      expect(cubit.state, const DetalleCargado(nuevo, esFavorito: true));
+      await cubit.close();
+    });
+
+    test(
+      'a refresh started before a finished toggle does not undo it',
+      () async {
+        final favoritos = _FavoritosMock();
+        when(() => favoritos.agregar(1)).thenAnswer((_) async {});
+        final refresco = Completer<LugarDetalle>();
+        var n = 0;
+        final cubit = DetalleLugarCubit(
+          RepoLugarFalso(
+            alObtener: (_) =>
+                n++ == 0 ? Future.value(_detalle) : refresco.future,
+          ),
+          favoritos,
+          1,
+        );
+        await cubit.cargar();
+
+        final r = cubit.refrescar();
+        await cubit.alternarFavorito();
+        refresco.complete(nuevo);
+        await r;
+
+        expect(cubit.state, const DetalleCargado(nuevo, esFavorito: true));
+        await cubit.close();
+      },
+    );
+
+    test('a refresh without any toggle still takes the server flag', () async {
+      var n = 0;
+      final cubit = DetalleLugarCubit(
+        RepoLugarFalso(alObtener: (_) async => n++ == 0 ? _detalle : _favorito),
+        _FavoritosMock(),
+        1,
+      );
+      await cubit.cargar();
+      await cubit.refrescar();
+      expect(cubit.state, const DetalleCargado(_favorito, esFavorito: true));
       await cubit.close();
     });
   });

@@ -20,6 +20,13 @@ void main() {
       expect(NivelSaturacion.desdePromedio(3), NivelSaturacion.saturado);
     });
 
+    test('NaN means there is no usable information', () {
+      expect(
+        NivelSaturacion.desdePromedio(double.nan),
+        NivelSaturacion.sinInformacion,
+      );
+    });
+
     test('out-of-range values still map to the nearest end', () {
       expect(NivelSaturacion.desdePromedio(-1), NivelSaturacion.tranquilo);
       expect(NivelSaturacion.desdePromedio(9), NivelSaturacion.saturado);

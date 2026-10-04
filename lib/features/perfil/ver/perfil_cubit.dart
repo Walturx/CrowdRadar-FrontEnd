@@ -13,7 +13,7 @@ class PerfilCubit extends Cubit<PerfilState> {
   bool _enVuelo = false;
 
   Future<void> cargar() async {
-    if (_enVuelo) return;
+    if (isClosed || _enVuelo) return;
     _enVuelo = true;
     emit(const PerfilCargando());
     try {
@@ -38,6 +38,7 @@ class PerfilCubit extends Cubit<PerfilState> {
   /// arrives, and a failure only adds a soft error. Without data it is a
   /// regular [cargar].
   Future<void> refrescar() async {
+    if (isClosed) return;
     final actual = state;
     if (actual is! PerfilCargado) return cargar();
     if (_enVuelo) return;
