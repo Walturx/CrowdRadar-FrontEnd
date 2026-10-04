@@ -82,10 +82,8 @@ class ValidacionRepositoryHttp implements ValidacionRepository {
       '$rutaReportes/mios/validacion',
       query: {'page': page, 'size': size},
       mensajeError: 'No se pudo obtener el estado de tus reportes',
-      parser: (d) => Pagina.fromJson(
-        d,
-        (i) => EstadoReporteValidacion.fromJson(aMapa(i)),
-      ),
+      parser: (d) =>
+          Pagina.fromJson(d, (i) => EstadoReporteValidacion.fromJson(aMapa(i))),
     );
     return res.datos;
   }

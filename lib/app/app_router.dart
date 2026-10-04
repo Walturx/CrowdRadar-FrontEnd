@@ -28,6 +28,7 @@ import '../features/moderacion/usuarios/usuarios_admin_page.dart';
 import '../features/perfil/acerca/acerca_page.dart';
 import '../features/perfil/cambiar_password/cambiar_password_page.dart';
 import '../features/reportes/mis_reportes/mis_reportes_page.dart';
+import '../core/map/centro_compartido.dart';
 import '../features/validacion/detalle_reporte/detalle_reporte_page.dart';
 import '../features/validacion/estado/estado_validacion_page.dart';
 import '../features/validacion/pendientes/validar_page.dart';
@@ -69,6 +70,8 @@ GoRoute _pagina(
     GoRoute(path: path, builder: (_, state) => pagina(state), routes: routes);
 
 GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa}) {
+  // The map writes its centre here and the validation tab reads it.
+  final centroMapa = CentroMapaCompartido();
   return GoRouter(
     initialLocation: ubicacionInicial,
     refreshListenable: _RefrescoPorSesion(sesion.stream),
@@ -84,7 +87,7 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
           StatefulShellBranch(routes: [
             GoRoute(
               path: Rutas.mapa,
-              builder: (_, _) => const MapPage(),
+              builder: (_, _) => MapPage(centroCompartido: centroMapa),
               routes: [
                 _pagina(_hija(Rutas.explorar, Rutas.mapa), (_) => const ExplorarPage()),
                 _pagina(
@@ -112,7 +115,7 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
           StatefulShellBranch(routes: [
             GoRoute(
               path: Rutas.validar,
-              builder: (_, _) => const ValidarPage(),
+              builder: (_, _) => ValidarPage(centro: centroMapa),
               routes: [
                 _pagina(
                   _hija(Rutas.reporteValidarPlantilla, Rutas.validar),
