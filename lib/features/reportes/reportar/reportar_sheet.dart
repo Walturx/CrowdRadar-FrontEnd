@@ -12,26 +12,35 @@ import 'reportar_state.dart';
 /// Opens the report sheet; completes with `true` when a report was sent, however
 /// the sheet was dismissed (Listo, swipe or scrim), so the caller can refresh
 /// what it shows.
+///
+/// The [cubit] outlives the sheet when the caller supplies it, so a request still
+/// in flight at dismissal is not lost; the caller then closes it. Without one the
+/// sheet creates its own and closes it after dismissal.
 Future<bool?> mostrarReportarSheet(
   BuildContext context, {
   required int lugarId,
   required String lugarNombre,
+  ReportarCubit? cubit,
 }) async {
+  final propio = cubit == null;
+  final reportar =
+      cubit ?? ReportarCubit(context.read<ReporteRepository>(), lugarId);
   var enviado = false;
   final resultado = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     builder: (_) => ReportarSheet(
-      repositorio: context.read<ReporteRepository>(),
-      lugarId: lugarId,
+      cubit: reportar,
       lugarNombre: lugarNombre,
       onEnviado: () => enviado = true,
     ),
   );
+  if (propio) await reportar.close();
   return enviado ? true : resultado;
 }
 
-/// HU 4.1: choose Tranquilo / Moderado / Saturado and send the report.
+/// HU 4.1: choose Tranquilo / Moderado / Saturado and send the report. It only
+/// renders the [cubit]'s state; whoever created the cubit owns and closes it.
 class ReportarSheet extends StatelessWidget {
   static const Map<NivelSaturacion, String> _descripciones = {
     NivelSaturacion.tranquilo: 'Hay espacio, poca gente',
@@ -39,8 +48,7 @@ class ReportarSheet extends StatelessWidget {
     NivelSaturacion.saturado: 'Lleno, mucha gente',
   };
 
-  final ReporteRepository repositorio;
-  final int lugarId;
+  final ReportarCubit cubit;
   final String lugarNombre;
 
   /// Called once the report was accepted.
@@ -48,16 +56,15 @@ class ReportarSheet extends StatelessWidget {
 
   const ReportarSheet({
     super.key,
-    required this.repositorio,
-    required this.lugarId,
+    required this.cubit,
     required this.lugarNombre,
     this.onEnviado,
   });
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => ReportarCubit(repositorio, lugarId),
+    return BlocProvider.value(
+      value: cubit,
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           20,

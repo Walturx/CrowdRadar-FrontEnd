@@ -13,7 +13,10 @@ import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/etiqueta_seccion.dart';
 import '../../../theme/app_colors.dart';
 import '../../favoritos/data/favorito_repository.dart';
+import '../../reportes/data/reporte_repository.dart';
+import '../../reportes/reportar/reportar_cubit.dart';
 import '../../reportes/reportar/reportar_sheet.dart';
+import '../../reportes/reportar/reportar_state.dart';
 import '../categoria_presentacion.dart';
 import '../data/lugar_repository.dart';
 import 'detalle_lugar_cubit.dart';
@@ -104,15 +107,41 @@ class _DetalleView extends StatelessWidget {
   }
 
   /// Opens the report sheet; a sent report refreshes the shown saturation
-  /// without blanking the detail.
+  /// without blanking the detail. The report cubit lives here, not in the
+  /// sheet, so a request still in flight when the sheet is dismissed is not
+  /// lost: once it succeeds the detail refreshes and the user is thanked.
   Future<void> _reportar(BuildContext context, LugarDetalle detalle) async {
-    final cubit = context.read<DetalleLugarCubit>();
-    final enviado = await mostrarReportarSheet(
-      context,
-      lugarId: detalle.id,
-      lugarNombre: detalle.nombre,
+    final detalleCubit = context.read<DetalleLugarCubit>();
+    final mensajes = ScaffoldMessenger.of(context);
+    final reportar = ReportarCubit(
+      context.read<ReporteRepository>(),
+      detalle.id,
     );
-    if (enviado == true) await cubit.refrescar();
+    try {
+      final enviado = await mostrarReportarSheet(
+        context,
+        lugarId: detalle.id,
+        lugarNombre: detalle.nombre,
+        cubit: reportar,
+      );
+      if (enviado == true) {
+        await detalleCubit.refrescar();
+        return;
+      }
+      if (reportar.state is! ReportarEnviando) return;
+      final fin = await reportar.stream.firstWhere(
+        (e) => e is! ReportarEnviando,
+      );
+      if (fin is! ReportarEnviado) return;
+      mensajes.showSnackBar(
+        SnackBar(
+          content: Text('Reporte enviado, +${fin.puntosGanados} puntos'),
+        ),
+      );
+      await detalleCubit.refrescar();
+    } finally {
+      await reportar.close();
+    }
   }
 }
 
