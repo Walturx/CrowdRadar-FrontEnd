@@ -40,6 +40,10 @@ class _MapViewState extends State<_MapView> {
   );
   static const String _tituloError = 'No pudimos cargar el mapa';
 
+  /// The offline banner is shown once per session: tiles fail in bursts.
+  bool _avisoMostrado = false;
+  bool _avisoVisible = false;
+
   void _alCamaraQuieta(LimitesMapa limites) {
     final cubit = context.read<MapaCubit>();
     // The first report loads at once; later ones wait for the camera to settle.
@@ -48,6 +52,14 @@ class _MapViewState extends State<_MapView> {
     } else {
       cubit.alMoverCamara(limites);
     }
+  }
+
+  void _alErrorTile() {
+    if (_avisoMostrado || !mounted) return;
+    setState(() {
+      _avisoMostrado = true;
+      _avisoVisible = true;
+    });
   }
 
   @override
@@ -105,6 +117,7 @@ class _MapViewState extends State<_MapView> {
                       alTocarMarcador: (id) =>
                           context.push(Rutas.lugar(id), extra: cubit.centro),
                       alCamaraQuieta: _alCamaraQuieta,
+                      alErrorTile: _alErrorTile,
                     ),
                   ),
                   if (state is MapaCargando)
@@ -148,6 +161,15 @@ class _MapViewState extends State<_MapView> {
                         ),
                       ),
                     ),
+                  if (_avisoVisible)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: _AvisoSinConexion(
+                        onCerrar: () => setState(() => _avisoVisible = false),
+                      ),
+                    ),
                   const Positioned(
                     left: 12,
                     bottom: 12,
@@ -158,6 +180,38 @@ class _MapViewState extends State<_MapView> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AvisoSinConexion extends StatelessWidget {
+  final VoidCallback onCerrar;
+
+  const _AvisoSinConexion({required this.onCerrar});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.warning,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            const Icon(Icons.wifi_off, size: 18, color: Colors.white),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Sin conexión al mapa',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, size: 18, color: Colors.white),
+              onPressed: onCerrar,
+            ),
+          ],
+        ),
       ),
     );
   }

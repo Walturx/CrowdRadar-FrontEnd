@@ -5,6 +5,7 @@ import 'package:crowdradar/core/map/mapa_adapter.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/widgets/pin_saturacion.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,6 +19,25 @@ class _TileProviderLocal extends TileProvider {
   @override
   ImageProvider getImage(TileCoordinates coordinates, TileLayer options) =>
       MemoryImage(_png);
+}
+
+/// Every tile fails to load, like a device without connection.
+class _ImagenFallida extends ImageProvider<_ImagenFallida> {
+  @override
+  Future<_ImagenFallida> obtainKey(ImageConfiguration configuration) =>
+      SynchronousFuture(this);
+
+  @override
+  ImageStreamCompleter loadImage(
+    _ImagenFallida key,
+    ImageDecoderCallback decode,
+  ) => OneFrameImageStreamCompleter(Future.error(Exception('sin red')));
+}
+
+class _TileProviderFallido extends TileProvider {
+  @override
+  ImageProvider getImage(TileCoordinates coordinates, TileLayer options) =>
+      _ImagenFallida();
 }
 
 const _centro = PuntoGeografico(-12.0464, -77.0428);
@@ -188,6 +208,44 @@ void main() {
       expect(reportes.length, greaterThan(1));
       expect(reportes.last.oeste, isNot(inicial.oeste));
       expect(reportes.last.este, greaterThan(inicial.este));
+    });
+  });
+
+  group('tile errors', () {
+    Future<void> montar(
+      WidgetTester tester,
+      TileProvider tiles,
+      VoidCallback alError,
+    ) => tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: FlutterMapAdapter(tileProvider: tiles).construirMapa(
+            centro: _centro,
+            zoom: 16,
+            alTocarMarcador: (_) {},
+            alErrorTile: alError,
+          ),
+        ),
+      ),
+    );
+
+    testWidgets('a tile that fails to load is reported', (tester) async {
+      var errores = 0;
+      await montar(tester, _TileProviderFallido(), () => errores++);
+      await tester.pump();
+      await tester.pump();
+
+      expect(errores, greaterThan(0));
+    });
+
+    testWidgets('tiles that load do not report errors', (tester) async {
+      var errores = 0;
+      await montar(tester, _TileProviderLocal(), () => errores++);
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(TileLayer), findsOneWidget);
+      expect(errores, 0);
     });
   });
 }
