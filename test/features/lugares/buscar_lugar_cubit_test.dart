@@ -87,6 +87,41 @@ void main() {
     });
   });
 
+  group('error message', () {
+    test('a non-connection failure gets the generic message', () {
+      fakeAsync((reloj) {
+        final cubit = BuscarLugarCubit(
+          RepoLugarFalso(
+            alBuscar: (_) async => throw const ApiException(
+              status: 500,
+              message: 'boom',
+              code: 'ERROR_INTERNO',
+            ),
+          ),
+        );
+
+        cubit.alCambiarTexto('Par');
+        reloj.elapse(_espera);
+        reloj.flushMicrotasks();
+
+        expect(
+          cubit.state,
+          const BuscarError(
+            BuscarLugarCubit.mensajeError,
+            consulta: 'Par',
+            codigo: 'ERROR_INTERNO',
+          ),
+        );
+        expect(BuscarLugarCubit.mensajeError, isNot(contains('conexión')));
+        expect(
+          BuscarLugarCubit.mensajeSinConexion,
+          contains('Revisa tu conexión'),
+        );
+        cubit.close();
+      });
+    });
+  });
+
   group('repeated query and retry', () {
     test('the same trimmed text as the last query makes no new request', () {
       fakeAsync((reloj) {
@@ -305,7 +340,7 @@ void main() {
           expect(
             cubit.state,
             const BuscarError(
-              BuscarLugarCubit.mensajeError,
+              BuscarLugarCubit.mensajeSinConexion,
               consulta: 'Par',
               esSinConexion: true,
             ),

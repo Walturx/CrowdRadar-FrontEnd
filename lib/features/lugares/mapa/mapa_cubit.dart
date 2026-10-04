@@ -12,15 +12,21 @@ import 'mapa_state.dart';
 class MapaCubit extends Cubit<MapaState> {
   static const int limiteLugares = 200;
   static const Duration esperaCamara = Duration(milliseconds: 500);
-  static const String mensajeError =
+  static const String mensajeSinConexion =
       'Hubo un error al obtener la información geográfica. Revisa tu conexión e inténtalo de nuevo.';
+  static const String mensajeError = 'No pudimos cargar los lugares';
   static const String mensajeZonaVacia = 'No hay lugares en esta zona.';
 
   final LugarRepository _repositorio;
   final Duration _espera;
 
   Timer? _temporizador;
+
+  /// Last area requested; a retry repeats it.
   LimitesMapa? _limites;
+
+  /// Live camera area, updated before the debounce fires.
+  LimitesMapa? _camara;
 
   /// Identifies the latest request so a slower, older response is dropped.
   int _solicitud = 0;
@@ -29,21 +35,26 @@ class MapaCubit extends Cubit<MapaState> {
     : _espera = espera,
       super(const MapaCargando());
 
-  /// Middle of the last visible area, or null before the camera reported one.
+  /// True once an area has been requested.
+  bool get yaCargo => _limites != null;
+
+  /// Middle of the live camera area, or null before the camera reported one.
   PuntoGeografico? get centro {
-    final l = _limites;
+    final l = _camara;
     if (l == null) return null;
     return PuntoGeografico((l.norte + l.sur) / 2, (l.este + l.oeste) / 2);
   }
 
   /// Camera moved: loads [limites] once the camera has been still for [esperaCamara].
   void alMoverCamara(LimitesMapa limites) {
+    _camara = limites;
     _temporizador?.cancel();
     _temporizador = Timer(_espera, () => cargar(limites));
   }
 
   Future<void> cargar(LimitesMapa limites) async {
     _limites = limites;
+    _camara ??= limites;
     final solicitud = ++_solicitud;
     final actual = state;
     emit(
@@ -71,7 +82,7 @@ class MapaCubit extends Cubit<MapaState> {
       if (_obsoleta(solicitud)) return;
       emit(
         MapaError(
-          mensajeError,
+          esErrorSinConexion(e) ? mensajeSinConexion : mensajeError,
           codigo: codigoDeError(e),
           esSinConexion: esErrorSinConexion(e),
         ),

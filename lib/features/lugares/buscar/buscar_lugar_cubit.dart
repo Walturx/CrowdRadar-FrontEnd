@@ -11,8 +11,10 @@ class BuscarLugarCubit extends Cubit<BuscarLugarState> {
   static const Duration esperaTecleo = Duration(milliseconds: 400);
   static const int minimoCaracteres = 2;
   static const int limiteResultados = 50;
-  static const String mensajeError =
+  static const String mensajeSinConexion =
       'No pudimos realizar la búsqueda. Revisa tu conexión e inténtalo de nuevo.';
+  static const String mensajeError =
+      'No pudimos realizar la búsqueda. Inténtalo de nuevo.';
 
   final LugarRepository _repositorio;
   final Duration _espera;
@@ -71,7 +73,7 @@ class BuscarLugarCubit extends Cubit<BuscarLugarState> {
       if (_obsoleta(solicitud)) return;
       emit(
         BuscarError(
-          mensajeError,
+          esErrorSinConexion(e) ? mensajeSinConexion : mensajeError,
           consulta: consulta,
           codigo: codigoDeError(e),
           esSinConexion: esErrorSinConexion(e),

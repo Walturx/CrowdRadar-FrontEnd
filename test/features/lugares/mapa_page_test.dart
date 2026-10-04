@@ -44,8 +44,11 @@ const _bbox = LimitesMapa(
 class _MapaFalso implements MapaAdapter {
   List<MarcadorLugar> marcadores = const [];
   late void Function(int) alTocar;
-  void Function(LimitesMapa)? alCamaraQuieta;
-  VoidCallback? alErrorTile;
+  EventosMapa eventos = const EventosMapa();
+  void Function(LimitesMapa) get alCamaraQuieta => eventos.alCamaraQuieta!;
+  void Function(LimitesMapa) get alMoverCamara => eventos.alMoverCamara!;
+  VoidCallback get alErrorTile => eventos.alErrorTile!;
+  VoidCallback get alTileCargado => eventos.alTileCargado!;
 
   @override
   Widget construirMapa({
@@ -53,16 +56,14 @@ class _MapaFalso implements MapaAdapter {
     double zoom = 13,
     List<MarcadorLugar> marcadores = const [],
     required void Function(int lugarId) alTocarMarcador,
-    void Function(LimitesMapa limites)? alMoverCamara,
-    void Function(LimitesMapa limites)? alCamaraQuieta,
-    VoidCallback? alErrorTile,
+    EventosMapa eventos = const EventosMapa(),
     PuntoGeografico? ubicacionUsuario,
   }) {
     this.marcadores = marcadores;
     alTocar = alTocarMarcador;
-    this.alCamaraQuieta = alCamaraQuieta;
-    this.alErrorTile = alErrorTile;
+    this.eventos = eventos;
     return Column(
+      key: const ValueKey('mapa-falso'),
       children: [
         for (final m in marcadores)
           PinSaturacion(
@@ -112,7 +113,7 @@ void main() {
     WidgetTester tester, [
     LimitesMapa b = _bbox,
   ]) async {
-    mapa.alCamaraQuieta!(b);
+    mapa.alCamaraQuieta(b);
     await tester.pump();
     await tester.pump();
   }
@@ -183,7 +184,7 @@ void main() {
         oeste: -77.06,
       );
 
-      mapa.alCamaraQuieta!(otro);
+      mapa.alCamaraQuieta(otro);
       await tester.pump(const Duration(milliseconds: 300));
       expect(repo.pedidos, hasLength(1));
 
@@ -240,6 +241,45 @@ void main() {
       expect(repo.pedidos.map((p) => p.bbox), [_bbox, _bbox]);
     });
 
+    testWidgets('a non-connection failure gets the generic message', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(
+        alBuscar: (_) async => throw const ApiException(
+          status: 500,
+          message: 'boom',
+          code: 'ERROR_INTERNO',
+        ),
+      );
+      await abrir(tester);
+      await alCamaraQuieta(tester);
+
+      expect(find.text('No pudimos cargar los lugares'), findsOneWidget);
+      expect(find.textContaining('Revisa tu conexión'), findsNothing);
+    });
+
+    testWidgets('the error is a dismissible card that does not cover the map', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(
+        alBuscar: (_) async => throw const ApiException.sinConexion(),
+      );
+      await abrir(tester);
+      await alCamaraQuieta(tester);
+
+      final tarjeta = tester.getRect(
+        find.byKey(const ValueKey('tarjeta-error')),
+      );
+      final mapaRect = tester.getRect(find.byKey(const ValueKey('mapa-falso')));
+      expect(find.byKey(const ValueKey('mapa-falso')), findsOneWidget);
+      expect(tarjeta.height, lessThan(mapaRect.height));
+
+      await tester.tap(find.byKey(const ValueKey('cerrar-error')));
+      await tester.pump();
+
+      expect(find.byKey(const ValueKey('tarjeta-error')), findsNothing);
+    });
+
     testWidgets('the legend names the three levels', (tester) async {
       repo = RepoLugarFalso();
       await abrir(tester);
@@ -264,6 +304,31 @@ void main() {
       expect(find.text('DETALLE 2'), findsOneWidget);
       final centro = extraDetalle as PuntoGeografico;
       expect(centro.latitud, closeTo(-12.12, 1e-9));
+      expect(centro.longitud, closeTo(-77.03, 1e-9));
+    });
+  });
+
+  group('live centre', () {
+    testWidgets('a tap during a pending debounce uses the live camera centre', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy, _mercado]));
+      await abrir(tester);
+      await alCamaraQuieta(tester);
+      const otro = LimitesMapa(
+        norte: -12.0,
+        sur: -12.04,
+        este: -77.0,
+        oeste: -77.06,
+      );
+
+      mapa.alMoverCamara(otro);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(find.byKey(const ValueKey('pin-1')));
+      await tester.pumpAndSettle();
+
+      final centro = extraDetalle as PuntoGeografico;
+      expect(centro.latitud, closeTo(-12.02, 1e-9));
       expect(centro.longitud, closeTo(-77.03, 1e-9));
     });
   });
@@ -320,7 +385,7 @@ void main() {
       await alCamaraQuieta(tester);
       expect(find.text('Sin conexión al mapa'), findsNothing);
 
-      mapa.alErrorTile!();
+      mapa.alErrorTile();
       await tester.pump();
 
       expect(find.text('Sin conexión al mapa'), findsOneWidget);
@@ -334,8 +399,8 @@ void main() {
       await abrir(tester);
       await alCamaraQuieta(tester);
 
-      mapa.alErrorTile!();
-      mapa.alErrorTile!();
+      mapa.alErrorTile();
+      mapa.alErrorTile();
       await tester.pump();
       expect(find.text('Sin conexión al mapa'), findsOneWidget);
 
@@ -343,9 +408,51 @@ void main() {
       await tester.pump();
       expect(find.text('Sin conexión al mapa'), findsNothing);
 
-      mapa.alErrorTile!();
+      mapa.alErrorTile();
       await tester.pump();
       expect(find.text('Sin conexión al mapa'), findsNothing);
+    });
+
+    testWidgets('a tile that loads again clears the banner and re-arms it', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      await abrir(tester);
+      await alCamaraQuieta(tester);
+
+      mapa.alErrorTile();
+      await tester.pump();
+      expect(find.text('Sin conexión al mapa'), findsOneWidget);
+
+      mapa.alTileCargado();
+      await tester.pump();
+      expect(find.text('Sin conexión al mapa'), findsNothing);
+
+      mapa.alErrorTile();
+      await tester.pump();
+      expect(find.text('Sin conexión al mapa'), findsOneWidget);
+    });
+
+    testWidgets('a dismissed banner returns after recovery and a new outage', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      await abrir(tester);
+      await alCamaraQuieta(tester);
+
+      mapa.alErrorTile();
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pump();
+      mapa.alErrorTile();
+      await tester.pump();
+      expect(find.text('Sin conexión al mapa'), findsNothing);
+
+      mapa.alTileCargado();
+      mapa.alErrorTile();
+      await tester.pump();
+
+      expect(find.text('Sin conexión al mapa'), findsOneWidget);
     });
   });
 }

@@ -17,6 +17,8 @@ class FlutterMapAdapter implements MapaAdapter {
   static const String atribucion = 'OpenStreetMap contributors';
   static const double zoomPorDefecto = 13;
   static const double _tamanoMarcador = 40;
+  static const double _tamanoUbicacion = 20;
+  static const Color _colorUbicacion = Colors.blue;
 
   /// Injectable so tests never hit the network.
   final TileProvider? _tileProvider;
@@ -30,11 +32,13 @@ class FlutterMapAdapter implements MapaAdapter {
     double zoom = zoomPorDefecto,
     List<MarcadorLugar> marcadores = const [],
     required void Function(int lugarId) alTocarMarcador,
-    void Function(LimitesMapa limites)? alMoverCamara,
-    void Function(LimitesMapa limites)? alCamaraQuieta,
-    VoidCallback? alErrorTile,
+    EventosMapa eventos = const EventosMapa(),
     PuntoGeografico? ubicacionUsuario,
   }) {
+    final alMoverCamara = eventos.alMoverCamara;
+    final alCamaraQuieta = eventos.alCamaraQuieta;
+    final alErrorTile = eventos.alErrorTile;
+    final alTileCargado = eventos.alTileCargado;
     return FlutterMap(
       options: MapOptions(
         initialCenter: LatLng(centro.latitud, centro.longitud),
@@ -58,6 +62,10 @@ class FlutterMapAdapter implements MapaAdapter {
           errorTileCallback: alErrorTile == null
               ? null
               : (_, _, _) => alErrorTile(),
+          tileBuilder: alTileCargado == null
+              ? null
+              : (_, tile, imagen) =>
+                    _AvisoTileCargado(imagen, alTileCargado, child: tile),
         ),
         MarkerLayer(
           markers: [
@@ -79,13 +87,13 @@ class FlutterMapAdapter implements MapaAdapter {
                   ubicacionUsuario.latitud,
                   ubicacionUsuario.longitud,
                 ),
-                width: 20,
-                height: 20,
+                width: _tamanoUbicacion,
+                height: _tamanoUbicacion,
                 child: const Icon(
                   Icons.circle,
                   key: ValueKey('ubicacion-usuario'),
-                  color: Colors.blue,
-                  size: 20,
+                  color: _colorUbicacion,
+                  size: _tamanoUbicacion,
                 ),
               ),
           ],
@@ -113,6 +121,47 @@ class FlutterMapAdapter implements MapaAdapter {
       e is MapEventFlingAnimationEnd ||
       e is MapEventDoubleTapZoomEnd ||
       e is MapEventScrollWheelZoom;
+}
+
+/// Calls [alCargar] once its tile has loaded without error.
+class _AvisoTileCargado extends StatefulWidget {
+  final TileImage tile;
+  final VoidCallback alCargar;
+  final Widget child;
+
+  const _AvisoTileCargado(this.tile, this.alCargar, {required this.child});
+
+  @override
+  State<_AvisoTileCargado> createState() => _AvisoTileCargadoState();
+}
+
+class _AvisoTileCargadoState extends State<_AvisoTileCargado> {
+  bool _avisado = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.tile.addListener(_revisar);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _revisar());
+  }
+
+  void _revisar() {
+    final tile = widget.tile;
+    if (_avisado || !mounted) return;
+    if (tile.loadFinishedAt != null && !tile.loadError) {
+      _avisado = true;
+      widget.alCargar();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.tile.removeListener(_revisar);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// Reports the initial bounds once, right after the first frame of the map.

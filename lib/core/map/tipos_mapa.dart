@@ -31,6 +31,26 @@ class LimitesMapa extends Equatable {
   List<Object?> get props => [norte, sur, este, oeste];
 }
 
+/// Parameter object with the map notifications a screen can listen to.
+///
+/// [alMoverCamara] fires continuously while the camera moves; [alCamaraQuieta]
+/// fires once the map is ready and after each gesture ends; [alErrorTile] fires
+/// for every tile that fails to load (typically no connection) and
+/// [alTileCargado] for every tile that loads (the connection is back).
+class EventosMapa {
+  final void Function(LimitesMapa limites)? alMoverCamara;
+  final void Function(LimitesMapa limites)? alCamaraQuieta;
+  final void Function()? alErrorTile;
+  final void Function()? alTileCargado;
+
+  const EventosMapa({
+    this.alMoverCamara,
+    this.alCamaraQuieta,
+    this.alErrorTile,
+    this.alTileCargado,
+  });
+}
+
 class MarcadorLugar extends Equatable {
   final int lugarId;
   final double latitud;
