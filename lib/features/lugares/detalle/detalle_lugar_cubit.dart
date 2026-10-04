@@ -1,0 +1,90 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../core/network/api_exception.dart';
+import '../../../core/utils/mensaje_error.dart';
+import '../../favoritos/data/favorito_repository.dart';
+import '../data/lugar_repository.dart';
+import 'detalle_lugar_state.dart';
+
+class DetalleLugarCubit extends Cubit<DetalleLugarState> {
+  static const String mensajeError =
+      'No pudimos obtener la información de este lugar. Inténtalo más tarde.';
+  static const String mensajeNoEncontrado = 'Este lugar ya no está disponible.';
+
+  static const String _codigoFavoritoDuplicado = 'FAVORITO_DUPLICADO';
+  static const String _codigoFavoritoNoEncontrado = 'FAVORITO_NO_ENCONTRADO';
+
+  final LugarRepository _lugares;
+  final FavoritoRepository _favoritos;
+  final int _lugarId;
+
+  DetalleLugarCubit(this._lugares, this._favoritos, this._lugarId)
+    : super(const DetalleCargando());
+
+  /// A load while another is in flight is ignored.
+  bool _enVuelo = false;
+
+  Future<void> cargar() async {
+    if (_enVuelo) return;
+    _enVuelo = true;
+    emit(const DetalleCargando());
+    try {
+      final detalle = await _lugares.obtener(_lugarId);
+      emit(DetalleCargado(detalle, esFavorito: detalle.esFavorito));
+    } catch (e) {
+      final codigo = codigoDeError(e);
+      emit(
+        DetalleError(
+          codigo == DetalleError.codigoNoEncontrado
+              ? mensajeNoEncontrado
+              : mensajeError,
+          codigo: codigo,
+          esSinConexion: esErrorSinConexion(e),
+        ),
+      );
+    } finally {
+      _enVuelo = false;
+    }
+  }
+
+  Future<void> alternarFavorito() async {
+    final actual = state;
+    if (actual is! DetalleCargado || actual.procesandoFavorito) return;
+    emit(
+      DetalleCargado(
+        actual.detalle,
+        esFavorito: actual.esFavorito,
+        procesandoFavorito: true,
+      ),
+    );
+    var esFavorito = actual.esFavorito;
+    String? error;
+    try {
+      if (esFavorito) {
+        await _favoritos.eliminar(_lugarId);
+      } else {
+        await _favoritos.agregar(_lugarId);
+      }
+      esFavorito = !esFavorito;
+    } on ApiException catch (e) {
+      // The server already agrees with the wanted end state.
+      if (e.code == _codigoFavoritoDuplicado) {
+        esFavorito = true;
+      } else if (e.code == _codigoFavoritoNoEncontrado) {
+        esFavorito = false;
+      } else {
+        error = mensajeDeError(e);
+      }
+    } catch (e) {
+      error = mensajeDeError(e);
+    }
+    if (isClosed) return;
+    emit(
+      DetalleCargado(
+        actual.detalle,
+        esFavorito: esFavorito,
+        errorFavorito: error,
+      ),
+    );
+  }
+}

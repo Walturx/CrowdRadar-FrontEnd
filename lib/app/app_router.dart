@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/map/tipos_mapa.dart';
 import '../core/models/usuario.dart';
 import '../core/session/sesion_cubit.dart';
 import '../core/session/sesion_state.dart';
@@ -82,7 +83,10 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
                 _pagina(_hija(Rutas.explorar, Rutas.mapa), (_) => const ExplorarPage()),
                 _pagina(
                   _hija(Rutas.lugarPlantilla, Rutas.mapa),
-                  (s) => DetalleLugarPage(lugarId: _id(s)),
+                  (s) => DetalleLugarPage(
+                    lugarId: _id(s),
+                    centroMapa: s.extra is PuntoGeografico ? s.extra as PuntoGeografico : null,
+                  ),
                   routes: [
                     _pagina(_hija(Rutas.historialPlantilla, Rutas.lugarPlantilla), (s) => HistorialPage(lugarId: _id(s))),
                     _pagina(_hija(Rutas.compararPlantilla, Rutas.lugarPlantilla), (s) => CompararPage(lugarId: _id(s))),
