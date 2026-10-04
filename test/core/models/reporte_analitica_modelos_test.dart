@@ -151,4 +151,76 @@ void main() {
   test('fechaIso pads month and day', () {
     expect(fechaIso(DateTime(2026, 3, 7)), '2026-03-07');
   });
+
+  group('backend-shaped analytics responses (sintetico placement)', () {
+    final punto = {'hora': 9, 'valor': 2.5, 'muestras': 4};
+
+    test('comparar: top-level sintetico wins over the periods', () {
+      final c = ComparacionPeriodos.fromJson({
+        'periodoA': [punto],
+        'periodoB': [punto],
+        'diferencias': [
+          {'hora': '09:00', 'diferencia': 0.5},
+        ],
+        'resumen': 'Los fines de semana la afluencia sube.',
+        'suficiente': true,
+        'mensaje': null,
+        'sintetico': true,
+      });
+
+      expect(c.sintetico, isTrue);
+      expect(c.sinDatos, isFalse);
+    });
+
+    test('comparar: absent or false top-level sintetico stays false', () {
+      final sin = ComparacionPeriodos.fromJson({
+        'periodoA': [punto],
+        'periodoB': [punto],
+      });
+      final falso = ComparacionPeriodos.fromJson({
+        'periodoA': [punto],
+        'periodoB': [punto],
+        'sintetico': false,
+      });
+
+      expect(sin.sintetico, isFalse);
+      expect(falso.sintetico, isFalse);
+    });
+
+    test('comparar: falls back to the periods flags when no top-level', () {
+      final c = ComparacionPeriodos.fromJson({
+        'periodoA': {'sintetico': true},
+        'periodoB': [punto],
+      });
+
+      expect(c.sintetico, isTrue);
+    });
+
+    test('historial reads top-level sintetico and hayDatos', () {
+      final s = SerieSaturacion.fromJson({
+        'puntos': [punto],
+        'hayDatos': true,
+        'mensaje': null,
+        'sintetico': true,
+      });
+
+      expect(s.sintetico, isTrue);
+      expect(s.sinDatos, isFalse);
+    });
+
+    test('mejor-horario reads top-level sintetico and suficiente', () {
+      final m = MejorHorario.fromJson({
+        'recomendaciones': [
+          {'horaInicio': '09:00', 'horaFin': '10:00', 'nivel': 'TRANQUILO'},
+        ],
+        'suficiente': true,
+        'mensaje': null,
+        'sintetico': true,
+      });
+
+      expect(m.sintetico, isTrue);
+      expect(m.sinDatos, isFalse);
+      expect(m.franjas, hasLength(1));
+    });
+  });
 }

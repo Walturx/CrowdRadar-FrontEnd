@@ -116,6 +116,19 @@ void main() {
   });
 
   group('CompararPage', () {
+    testWidgets('discloses demo data when the backend flags it top-level', (
+      tester,
+    ) async {
+      await abrir(
+        tester,
+        const CompararPage(lugarId: _conDatos),
+        repo: _CompararDelBackend(),
+      );
+
+      expect(find.byKey(const Key('barra-saturacion')), findsNWidgets(48));
+      expect(find.text('Datos de demostración'), findsOneWidget);
+    });
+
     testWidgets('shows both periods and the summary (HU 6.2 c1)', (
       tester,
     ) async {
@@ -197,5 +210,35 @@ class _Intermitente extends AnaliticaRepositoryFake {
       hasta: hasta,
       agrupacion: agrupacion,
     );
+  }
+}
+
+/// Serves `comparar` through the parser with a backend-shaped body: the
+/// `sintetico` flag lives at the top level, the periods are plain lists.
+class _CompararDelBackend extends AnaliticaRepositoryFake {
+  @override
+  Future<ComparacionPeriodos> comparar(
+    int lugarId, {
+    required DateTime desdeA,
+    required DateTime hastaA,
+    required DateTime desdeB,
+    required DateTime hastaB,
+    String? diasA,
+    String? diasB,
+  }) async {
+    List<Map<String, Object?>> dia(double v) => [
+      for (var h = 0; h < 24; h++) {'hora': h, 'valor': v, 'muestras': 3},
+    ];
+    return ComparacionPeriodos.fromJson({
+      'periodoA': dia(1),
+      'periodoB': dia(2),
+      'diferencias': [
+        for (var h = 0; h < 24; h++) {'hora': h, 'diferencia': 1.0},
+      ],
+      'resumen': 'Los fines de semana la afluencia sube.',
+      'suficiente': true,
+      'mensaje': null,
+      'sintetico': true,
+    });
   }
 }

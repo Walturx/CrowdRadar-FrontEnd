@@ -134,10 +134,11 @@ class AnaliticaRepositoryFake implements AnaliticaRepository {
         DiferenciaHora(h, b[h].valor - a[h].valor),
     ];
     return ComparacionPeriodos(
-      SerieSaturacion(puntos: a, sintetico: true),
-      SerieSaturacion(puntos: b, sintetico: true),
+      SerieSaturacion(puntos: a),
+      SerieSaturacion(puntos: b),
       diferencias: diferencias,
       resumen: _resumen(diferencias, diasB == AnaliticaParametros.finDeSemana),
+      sintetico: true,
     );
   }
 
