@@ -69,15 +69,20 @@ class MapaCubit extends Cubit<MapaState> {
   }
 
   /// Sets the category and level filters (null = no filter) and reloads the
-  /// current area; before the first area they only apply to the first load.
+  /// camera area (a pending camera load is folded into it); before the first
+  /// area they only apply to the first load. The same filters again do nothing.
   Future<void> aplicarFiltros({
     CategoriaLugar? categoria,
     NivelSaturacion? nivel,
   }) async {
+    if (isClosed || (categoria == _categoria && nivel == _nivel)) return;
     _categoria = categoria;
     _nivel = nivel;
-    final limites = _limites;
-    if (limites != null) await cargar(limites, conservarMarcadores: false);
+    final camara = _camara;
+    final hayCargaPendiente = _temporizador?.isActive ?? false;
+    if (camara == null || (_limites == null && !hayCargaPendiente)) return;
+    _temporizador?.cancel();
+    await cargar(camara, conservarMarcadores: false);
   }
 
   /// Loads [limites]; [conservarMarcadores] keeps the previous markers while
@@ -86,6 +91,7 @@ class MapaCubit extends Cubit<MapaState> {
     LimitesMapa limites, {
     bool conservarMarcadores = true,
   }) async {
+    if (isClosed) return;
     _limites = limites;
     _camara ??= limites;
     final solicitud = ++_solicitud;

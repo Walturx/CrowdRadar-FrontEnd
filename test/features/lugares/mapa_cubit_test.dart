@@ -251,6 +251,51 @@ void main() {
       await cubit.close();
     });
 
+    test('the same filters again do not reload (R3-808)', () async {
+      final repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      final cubit = MapaCubit(repo);
+      await cubit.cargar(_b1);
+      await cubit.aplicarFiltros(categoria: CategoriaLugar.parque);
+
+      await cubit.aplicarFiltros(categoria: CategoriaLugar.parque);
+
+      expect(repo.pedidos, hasLength(2));
+      await cubit.close();
+    });
+
+    test('a pending camera load is replaced by the filtered load of the camera', () {
+      fakeAsync((reloj) {
+        final repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+        final cubit = MapaCubit(repo);
+        cubit.cargar(_b1);
+        reloj.flushMicrotasks();
+
+        cubit.alMoverCamara(_b2);
+        cubit.aplicarFiltros(categoria: CategoriaLugar.playa);
+        reloj.elapse(const Duration(seconds: 2));
+
+        expect(repo.pedidos, hasLength(2));
+        expect(repo.pedidos.last.bbox, _b2);
+        expect(repo.pedidos.last.categoria, CategoriaLugar.playa);
+        cubit.close();
+      });
+    });
+
+    test('after close nothing is loaded and nothing throws (R3-808)', () async {
+      final repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      final cubit = MapaCubit(repo);
+      await cubit.cargar(_b1);
+      await cubit.close();
+
+      await expectLater(cubit.cargar(_b2), completes);
+      await expectLater(
+        cubit.aplicarFiltros(categoria: CategoriaLugar.playa),
+        completes,
+      );
+
+      expect(repo.pedidos, hasLength(1));
+    });
+
     test('before any area it only stores them for the first load', () async {
       final repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
       final cubit = MapaCubit(repo);
