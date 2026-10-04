@@ -28,6 +28,7 @@ class Rutas {
   static const String perfil = '/perfil';
   static const String perfilEditar = '/perfil/editar';
   static const String perfilPassword = '/perfil/password';
+  static const String perfilAcerca = '/perfil/acerca';
   static const String perfilReportes = '/perfil/reportes';
   static const String perfilValidaciones = '/perfil/validaciones';
 

@@ -142,6 +142,32 @@ void main() {
       expect(e.errors.single.mensaje, 'Email inválido');
     });
 
+    test('429 keeps the Retry-After seconds on the exception', () async {
+      final api = _cliente((_) async => http.Response.bytes(
+            utf8.encode(jsonEncode({'code': 'DEMASIADOS_INTENTOS'})),
+            429,
+            headers: {'retry-after': '120'},
+          ));
+
+      final e = await _capturar(
+          () => api.get<Object?>('/api/x', parser: _identidad));
+
+      expect(e.reintentarEnSegundos, 120);
+    });
+
+    test('a failure without a numeric Retry-After has none', () async {
+      final api = _cliente((_) async => http.Response.bytes(
+            utf8.encode(jsonEncode({'code': 'X'})),
+            429,
+            headers: {'retry-after': 'Wed, 21 Oct 2026 07:28:00 GMT'},
+          ));
+
+      final e = await _capturar(
+          () => api.get<Object?>('/api/x', parser: _identidad));
+
+      expect(e.reintentarEnSegundos, isNull);
+    });
+
     test('S3.6 non-JSON failure falls back to the provided message', () async {
       final api = _cliente((_) async => http.Response('<html>', 500));
 

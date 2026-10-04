@@ -160,6 +160,8 @@ void main() {
 
       await tester.tap(find.text('Cerrar sesión'));
       await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
+      await tester.pumpAndSettle();
 
       // The fake needs a live session to accept the DELETE, so an empty list
       // proves the call went out before the session was cleared.
@@ -200,6 +202,8 @@ void main() {
       await abrir(tester, ruta: '/perfil');
 
       await tester.tap(find.text('Cerrar sesión'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
       await tester.pumpAndSettle();
 
       expect(grabadoras.borrados, 1);

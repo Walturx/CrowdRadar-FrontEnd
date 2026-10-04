@@ -24,6 +24,12 @@ void main() {
       expect(redirigirPorSesion(_anonimo, '/admin/usuarios'), Rutas.login);
     });
 
+    test('HU 2.4 c2 after a user sign out a protected route asks to log in', () {
+      const cerrada = SesionNoAutenticada(motivo: MotivoCierre.usuario);
+      expect(redirigirPorSesion(cerrada, '/perfil'), Rutas.login);
+      expect(redirigirPorSesion(cerrada, '/mapa'), Rutas.login);
+    });
+
     test('S5.1 public routes stay reachable while unauthenticated', () {
       for (final ruta in [Rutas.login, Rutas.registro, Rutas.recuperar]) {
         expect(redirigirPorSesion(_anonimo, ruta), isNull);

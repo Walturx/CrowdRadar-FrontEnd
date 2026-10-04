@@ -125,6 +125,7 @@ class ApiClient {
         res.statusCode,
         _decodificarONulo(texto),
         mensajePorDefecto: mensajeError,
+        reintentarEnSegundos: int.tryParse(res.headers['retry-after'] ?? ''),
       );
       await _notificarError(error, solicitud);
       throw error;

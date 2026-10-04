@@ -50,6 +50,9 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
     _sesion,
     ubicacionInicial: widget.ubicacionInicial,
   );
+  /// Shows the session-ended notice above the router, so it survives the
+  /// redirect to the login.
+  final _mensajero = GlobalKey<ScaffoldMessengerState>();
   StreamSubscription<EventoSesion>? _eventosSesion;
   StreamSubscription<int>? _toques;
 
@@ -82,6 +85,11 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
         if (pendiente != null) _abrirLugar(pendiente);
       case SesionCerrada(:final motivo):
         _toquePendiente = null;
+        if (motivo == MotivoCierre.sesionExpirada) {
+          _mensajero.currentState
+            ?..hideCurrentSnackBar()
+            ..showSnackBar(const SnackBar(content: Text('Tu sesión terminó')));
+        }
         // A user sign out already ran the hook while the session was valid;
         // a forced close tries best effort (it is retried on the next sign in).
         if (motivo != MotivoCierre.usuario) unawaited(_dispositivo.quitar());
@@ -157,6 +165,7 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
         providers: [BlocProvider<SesionCubit>.value(value: _sesion)],
         child: MaterialApp.router(
           title: 'CrowdRadar',
+          scaffoldMessengerKey: _mensajero,
           theme: AppTheme.lightTheme,
           debugShowCheckedModeBanner: false,
           routerConfig: _router,
