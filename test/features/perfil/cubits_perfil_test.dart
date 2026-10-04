@@ -76,6 +76,91 @@ void main() {
     );
   });
 
+  group('PerfilCubit.refrescar (stale-while-revalidate)', () {
+    blocTest<PerfilCubit, PerfilState>(
+      'success keeps the data visible and swaps it for the new one',
+      build: () {
+        var n = 0;
+        when(
+          () => repo.obtener(),
+        ).thenAnswer((_) async => n++ == 0 ? _user : _editado);
+        return PerfilCubit(repo);
+      },
+      act: (c) async {
+        await c.cargar();
+        await c.refrescar();
+      },
+      skip: 2,
+      expect: () => [const PerfilCargado(_editado)],
+    );
+
+    blocTest<PerfilCubit, PerfilState>(
+      'failure keeps the data and surfaces a soft error, never PerfilError',
+      build: () {
+        var n = 0;
+        when(() => repo.obtener()).thenAnswer((_) async {
+          if (n++ == 0) return _user;
+          throw const ApiException(status: 500, message: 'caído');
+        });
+        return PerfilCubit(repo);
+      },
+      act: (c) async {
+        await c.cargar();
+        await c.refrescar();
+      },
+      skip: 2,
+      expect: () => [const PerfilCargado(_user, errorActualizacion: 'caído')],
+    );
+
+    blocTest<PerfilCubit, PerfilState>(
+      'offline keeps the data and surfaces the offline message',
+      build: () {
+        var n = 0;
+        when(() => repo.obtener()).thenAnswer((_) async {
+          if (n++ == 0) return _user;
+          throw const ApiException.sinConexion();
+        });
+        return PerfilCubit(repo);
+      },
+      act: (c) async {
+        await c.cargar();
+        await c.refrescar();
+      },
+      skip: 2,
+      expect: () => [
+        const PerfilCargado(
+          _user,
+          errorActualizacion: ApiException.mensajeSinConexion,
+        ),
+      ],
+    );
+
+    blocTest<PerfilCubit, PerfilState>(
+      'without data it behaves like cargar',
+      build: () {
+        when(() => repo.obtener()).thenAnswer((_) async => _user);
+        return PerfilCubit(repo);
+      },
+      act: (c) => c.refrescar(),
+      expect: () => [const PerfilCargando(), const PerfilCargado(_user)],
+    );
+
+    test('closing during a load or refresh neither throws nor emits', () async {
+      final espera = Completer<Usuario>();
+      when(() => repo.obtener()).thenAnswer((_) => espera.future);
+      final c = PerfilCubit(repo);
+      final estados = <PerfilState>[];
+      c.stream.listen(estados.add);
+
+      final carga = c.cargar();
+      await c.close();
+      espera.complete(_user);
+      await carga;
+
+      expect(estados.whereType<PerfilCargado>(), isEmpty);
+    });
+  });
+
   blocTest<EditarPerfilCubit, EditarPerfilState>(
     'R4-101 sinConexion and codigo are exposed',
     build: () {

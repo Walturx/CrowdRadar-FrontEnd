@@ -36,6 +36,34 @@ void main() {
       expect(r.reporte.nivel, NivelSaturacion.saturado);
     });
 
+    test('the 422 message says how many minutes are left', () async {
+      await repo.reportar(1, NivelSaturacion.moderado);
+
+      ahora = ahora.add(const Duration(minutes: 10));
+      await expectLater(
+        repo.reportar(1, NivelSaturacion.saturado),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.message,
+            'message',
+            contains('vuelve a intentarlo en 20 minutos'),
+          ),
+        ),
+      );
+
+      ahora = DateTime.utc(2026, 10, 5, 15, 29, 30);
+      await expectLater(
+        repo.reportar(1, NivelSaturacion.saturado),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.message,
+            'message',
+            contains('en 1 minuto.'),
+          ),
+        ),
+      );
+    });
+
     test('another place is not affected', () async {
       await repo.reportar(1, NivelSaturacion.moderado);
 

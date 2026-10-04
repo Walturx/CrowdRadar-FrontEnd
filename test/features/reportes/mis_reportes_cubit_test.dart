@@ -158,4 +158,112 @@ void main() {
 
     verify(() => repo.listarMios(page: 2, size: 2)).called(1);
   });
+
+  group('refresh, races and pagination edges (R3-604)', () {
+    blocTest<MisReportesCubit, MisReportesState>(
+      'cargar over a loaded list keeps it visible until the new data arrives',
+      setUp: () {
+        var n = 0;
+        when(
+          () => repo.listarMios(page: 1, size: 2),
+        ).thenAnswer((_) async => n++ == 0 ? _pagina([2, 1]) : _pagina([3, 2]));
+      },
+      build: cubit,
+      act: (c) async {
+        await c.cargar();
+        await c.cargar();
+      },
+      skip: 2,
+      expect: () => [
+        MisReportesCargado([_r(3), _r(2)]),
+      ],
+    );
+
+    blocTest<MisReportesCubit, MisReportesState>(
+      'a failed refresh keeps the list and reports the error',
+      setUp: () {
+        var n = 0;
+        when(() => repo.listarMios(page: 1, size: 2)).thenAnswer((_) async {
+          if (n++ == 0) return _pagina([2, 1]);
+          throw const ApiException.sinConexion();
+        });
+      },
+      build: cubit,
+      act: (c) async {
+        await c.cargar();
+        await c.cargar();
+      },
+      skip: 2,
+      expect: () => [
+        MisReportesCargado([
+          _r(2),
+          _r(1),
+        ], errorMas: ApiException.mensajeSinConexion),
+      ],
+    );
+
+    test('cargar during cargarMas is not dropped and wins the race', () async {
+      final siguiente = Completer<Pagina<ReporteSaturacion>>();
+      var primeras = 0;
+      when(() => repo.listarMios(page: 1, size: 2)).thenAnswer(
+        (_) async => primeras++ == 0
+            ? _pagina([2, 1], totalPaginas: 3)
+            : _pagina([9, 8]),
+      );
+      when(
+        () => repo.listarMios(page: 2, size: 2),
+      ).thenAnswer((_) => siguiente.future);
+      final c = cubit();
+      await c.cargar();
+
+      final mas = c.cargarMas();
+      await c.cargar();
+      siguiente.complete(_pagina([0], page: 2, totalPaginas: 3));
+      await mas;
+
+      expect(c.state, MisReportesCargado([_r(9), _r(8)]));
+    });
+
+    blocTest<MisReportesCubit, MisReportesState>(
+      'cargarMas drops ids that are already in the list',
+      setUp: () {
+        when(
+          () => repo.listarMios(page: 1, size: 2),
+        ).thenAnswer((_) async => _pagina([3, 2], totalPaginas: 2));
+        when(
+          () => repo.listarMios(page: 2, size: 2),
+        ).thenAnswer((_) async => _pagina([2, 1], page: 2, totalPaginas: 2));
+      },
+      build: cubit,
+      act: (c) async {
+        await c.cargar();
+        await c.cargarMas();
+      },
+      skip: 3,
+      expect: () => [
+        MisReportesCargado([_r(3), _r(2), _r(1)]),
+      ],
+    );
+
+    blocTest<MisReportesCubit, MisReportesState>(
+      'an empty page stops "Cargar más" even if hayMas is still true',
+      setUp: () {
+        when(
+          () => repo.listarMios(page: 1, size: 2),
+        ).thenAnswer((_) async => _pagina([2, 1], totalPaginas: 5));
+        when(
+          () => repo.listarMios(page: 2, size: 2),
+        ).thenAnswer((_) async => _pagina([], page: 2, totalPaginas: 5));
+      },
+      build: cubit,
+      act: (c) async {
+        await c.cargar();
+        await c.cargarMas();
+      },
+      skip: 3,
+      expect: () => [
+        MisReportesCargado([_r(2), _r(1)]),
+      ],
+    );
+  });
 }

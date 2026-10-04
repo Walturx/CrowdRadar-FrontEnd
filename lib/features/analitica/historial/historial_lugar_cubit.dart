@@ -1,4 +1,5 @@
 import '../../../core/models/analitica.dart';
+import '../analitica_parametros.dart';
 import '../carga/analitica_cubit.dart';
 import '../data/analitica_repository.dart';
 
@@ -17,7 +18,7 @@ class HistorialLugarCubit extends AnaliticaCubit<SerieSaturacion> {
 
   AgrupacionHistorial get agrupacion => _agrupacion;
 
-  /// Hourly view = today (backend default); daily view = last 7 days.
+  /// Hourly view = today (backend default); daily view = the short window.
   Future<void> seleccionar(AgrupacionHistorial agrupacion) async {
     if (enVuelo || agrupacion == _agrupacion) return;
     _agrupacion = agrupacion;
@@ -31,7 +32,13 @@ class HistorialLugarCubit extends AnaliticaCubit<SerieSaturacion> {
     final porDia = _agrupacion == AgrupacionHistorial.dia;
     return _repositorio.historial(
       _lugarId,
-      desde: porDia ? DateTime(fin.year, fin.month, fin.day - 6) : null,
+      desde: porDia
+          ? DateTime(
+              fin.year,
+              fin.month,
+              fin.day - (AnaliticaParametros.diasHistorialCorto - 1),
+            )
+          : null,
       hasta: porDia ? fin : null,
       agrupacion: _agrupacion,
     );

@@ -5,6 +5,7 @@ import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
 import 'package:crowdradar/app/fakes/favorito_repository_fake.dart';
 import 'package:crowdradar/core/models/categoria_lugar.dart';
 import 'package:crowdradar/core/models/lugar_detalle.dart';
+import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/features/lugares/detalle/detalle_lugar_cubit.dart';
 import 'package:crowdradar/features/lugares/detalle/detalle_lugar_state.dart';
@@ -78,6 +79,98 @@ void main() {
       );
 
       await expectLater(carga, completes);
+    });
+  });
+
+  group('refrescar (non-destructive reload)', () {
+    const saturado = LugarDetalle(
+      id: 1,
+      nombre: 'Parque Kennedy',
+      categoria: CategoriaLugar.parque,
+      latitud: -12.1219,
+      longitud: -77.0297,
+      saturacion: SaturacionLugar(nivel: NivelSaturacion.saturado),
+    );
+
+    blocTest<DetalleLugarCubit, DetalleLugarState>(
+      'the saturation changes without passing through Cargando',
+      build: () {
+        var n = 0;
+        return DetalleLugarCubit(
+          RepoLugarFalso(
+            alObtener: (_) async => n++ == 0 ? _detalle : saturado,
+          ),
+          FavoritoRepositoryFake(),
+          1,
+        );
+      },
+      act: (c) async {
+        await c.cargar();
+        await c.refrescar();
+      },
+      skip: 2,
+      expect: () => const [DetalleCargado(saturado, esFavorito: false)],
+    );
+
+    blocTest<DetalleLugarCubit, DetalleLugarState>(
+      'a failure keeps the detail and adds a soft error',
+      build: () {
+        var n = 0;
+        return DetalleLugarCubit(
+          RepoLugarFalso(
+            alObtener: (_) async {
+              if (n++ == 0) return _detalle;
+              throw const ApiException.sinConexion();
+            },
+          ),
+          FavoritoRepositoryFake(),
+          1,
+        );
+      },
+      act: (c) async {
+        await c.cargar();
+        await c.refrescar();
+      },
+      skip: 2,
+      expect: () => const [
+        DetalleCargado(
+          _detalle,
+          esFavorito: false,
+          errorActualizacion: ApiException.mensajeSinConexion,
+        ),
+      ],
+    );
+
+    blocTest<DetalleLugarCubit, DetalleLugarState>(
+      'without a detail it behaves like cargar',
+      build: () => _cubit(_detalle),
+      act: (c) => c.refrescar(),
+      expect: () => const [
+        DetalleCargando(),
+        DetalleCargado(_detalle, esFavorito: false),
+      ],
+    );
+
+    test('closing during a refresh neither throws nor emits', () async {
+      var n = 0;
+      final espera = Completer<LugarDetalle>();
+      final cubit = DetalleLugarCubit(
+        RepoLugarFalso(
+          alObtener: (_) => n++ == 0 ? Future.value(_detalle) : espera.future,
+        ),
+        FavoritoRepositoryFake(),
+        1,
+      );
+      await cubit.cargar();
+      final estados = <DetalleLugarState>[];
+      cubit.stream.listen(estados.add);
+
+      final refresco = cubit.refrescar();
+      await cubit.close();
+      espera.complete(saturado);
+
+      await expectLater(refresco, completes);
+      expect(estados.whereType<DetalleCargando>(), isEmpty);
     });
   });
 

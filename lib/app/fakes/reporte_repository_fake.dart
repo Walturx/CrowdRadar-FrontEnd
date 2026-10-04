@@ -43,10 +43,14 @@ class ReporteRepositoryFake implements ReporteRepository {
     final ahora = _reloj();
     final previo = _mios.where((r) => r.lugarId == lugarId).firstOrNull;
     if (previo != null && ahora.difference(previo.fechaHora!) < _espera) {
+      final faltan =
+          (_espera - ahora.difference(previo.fechaHora!)).inSeconds / 60;
+      final minutos = faltan.ceil();
       throw errorFake(
         422,
         'REPORTE_EN_ESPERA',
-        'Ya enviaste un reporte para este lugar. Inténtalo más tarde.',
+        'Ya enviaste un reporte para este lugar; vuelve a intentarlo en '
+            '$minutos ${minutos == 1 ? 'minuto' : 'minutos'}.',
       );
     }
     final hoy = _diaLima(ahora);

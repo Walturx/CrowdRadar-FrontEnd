@@ -1,4 +1,5 @@
 import '../../../core/models/analitica.dart';
+import '../analitica_parametros.dart';
 import '../../../core/models/enum_api.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/utils/formato_fecha.dart';
@@ -65,7 +66,7 @@ class AnaliticaRepositoryHttp implements AnaliticaRepository {
   Future<MejorHorario> mejorHorario(
     int lugarId, {
     String? dias,
-    int semanas = 4,
+    int semanas = AnaliticaParametros.semanasComparacion,
   }) async {
     final res = await _api.get<MejorHorario>(
       '$rutaLugares/$lugarId/mejor-horario',

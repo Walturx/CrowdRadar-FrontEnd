@@ -25,7 +25,7 @@ class DetalleLugarCubit extends Cubit<DetalleLugarState> {
   bool _enVuelo = false;
 
   Future<void> cargar() async {
-    if (_enVuelo) return;
+    if (isClosed || _enVuelo) return;
     _enVuelo = true;
     emit(const DetalleCargando());
     try {
@@ -42,6 +42,34 @@ class DetalleLugarCubit extends Cubit<DetalleLugarState> {
               : mensajeError,
           codigo: codigo,
           esSinConexion: esErrorSinConexion(e),
+        ),
+      );
+    } finally {
+      _enVuelo = false;
+    }
+  }
+
+  /// Reloads in the background: the detail on screen stays until the new one
+  /// arrives, and a failure only adds a soft error. Without a detail it is a
+  /// regular [cargar].
+  Future<void> refrescar() async {
+    final actual = state;
+    if (actual is! DetalleCargado) return cargar();
+    if (isClosed || _enVuelo) return;
+    _enVuelo = true;
+    // Clears a previous soft error so a repeated failure is reported again.
+    emit(DetalleCargado(actual.detalle, esFavorito: actual.esFavorito));
+    try {
+      final detalle = await _lugares.obtener(_lugarId);
+      if (isClosed) return;
+      emit(DetalleCargado(detalle, esFavorito: detalle.esFavorito));
+    } catch (e) {
+      if (isClosed) return;
+      emit(
+        DetalleCargado(
+          actual.detalle,
+          esFavorito: actual.esFavorito,
+          errorActualizacion: mensajeDeError(e),
         ),
       );
     } finally {

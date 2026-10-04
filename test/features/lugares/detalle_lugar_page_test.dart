@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
 import 'package:crowdradar/app/fakes/favorito_repository_fake.dart';
 import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
@@ -6,6 +8,7 @@ import 'package:crowdradar/core/models/categoria_lugar.dart';
 import 'package:crowdradar/core/models/lugar_detalle.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
+import 'package:crowdradar/core/widgets/cargando.dart';
 import 'package:crowdradar/features/favoritos/data/favorito_repository.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
 import 'package:crowdradar/features/lugares/detalle/detalle_lugar_page.dart';
@@ -95,6 +98,34 @@ void main() {
         expect(repo.detallesPedidos, [1, 1]);
       },
     );
+
+    testWidgets('the detail stays visible while the report refresh runs', (
+      tester,
+    ) async {
+      final refresco = Completer<LugarDetalle>();
+      var n = 0;
+      repo = RepoLugarFalso(
+        alObtener: (_) => n++ == 0 ? Future.value(_detalle()) : refresco.future,
+      );
+      await abrir(tester);
+
+      await tester.tap(find.text('Reportar saturación'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Saturado'));
+      await tester.pump();
+      await tester.tap(find.text('Enviar reporte'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Listo'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Cargando), findsNothing);
+      expect(find.text('SATURACIÓN AHORA'), findsOneWidget);
+
+      refresco.complete(_detalle(nivel: NivelSaturacion.saturado));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Saturado'), findsOneWidget);
+    });
 
     testWidgets('dismissing the sheet without sending does not reload', (
       tester,

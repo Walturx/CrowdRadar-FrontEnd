@@ -9,7 +9,7 @@ class PerfilCubit extends Cubit<PerfilState> {
 
   PerfilCubit(this._repositorio) : super(const PerfilCargando());
 
-  /// A submit while another is in flight is ignored.
+  /// A load while another is in flight is ignored.
   bool _enVuelo = false;
 
   Future<void> cargar() async {
@@ -17,13 +17,42 @@ class PerfilCubit extends Cubit<PerfilState> {
     _enVuelo = true;
     emit(const PerfilCargando());
     try {
-      emit(PerfilCargado(await _repositorio.obtener()));
+      final usuario = await _repositorio.obtener();
+      if (isClosed) return;
+      emit(PerfilCargado(usuario));
     } catch (e) {
-      emit(PerfilError(
-        mensajeDeError(e),
-        codigo: codigoDeError(e),
-        esSinConexion: esErrorSinConexion(e),
-      ));
+      if (isClosed) return;
+      emit(
+        PerfilError(
+          mensajeDeError(e),
+          codigo: codigoDeError(e),
+          esSinConexion: esErrorSinConexion(e),
+        ),
+      );
+    } finally {
+      _enVuelo = false;
+    }
+  }
+
+  /// Reloads in the background: the data on screen stays until the new data
+  /// arrives, and a failure only adds a soft error. Without data it is a
+  /// regular [cargar].
+  Future<void> refrescar() async {
+    final actual = state;
+    if (actual is! PerfilCargado) return cargar();
+    if (_enVuelo) return;
+    _enVuelo = true;
+    // Clears a previous soft error so a repeated failure is reported again.
+    emit(PerfilCargado(actual.usuario));
+    try {
+      final usuario = await _repositorio.obtener();
+      if (isClosed) return;
+      emit(PerfilCargado(usuario));
+    } catch (e) {
+      if (isClosed) return;
+      emit(
+        PerfilCargado(actual.usuario, errorActualizacion: mensajeDeError(e)),
+      );
     } finally {
       _enVuelo = false;
     }

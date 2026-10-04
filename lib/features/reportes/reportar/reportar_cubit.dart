@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/models/nivel_saturacion.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/utils/mensaje_error.dart';
 import '../data/reporte_repository.dart';
 import 'reportar_state.dart';
@@ -31,14 +32,14 @@ class ReportarCubit extends Cubit<ReportarState> {
   bool _enVuelo = false;
 
   void seleccionarNivel(NivelSaturacion nivel) {
-    if (_enVuelo || state is ReportarEnviado) return;
+    if (isClosed || _enVuelo || state is ReportarEnviado) return;
     _nivel = nivel;
     emit(ReportarEditando(nivel: nivel));
   }
 
   Future<void> enviar() async {
     final nivel = _nivel;
-    if (_enVuelo || state is ReportarEnviado) return;
+    if (isClosed || _enVuelo || state is ReportarEnviado) return;
     if (nivel == null) {
       emit(const ReportarEditando(error: mensajeSinNivel));
       return;
@@ -47,6 +48,7 @@ class ReportarCubit extends Cubit<ReportarState> {
     emit(ReportarEnviando(nivel));
     try {
       final r = await _repositorio.reportar(_lugarId, nivel);
+      if (isClosed) return;
       emit(
         ReportarEnviado(
           mensaje: mensajeGracias,
@@ -60,17 +62,28 @@ class ReportarCubit extends Cubit<ReportarState> {
         ),
       );
     } catch (e) {
+      if (isClosed) return;
       final codigo = codigoDeError(e);
+      final status = e is ApiException ? e.status : 0;
+      final sinConexion = esErrorSinConexion(e);
       emit(
         ReportarFallido(
-          codigo == _codigoEnEspera ? mensajeEnEspera : mensajeDeError(e),
+          codigo == _codigoEnEspera ? _mensajeEnEspera(e) : mensajeDeError(e),
           nivel: nivel,
           codigo: codigo,
-          esSinConexion: esErrorSinConexion(e),
+          esSinConexion: sinConexion,
+          bloqueante: status == 403 || status == 404,
+          reintentable: sinConexion || status >= 500,
         ),
       );
     } finally {
       _enVuelo = false;
     }
+  }
+
+  /// The server text carries the minutes left; the static one is the fallback.
+  static String _mensajeEnEspera(Object e) {
+    final servidor = mensajeDeError(e).trim();
+    return servidor.isEmpty ? mensajeEnEspera : servidor;
   }
 }

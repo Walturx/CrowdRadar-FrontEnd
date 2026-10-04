@@ -104,13 +104,32 @@ void main() {
   );
 
   blocTest<ReportarCubit, ReportarState>(
-    'cooldown 422 REPORTE_EN_ESPERA becomes the HU 4.1 message',
+    'cooldown 422 REPORTE_EN_ESPERA shows the server message (with minutes)',
     setUp: () => when(() => repo.reportar(any(), any())).thenThrow(
       const ApiException(
         status: 422,
-        message: 'raw backend text',
+        message: 'Ya enviaste un reporte; vuelve a intentarlo en 12 minutos.',
         code: 'REPORTE_EN_ESPERA',
       ),
+    ),
+    build: cubit,
+    act: (c) => c
+      ..seleccionarNivel(NivelSaturacion.moderado)
+      ..enviar(),
+    skip: 2,
+    expect: () => [
+      const ReportarFallido(
+        'Ya enviaste un reporte; vuelve a intentarlo en 12 minutos.',
+        nivel: NivelSaturacion.moderado,
+        codigo: 'REPORTE_EN_ESPERA',
+      ),
+    ],
+  );
+
+  blocTest<ReportarCubit, ReportarState>(
+    'cooldown 422 with an empty server message falls back to the static text',
+    setUp: () => when(() => repo.reportar(any(), any())).thenThrow(
+      const ApiException(status: 422, message: '  ', code: 'REPORTE_EN_ESPERA'),
     ),
     build: cubit,
     act: (c) => c
@@ -125,6 +144,78 @@ void main() {
       ),
     ],
   );
+
+  for (final (status, codigo) in [
+    (403, 'CUENTA_SUSPENDIDA'),
+    (404, 'LUGAR_NO_ENCONTRADO'),
+  ]) {
+    blocTest<ReportarCubit, ReportarState>(
+      '$status $codigo is blocking (cannot be retried)',
+      setUp: () => when(
+        () => repo.reportar(any(), any()),
+      ).thenThrow(ApiException(status: status, message: 'no', code: codigo)),
+      build: cubit,
+      act: (c) => c
+        ..seleccionarNivel(NivelSaturacion.moderado)
+        ..enviar(),
+      skip: 2,
+      expect: () => [
+        ReportarFallido(
+          'no',
+          nivel: NivelSaturacion.moderado,
+          codigo: codigo,
+          bloqueante: true,
+        ),
+      ],
+    );
+  }
+
+  blocTest<ReportarCubit, ReportarState>(
+    'a 5xx is retryable but not blocking',
+    setUp: () => when(
+      () => repo.reportar(any(), any()),
+    ).thenThrow(const ApiException(status: 503, message: 'caído')),
+    build: cubit,
+    act: (c) => c
+      ..seleccionarNivel(NivelSaturacion.moderado)
+      ..enviar(),
+    skip: 2,
+    expect: () => [
+      const ReportarFallido(
+        'caído',
+        nivel: NivelSaturacion.moderado,
+        reintentable: true,
+      ),
+    ],
+  );
+
+  test('closing during the request neither throws nor emits', () async {
+    final respuesta = Completer<ReporteCreado>();
+    when(() => repo.reportar(any(), any())).thenAnswer((_) => respuesta.future);
+    final c = cubit()..seleccionarNivel(NivelSaturacion.moderado);
+    final estados = <ReportarState>[];
+    c.stream.listen(estados.add);
+
+    final envio = c.enviar();
+    await c.close();
+    respuesta.complete(_creado());
+    await envio;
+
+    expect(estados.whereType<ReportarEnviado>(), isEmpty);
+  });
+
+  test('closing during a failing request neither throws nor emits', () async {
+    final respuesta = Completer<ReporteCreado>();
+    when(() => repo.reportar(any(), any())).thenAnswer((_) => respuesta.future);
+    final c = cubit()..seleccionarNivel(NivelSaturacion.moderado);
+
+    final envio = c.enviar();
+    await c.close();
+    respuesta.completeError(const ApiException.sinConexion());
+
+    await envio;
+    expect(c.isClosed, isTrue);
+  });
 
   blocTest<ReportarCubit, ReportarState>(
     'a network failure is Fallido(esSinConexion) and can be retried',
@@ -147,6 +238,7 @@ void main() {
         ApiException.mensajeSinConexion,
         nivel: NivelSaturacion.moderado,
         esSinConexion: true,
+        reintentable: true,
       ),
       const ReportarEnviando(NivelSaturacion.moderado),
       const ReportarEnviado(

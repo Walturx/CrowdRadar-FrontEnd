@@ -35,13 +35,13 @@ class _ProfileView extends StatefulWidget {
 class _ProfileViewState extends State<_ProfileView> {
   bool? _activa;
 
-  /// Reloads when the tab becomes active again, so the karma earned by a
-  /// report sent elsewhere shows up (HU 4.2 c2).
+  /// Refreshes (keeping the data on screen) when the tab becomes active again,
+  /// so the karma earned by a report sent elsewhere shows up (HU 4.2 c2).
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final activa = TickerMode.valuesOf(context).enabled;
-    if (_activa == false && activa) context.read<PerfilCubit>().cargar();
+    if (_activa == false && activa) context.read<PerfilCubit>().refrescar();
     _activa = activa;
   }
 
@@ -49,7 +49,15 @@ class _ProfileViewState extends State<_ProfileView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Perfil')),
-      body: BlocBuilder<PerfilCubit, PerfilState>(
+      body: BlocConsumer<PerfilCubit, PerfilState>(
+        listenWhen: (_, actual) =>
+            actual is PerfilCargado && actual.errorActualizacion != null,
+        listener: (context, state) => ScaffoldMessenger.of(context)
+            .showSnackBar(
+              SnackBar(
+                content: Text((state as PerfilCargado).errorActualizacion!),
+              ),
+            ),
         builder: (context, state) {
           if (state is PerfilCargando) {
             return const Cargando();
@@ -197,7 +205,7 @@ class _ProfileViewState extends State<_ProfileView> {
                       await context.push(Rutas.perfilEditar,
                           extra: loaded.usuario.toJson());
                       if (context.mounted) {
-                        context.read<PerfilCubit>().cargar();
+                        context.read<PerfilCubit>().refrescar();
                       }
                     },
                     child: Container(

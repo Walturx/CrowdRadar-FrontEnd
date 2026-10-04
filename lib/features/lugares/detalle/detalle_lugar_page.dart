@@ -54,14 +54,13 @@ class _DetalleView extends StatelessWidget {
     return BlocConsumer<DetalleLugarCubit, DetalleLugarState>(
       listenWhen: (previo, actual) =>
           actual is DetalleCargado &&
-          actual.errorFavorito != null &&
-          (previo is! DetalleCargado ||
-              previo.errorFavorito != actual.errorFavorito),
+          actual.aviso != null &&
+          (previo is! DetalleCargado || previo.aviso != actual.aviso),
       listener: (context, state) {
-        final error = (state as DetalleCargado).errorFavorito!;
+        final aviso = (state as DetalleCargado).aviso!;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error)));
+        ).showSnackBar(SnackBar(content: Text(aviso)));
       },
       builder: (context, state) => Scaffold(
         appBar: AppBar(
@@ -104,7 +103,8 @@ class _DetalleView extends StatelessWidget {
     );
   }
 
-  /// Opens the report sheet; a sent report refreshes the shown saturation.
+  /// Opens the report sheet; a sent report refreshes the shown saturation
+  /// without blanking the detail.
   Future<void> _reportar(BuildContext context, LugarDetalle detalle) async {
     final cubit = context.read<DetalleLugarCubit>();
     final enviado = await mostrarReportarSheet(
@@ -112,7 +112,7 @@ class _DetalleView extends StatelessWidget {
       lugarId: detalle.id,
       lugarNombre: detalle.nombre,
     );
-    if (enviado == true) await cubit.cargar();
+    if (enviado == true) await cubit.refrescar();
   }
 }
 
