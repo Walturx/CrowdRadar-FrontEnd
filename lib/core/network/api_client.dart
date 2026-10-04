@@ -11,7 +11,7 @@ import 'respuesta_api.dart';
 
 typedef ParserApi<T> = T Function(Object? datos);
 
-/// Single HTTP entry point: JSON, 15 s timeout, typed envelope, interceptors.
+/// Facade over `http`: single HTTP entry point: JSON, 15 s timeout, typed envelope, interceptors.
 class ApiClient {
   static const Duration timeoutPorDefecto = Duration(seconds: 15);
 

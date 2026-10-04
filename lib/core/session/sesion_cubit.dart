@@ -6,7 +6,8 @@ import 'motivo_cierre.dart';
 import 'sesion_state.dart';
 import 'session_service.dart';
 
-/// Exposes the session to the UI and router.
+/// Observer: exposes the session to the UI and router by listening to
+/// `SessionService.eventos`.
 class SesionCubit extends Cubit<SesionState> {
   final SessionService _sesion;
   late final StreamSubscription<EventoSesion> _suscripcion;

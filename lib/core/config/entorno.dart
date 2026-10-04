@@ -1,4 +1,5 @@
-/// Build-time environment, read from `--dart-define`.
+/// Singleton-style configuration: build-time environment read once from
+/// `--dart-define` and shared through the composition root.
 class Entorno {
   static const String apiUrlPorDefecto = 'http://10.0.2.2:3000';
 

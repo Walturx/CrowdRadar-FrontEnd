@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import 'tipos_mapa.dart';
 
-/// Frozen port for drawing maps. Features depend on this, never on a map SDK.
+/// Adapter pattern: frozen port for drawing maps. Features depend on this, never on a map SDK.
 abstract class MapaAdapter {
   Widget construirMapa({
     required PuntoGeografico centro,

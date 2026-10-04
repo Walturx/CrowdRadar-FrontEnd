@@ -6,7 +6,7 @@ import '../widgets/pin_saturacion.dart';
 import 'mapa_adapter.dart';
 import 'tipos_mapa.dart';
 
-/// OpenStreetMap tiles through `flutter_map`; the only file allowed to import it.
+/// Adapter pattern: OpenStreetMap tiles through `flutter_map`; the only file allowed to import it.
 class FlutterMapAdapter implements MapaAdapter {
   static const String urlTiles =
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png';

@@ -1,6 +1,6 @@
 import 'api_exception.dart';
 
-/// Contract stub: every method fails with 501 until its stream implements it.
+/// Null-object style contract stub: every method fails with 501 until its stream implements it.
 ///
 /// Mix into a `<X>RepositoryHttp implements <X>Repository` class and delete the
 /// mixin once all methods have real bodies.

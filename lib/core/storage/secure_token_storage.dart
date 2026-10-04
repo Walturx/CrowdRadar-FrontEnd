@@ -24,6 +24,7 @@ class SecureTokenStorage implements TokenStorage {
     try {
       return UsuarioSesion.fromJson(jsonDecode(json) as Map<String, dynamic>);
     } catch (_) {
+      // Corrupt stored user: treat as absent so restore wipes the session.
       return null;
     }
   }

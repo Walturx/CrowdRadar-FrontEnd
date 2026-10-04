@@ -1,7 +1,8 @@
 import '../session/usuario_sesion.dart';
 import 'token_storage.dart';
 
-/// In-memory storage for tests and fakes mode.
+/// In-memory [TokenStorage]: default before `SessionService.configurar` runs,
+/// and the storage used by tests and `USAR_FAKES` mode (nothing is persisted).
 class MemoriaTokenStorage implements TokenStorage {
   String? token;
   UsuarioSesion? usuario;
