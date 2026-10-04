@@ -95,6 +95,34 @@ void main() {
     expect(find.byIcon(Icons.radio_button_unchecked), findsNothing);
   });
 
+  testWidgets('the byte limit row shows only when it is exceeded', (
+    tester,
+  ) async {
+    await abrir(tester);
+    expect(find.textContaining('72 bytes'), findsNothing);
+
+    await tester.enterText(campo('campo-password-nueva'), 'Aa1${'😀' * 18}');
+    await tester.pump();
+
+    expect(find.textContaining('72 bytes'), findsOneWidget);
+  });
+
+  testWidgets('R1-1202 password fields declare their autofill hints', (
+    tester,
+  ) async {
+    await abrir(tester);
+
+    Iterable<String>? pistas(String clave) => tester
+        .widget<TextField>(
+          find.descendant(of: campo(clave), matching: find.byType(TextField)),
+        )
+        .autofillHints;
+
+    expect(pistas('campo-password-actual'), [AutofillHints.password]);
+    expect(pistas('campo-password-nueva'), [AutofillHints.newPassword]);
+    expect(pistas('campo-password-confirmar'), [AutofillHints.newPassword]);
+  });
+
   testWidgets('empty fields never reach the repository', (tester) async {
     await abrir(tester);
 

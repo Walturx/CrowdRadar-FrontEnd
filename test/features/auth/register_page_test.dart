@@ -113,4 +113,50 @@ void main() {
     expect(find.text('RUTA /inicio'), findsOneWidget);
     expect(find.text('Usuario registrado correctamente'), findsOneWidget);
   });
+
+  testWidgets('a password that breaks the shared policy never reaches the repository', (
+    tester,
+  ) async {
+    await abrir(tester);
+
+    Future<void> intentar(String password) async {
+      await tester.enterText(find.byKey(const Key('campo-password')), password);
+      await tester.ensureVisible(find.text('Registrarme'));
+      await tester.tap(find.text('Registrarme'));
+      await tester.pump();
+    }
+
+    await intentar('secreta12'); // no uppercase
+    expect(find.text('Al menos una mayúscula'), findsOneWidget);
+    await intentar('Aa1${'😀' * 4}'); // 7 code points
+    expect(find.text('Al menos 8 caracteres'), findsOneWidget);
+    await intentar('Aa1${'😀' * 18}'); // 75 bytes
+    expect(find.textContaining('72 bytes'), findsOneWidget);
+
+    verifyNever(
+      () => repo.registrar(
+        nombre: any(named: 'nombre'),
+        apellido: any(named: 'apellido'),
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+        telefono: any(named: 'telefono'),
+        distrito: any(named: 'distrito'),
+      ),
+    );
+  });
+
+  testWidgets('R1-1202 the register password declares its autofill hint', (
+    tester,
+  ) async {
+    await abrir(tester);
+
+    final campo = tester.widget<TextField>(
+      find.descendant(
+        of: find.byKey(const Key('campo-password')),
+        matching: find.byType(TextField),
+      ),
+    );
+
+    expect(campo.autofillHints, [AutofillHints.newPassword]);
+  });
 }

@@ -9,7 +9,7 @@ import '../../../theme/app_colors.dart';
 import '../data/perfil_repository.dart';
 import 'cambiar_password_cubit.dart';
 import 'cambiar_password_state.dart';
-import 'requisitos_password.dart';
+import '../../../core/utils/politica_password.dart';
 
 /// HU 2.3: change the password. On success the session ends: the old token is
 /// stale on the server, so the user signs in again.
@@ -82,6 +82,7 @@ class _CambiarPasswordViewState extends State<_CambiarPasswordView> {
                     key: const Key('campo-password-actual'),
                     controller: _actualCtrl,
                     obscureText: true,
+                    autofillHints: const [AutofillHints.password],
                     decoration:
                         const InputDecoration(labelText: 'Contraseña actual'),
                     validator: (v) =>
@@ -92,6 +93,7 @@ class _CambiarPasswordViewState extends State<_CambiarPasswordView> {
                     key: const Key('campo-password-nueva'),
                     controller: _nuevaCtrl,
                     obscureText: true,
+                    autofillHints: const [AutofillHints.newPassword],
                     onChanged: (_) => setState(() {}),
                     decoration:
                         const InputDecoration(labelText: 'Nueva contraseña'),
@@ -105,6 +107,7 @@ class _CambiarPasswordViewState extends State<_CambiarPasswordView> {
                     key: const Key('campo-password-confirmar'),
                     controller: _confirmarCtrl,
                     obscureText: true,
+                    autofillHints: const [AutofillHints.newPassword],
                     decoration: const InputDecoration(
                         labelText: 'Confirmar nueva contraseña'),
                     validator: (v) =>
@@ -142,7 +145,9 @@ class _ListaRequisitos extends StatelessWidget {
     return Column(
       children: [
         for (final r in RequisitoPassword.values)
-          Row(
+          // The byte limit is a rare edge: shown only once exceeded.
+          if (r != RequisitoPassword.maximoBytes || incumplidos.contains(r))
+            Row(
             children: [
               Icon(
                 incumplidos.contains(r)

@@ -3,14 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/utils/politica_password.dart';
+import '../../../core/utils/validadores.dart';
 import '../../../core/widgets/boton_principal.dart';
 import '../../../core/widgets/cargando.dart';
+import '../../../theme/app_colors.dart';
 import '../data/auth_repository.dart';
 import 'registro_cubit.dart';
 import 'registro_state.dart';
-
-import '../../../core/utils/validadores.dart';
-import '../../../theme/app_colors.dart';
 
 class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
@@ -153,19 +153,12 @@ class _RegisterViewState extends State<_RegisterView> {
                     key: const Key('campo-password'),
                     controller: _passwordCtrl,
                     obscureText: true,
+                    autofillHints: const [AutofillHints.newPassword],
                     decoration: InputDecoration(
                       labelText: 'Contraseña',
                       errorText: errores['password'],
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Este campo es obligatorio';
-                      }
-                      if (value.length < 8) {
-                        return 'La contraseña debe tener al menos 8 caracteres';
-                      }
-                      return null;
-                    },
+                    validator: validarPassword,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
