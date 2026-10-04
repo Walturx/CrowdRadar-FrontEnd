@@ -34,6 +34,10 @@ class RegistroDispositivo {
   /// The registration running right now; [quitar] waits for it.
   Future<void>? _registrando;
 
+  /// The [quitar] running right now; a [registrar] waits for it so a DELETE
+  /// landing after a new sign in cannot leave the device unregistered.
+  Future<void>? _quitando;
+
   /// A DELETE failed: the backend may still hold [_tokenRegistrado].
   bool _borradoPendiente = false;
 
@@ -46,6 +50,7 @@ class RegistroDispositivo {
 
   Future<void> _registrar() async {
     try {
+      await _quitando;
       if (_borradoPendiente) await _reintentarBorrado();
       final token = await _receptor.obtenerToken();
       if (token == null || token == _tokenRegistrado) return;
@@ -72,7 +77,10 @@ class RegistroDispositivo {
   /// Waits for a registration in flight, then deletes the token. Must run
   /// while the session is still valid (the DELETE is authenticated); when it
   /// fails the token is kept and retried by the next [quitar] or [registrar].
-  Future<void> quitar() async {
+  Future<void> quitar() =>
+      _quitando = _quitar().whenComplete(() => _quitando = null);
+
+  Future<void> _quitar() async {
     await _registrando;
     final token = _tokenRegistrado;
     if (token == null) return;
