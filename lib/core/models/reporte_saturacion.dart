@@ -9,23 +9,51 @@ class ReporteSaturacion extends Equatable {
   final NivelSaturacion nivel;
   final DateTime? fechaHora;
 
+  /// Only present in `GET /api/reportes/mios` items (`lugar{id,nombre}`).
+  final String? lugarNombre;
+  final int? puntosOtorgados;
+  final String? motivoSinPuntos;
+  final String? estado;
+
   const ReporteSaturacion({
     required this.id,
     required this.lugarId,
     required this.nivel,
     this.fechaHora,
+    this.lugarNombre,
+    this.puntosOtorgados,
+    this.motivoSinPuntos,
+    this.estado,
   });
 
-  factory ReporteSaturacion.fromJson(Map<String, dynamic> j) =>
-      ReporteSaturacion(
-        id: aInt(j['id']),
-        lugarId: aInt(j['lugarId']),
-        nivel: NivelSaturacion.desdeApi(j['nivel']),
-        fechaHora: aFecha(j['fechaHora']),
-      );
+  /// Accepts both `lugarId` (create response) and `lugar{id,nombre}` (list).
+  factory ReporteSaturacion.fromJson(Map<String, dynamic> j) {
+    final lugar = aMapa(j['lugar']);
+    return ReporteSaturacion(
+      id: aInt(j['id']),
+      lugarId: aInt(j['lugarId'] ?? lugar['id']),
+      nivel: NivelSaturacion.desdeApi(j['nivel']),
+      fechaHora: aFecha(j['fechaHora']),
+      lugarNombre: lugar['nombre'] as String?,
+      puntosOtorgados: j['puntosOtorgados'] is num
+          ? aInt(j['puntosOtorgados'])
+          : null,
+      motivoSinPuntos: j['motivoSinPuntos'] as String?,
+      estado: j['estado'] as String?,
+    );
+  }
 
   @override
-  List<Object?> get props => [id, lugarId, nivel, fechaHora];
+  List<Object?> get props => [
+    id,
+    lugarId,
+    nivel,
+    fechaHora,
+    lugarNombre,
+    puntosOtorgados,
+    motivoSinPuntos,
+    estado,
+  ];
 }
 
 /// Result of `POST /api/reportes`: the report plus the karma outcome.
@@ -53,6 +81,10 @@ class ReporteCreado extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [reporte, puntosGanados, totalKarma, motivoSinPuntos];
+  List<Object?> get props => [
+    reporte,
+    puntosGanados,
+    totalKarma,
+    motivoSinPuntos,
+  ];
 }
