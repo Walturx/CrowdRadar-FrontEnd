@@ -68,7 +68,13 @@ class Dependencias {
     required this.moderacionRepository,
   });
 
-  factory Dependencias.crear(Entorno entorno, SessionService sesion) {
+  /// [mapaAdapter] and [receptorPush] can be overridden (tests, M3).
+  factory Dependencias.crear(
+    Entorno entorno,
+    SessionService sesion, {
+    MapaAdapter? mapaAdapter,
+    ReceptorPush? receptorPush,
+  }) {
     final api = ApiClient(
       http.Client(),
       entorno,
@@ -79,8 +85,8 @@ class Dependencias {
       entorno: entorno,
       sesion: sesion,
       apiClient: api,
-      mapaAdapter: FlutterMapAdapter(),
-      receptorPush: ReceptorPushNulo(),
+      mapaAdapter: mapaAdapter ?? FlutterMapAdapter(),
+      receptorPush: receptorPush ?? ReceptorPushNulo(),
       authRepository:
           fakes ? FakeAuthRepository(sesion) : AuthRepositoryHttp(api, sesion),
       perfilRepository: fakes

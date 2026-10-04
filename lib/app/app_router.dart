@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/models/user_model.dart';
@@ -12,10 +12,24 @@ import '../features/favoritos/lista/favoritos_page.dart';
 import '../features/lugares/mapa/map_page.dart';
 import '../features/perfil/editar/edit_profile_page.dart';
 import '../features/perfil/ver/profile_page.dart';
+import '../features/alertas/lista/alertas_page.dart';
+import '../features/analitica/comparar/comparar_page.dart';
+import '../features/analitica/historial/historial_page.dart';
+import '../features/analitica/mejor_horario/mejor_horario_page.dart';
+import '../features/auth/recuperar/recuperar_page.dart';
+import '../features/exploracion/explorar/explorar_page.dart';
+import '../features/lugares/detalle/detalle_lugar_page.dart';
+import '../features/moderacion/reportes_denunciados/reportes_denunciados_page.dart';
+import '../features/moderacion/revision_reporte/revision_reporte_page.dart';
+import '../features/moderacion/usuario_detalle/usuario_admin_detalle_page.dart';
+import '../features/moderacion/usuarios/usuarios_admin_page.dart';
+import '../features/perfil/cambiar_password/cambiar_password_page.dart';
+import '../features/reportes/mis_reportes/mis_reportes_page.dart';
+import '../features/validacion/detalle_reporte/detalle_reporte_page.dart';
+import '../features/validacion/estado/estado_validacion_page.dart';
 import '../features/validacion/pendientes/validar_page.dart';
 import '../layout/admin_layout.dart';
 import '../layout/main_layout.dart';
-import 'pagina_provisional.dart';
 import 'rutas.dart';
 
 /// Session guard. Returns the redirect target or null to stay.
@@ -47,12 +61,16 @@ class _RefrescoPorSesion extends ChangeNotifier {
   }
 }
 
-GoRoute _provisional(String path, {List<RouteBase> routes = const []}) =>
-    GoRoute(
-      path: path,
-      builder: (context, state) => const PaginaProvisional(),
-      routes: routes,
-    );
+/// Path parameter `:id` as an int (0 when absent or malformed).
+int _id(GoRouterState state) =>
+    int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+
+GoRoute _pagina(
+  String path,
+  Widget Function(GoRouterState state) pagina, {
+  List<RouteBase> routes = const [],
+}) =>
+    GoRoute(path: path, builder: (_, state) => pagina(state), routes: routes);
 
 GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa}) {
   return GoRouter(
@@ -63,7 +81,7 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
     routes: [
       GoRoute(path: Rutas.login, builder: (_, _) => const LoginPage()),
       GoRoute(path: Rutas.registro, builder: (_, _) => const RegisterPage()),
-      _provisional(Rutas.recuperar),
+      _pagina(Rutas.recuperar, (_) => const RecuperarPage()),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => MainLayout(shell: shell),
         branches: [
@@ -72,12 +90,19 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
               path: Rutas.mapa,
               builder: (_, _) => const MapPage(),
               routes: [
-                _provisional('explorar'),
-                _provisional('lugares/:id', routes: [
-                  _provisional('historial'),
-                  _provisional('comparar'),
-                  _provisional('mejor-horario'),
-                ]),
+                _pagina('explorar', (_) => const ExplorarPage()),
+                _pagina(
+                  'lugares/:id',
+                  (s) => DetalleLugarPage(lugarId: _id(s)),
+                  routes: [
+                    _pagina('historial', (s) => HistorialPage(lugarId: _id(s))),
+                    _pagina('comparar', (s) => CompararPage(lugarId: _id(s))),
+                    _pagina(
+                      'mejor-horario',
+                      (s) => MejorHorarioPage(lugarId: _id(s)),
+                    ),
+                  ],
+                ),
               ],
             ),
           ]),
@@ -85,14 +110,19 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
             GoRoute(
               path: Rutas.validar,
               builder: (_, _) => const ValidarPage(),
-              routes: [_provisional('reportes/:id')],
+              routes: [
+                _pagina(
+                  'reportes/:id',
+                  (s) => DetalleReportePage(reporteId: _id(s)),
+                ),
+              ],
             ),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
               path: Rutas.favoritos,
               builder: (_, _) => const FavoritosPage(),
-              routes: [_provisional('alertas')],
+              routes: [_pagina('alertas', (_) => const AlertasPage())],
             ),
           ]),
           StatefulShellBranch(routes: [
@@ -109,9 +139,9 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
                     );
                   },
                 ),
-                _provisional('password'),
-                _provisional('reportes'),
-                _provisional('validaciones'),
+                _pagina('password', (_) => const CambiarPasswordPage()),
+                _pagina('reportes', (_) => const MisReportesPage()),
+                _pagina('validaciones', (_) => const EstadoValidacionPage()),
               ],
             ),
           ]),
@@ -121,10 +151,25 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
         builder: (_, _, shell) => AdminLayout(shell: shell),
         branches: [
           StatefulShellBranch(routes: [
-            _provisional(Rutas.adminReportes, routes: [_provisional(':id')]),
+            _pagina(
+              Rutas.adminReportes,
+              (_) => const ReportesDenunciadosPage(),
+              routes: [
+                _pagina(':id', (s) => RevisionReportePage(reporteId: _id(s))),
+              ],
+            ),
           ]),
           StatefulShellBranch(routes: [
-            _provisional(Rutas.adminUsuarios, routes: [_provisional(':id')]),
+            _pagina(
+              Rutas.adminUsuarios,
+              (_) => const UsuariosAdminPage(),
+              routes: [
+                _pagina(
+                  ':id',
+                  (s) => UsuarioAdminDetallePage(usuarioId: _id(s)),
+                ),
+              ],
+            ),
           ]),
         ],
       ),

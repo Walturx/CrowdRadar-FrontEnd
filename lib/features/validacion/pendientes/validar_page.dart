@@ -12,7 +12,8 @@ class ValidarPage extends StatelessWidget {
       body: const EstadoVacio(
         icon: Icons.shield_outlined,
         title: 'Validar reportes',
-        subtitle: 'Pronto vas a poder validar los reportes de aforo de otros usuarios.',
+        subtitle:
+            'Pronto vas a poder validar los reportes de aforo de otros usuarios.',
       ),
     );
   }
