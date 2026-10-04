@@ -2,6 +2,8 @@ import 'package:crowdradar/app/fakes/karma_fake.dart';
 import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
+import 'package:crowdradar/core/session/session_service.dart';
+import 'package:crowdradar/core/session/usuario_sesion.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Matcher _falla(int status, String code) => throwsA(
@@ -109,6 +111,27 @@ void main() {
         expect(siguiente.totalKarma, 160);
       },
     );
+  });
+
+  group('session (R4-608)', () {
+    test('reportar and listarMios need a session when one is wired', () async {
+      final sesion = SessionService.instance..reiniciar();
+      addTearDown(sesion.reiniciar);
+      final conSesion = ReporteRepositoryFake(sesion: sesion);
+
+      await expectLater(
+        conSesion.reportar(1, NivelSaturacion.moderado),
+        _falla(401, 'NO_AUTENTICADO'),
+      );
+      await expectLater(conSesion.listarMios(), _falla(401, 'NO_AUTENTICADO'));
+
+      await sesion.iniciar('t', const UsuarioSesion(id: 1));
+      await expectLater(
+        conSesion.reportar(1, NivelSaturacion.moderado),
+        completes,
+      );
+      expect((await conSesion.listarMios()).items, hasLength(1));
+    });
   });
 
   group('listarMios', () {
