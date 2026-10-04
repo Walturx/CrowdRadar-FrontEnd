@@ -131,6 +131,19 @@ void main() {
       );
     });
 
+    testWidgets('Cambiar contraseña opens /perfil/password (HU 2.3 c1)', (
+      tester,
+    ) async {
+      when(() => repo.obtener()).thenAnswer((_) async => _usuario);
+      await abrir(tester, otras: const ['/perfil/password']);
+
+      await tester.ensureVisible(find.text('Cambiar contraseña'));
+      await tester.tap(find.text('Cambiar contraseña'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('RUTA /perfil/password'), findsOneWidget);
+    });
+
     testWidgets('Mis reportes opens /perfil/reportes', (tester) async {
       when(() => repo.obtener()).thenAnswer((_) async => _usuario);
       await abrir(tester, otras: const ['/perfil/reportes']);

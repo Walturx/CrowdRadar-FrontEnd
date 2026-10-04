@@ -90,6 +90,26 @@ void main() {
         const SesionNoAutenticada(motivo: MotivoCierre.usuario));
     await cubit.close();
   });
+  test('a password-change sign out keeps its motive and skips the hook', () async {
+    await sesion.iniciar(token, usuarioPrueba);
+    var hookLlamado = false;
+    final cubit = SesionCubit(
+      sesion,
+      antesDeCerrar: () async => hookLlamado = true,
+    );
+
+    await cubit.cerrarSesion(motivo: MotivoCierre.passwordCambiada);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(hookLlamado, isFalse); // the old token is already invalid
+    expect(sesion.token, isNull);
+    expect(
+      cubit.state,
+      const SesionNoAutenticada(motivo: MotivoCierre.passwordCambiada),
+    );
+    await cubit.close();
+  });
+
   group('antesDeCerrar hook', () {
     test('runs while the session is still valid, then closes', () async {
       await sesion.iniciar(token, usuarioPrueba);
