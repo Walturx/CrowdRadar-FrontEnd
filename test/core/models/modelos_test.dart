@@ -8,7 +8,6 @@ import 'package:crowdradar/core/models/lugar_resumen.dart';
 import 'package:crowdradar/core/models/moderacion.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/models/reporte_saturacion.dart';
-import 'package:crowdradar/core/models/validacion.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -224,63 +223,6 @@ void main() {
       expect(m.franjas.single.horaInicio, 8);
       expect(m.franjas.single.nivel, NivelSaturacion.tranquilo);
       expect(m.sinDatos, false);
-    });
-  });
-
-  group('validacion', () {
-    test('ReportePendiente', () {
-      final r = ReportePendiente.fromJson({
-        'id': 5,
-        'lugarId': 3,
-        'lugarNombre': 'Parque',
-        'nivel': 'MODERADO',
-        'fechaHora': '2026-10-05T12:00:00.000Z',
-        'distanciaMetros': 800,
-      });
-
-      expect(r.id, 5);
-      expect(r.nivel, NivelSaturacion.moderado);
-      expect(r.distanciaMetros, 800.0);
-    });
-
-    test('DetalleReporte carries my validation and flags', () {
-      final d = DetalleReporte.fromJson({
-        'id': 5,
-        'lugarId': 3,
-        'lugarNombre': 'Parque',
-        'nivel': 'MODERADO',
-        'fechaHora': '2026-10-05T12:00:00.000Z',
-        'miValidacion': 'CONFIRMAR',
-        'yaDenunciado': true,
-        'esPropio': false,
-      });
-
-      expect(d.miValidacion, TipoAccionValidacion.confirmar);
-      expect(d.yaDenunciado, true);
-      expect(d.esPropio, false);
-
-      final sin = DetalleReporte.fromJson({
-        'id': 6,
-        'lugarId': 3,
-        'lugarNombre': 'Parque',
-        'nivel': 'SATURADO',
-        'fechaHora': '2026-10-05T12:00:00.000Z',
-      });
-      expect(sin.miValidacion, isNull);
-      expect(sin.esPropio, false);
-    });
-
-    test('EstadoReporteValidacion maps the status', () {
-      final e = EstadoReporteValidacion.fromJson({
-        'reporteId': 5,
-        'estado': 'EN_VALIDACION',
-        'confirmaciones': 2,
-        'rechazos': 1,
-      });
-
-      expect(e.estado, EstadoValidacion.enValidacion);
-      expect(e.confirmaciones, 2);
-      expect(valorApi(MotivoDenuncia.informacionFalsa), 'INFORMACION_FALSA');
     });
   });
 

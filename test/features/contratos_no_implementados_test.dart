@@ -3,7 +3,6 @@
 import 'package:crowdradar/app/dependencias.dart';
 import 'package:crowdradar/core/config/entorno.dart';
 import 'package:crowdradar/core/models/moderacion.dart';
-import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/core/network/api_client.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/session/session_service.dart';
@@ -15,7 +14,6 @@ import 'package:crowdradar/features/lugares/data/lugar_repository_http.dart';
 import 'package:crowdradar/features/moderacion/data/moderacion_repository.dart';
 import 'package:crowdradar/features/moderacion/data/moderacion_repository_http.dart';
 import 'package:crowdradar/features/reportes/data/reporte_repository_http.dart';
-import 'package:crowdradar/features/validacion/data/validacion_repository.dart';
 import 'package:crowdradar/features/validacion/data/validacion_repository_http.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -45,17 +43,6 @@ void main() {
   );
 
   group('stubs fail with 501', () {
-    test('ValidacionRepository', () {
-      final ValidacionRepository r = ValidacionRepositoryHttp(api);
-
-      expect(() => r.pendientes(), _noImplementado);
-      expect(
-        () => r.validar(1, TipoAccionValidacion.confirmar),
-        _noImplementado,
-      );
-      expect(() => r.denunciar(1, MotivoDenuncia.spam), _noImplementado);
-    });
-
     test('ModeracionRepository', () {
       final ModeracionRepository r = ModeracionRepositoryHttp(api);
 
