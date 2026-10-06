@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/rutas.dart';
 import '../../../core/map/mapa_adapter.dart';
+import '../../../core/map/centro_compartido.dart';
 import '../../../core/map/tipos_mapa.dart';
 import '../../../core/widgets/tarjeta_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
@@ -16,19 +17,24 @@ import 'mapa_state.dart';
 import 'marcadores.dart';
 
 class MapPage extends StatelessWidget {
-  const MapPage({super.key});
+  /// Where the camera centre is published for the other tabs.
+  final CentroMapaCompartido? centroCompartido;
+
+  const MapPage({super.key, this.centroCompartido});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => MapaCubit(context.read<LugarRepository>()),
-      child: const _MapView(),
+      child: _MapView(centroCompartido),
     );
   }
 }
 
 class _MapView extends StatefulWidget {
-  const _MapView();
+  final CentroMapaCompartido? centroCompartido;
+
+  const _MapView(this.centroCompartido);
 
   @override
   State<_MapView> createState() => _MapViewState();
@@ -47,6 +53,7 @@ class _MapViewState extends State<_MapView> {
   bool _errorDescartado = false;
 
   void _alCamaraQuieta(LimitesMapa limites) {
+    widget.centroCompartido?.actualizar(limites);
     final cubit = context.read<MapaCubit>();
     // The first report loads at once; later ones wait for the camera to settle.
     if (!cubit.yaCargo) {

@@ -1,5 +1,6 @@
 import 'package:crowdradar/app/fakes/exploracion_repository_fake.dart';
 import 'package:crowdradar/app/rutas.dart';
+import 'package:crowdradar/core/map/centro_compartido.dart';
 import 'package:crowdradar/core/map/mapa_adapter.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
 import 'package:crowdradar/core/models/categoria_lugar.dart';
@@ -84,6 +85,7 @@ void main() {
   late _MapaFalso mapa;
   late RepoLugarFalso repo;
   Object? extraDetalle;
+  CentroMapaCompartido? centroCompartido;
 
   Future<void> abrir(WidgetTester tester) async {
     mapa = _MapaFalso();
@@ -91,7 +93,10 @@ void main() {
     final router = GoRouter(
       initialLocation: Rutas.mapa,
       routes: [
-        GoRoute(path: Rutas.mapa, builder: (_, _) => const MapPage()),
+        GoRoute(
+          path: Rutas.mapa,
+          builder: (_, _) => MapPage(centroCompartido: centroCompartido),
+        ),
         GoRoute(
           path: Rutas.buscarLugar,
           builder: (_, s) => BuscarLugarPage(
@@ -163,6 +168,18 @@ void main() {
       expect(marcadoresDe(const []), isEmpty);
     });
 
+    testWidgets('a settled camera publishes its centre for the other tabs', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(alBuscar: (_) => resultado([]));
+      centroCompartido = CentroMapaCompartido();
+      await abrir(tester);
+      await alCamaraQuieta(tester);
+
+      expect(centroCompartido!.actual.latitud, closeTo(-12.12, 1e-9));
+      expect(centroCompartido!.actual.longitud, closeTo(-77.03, 1e-9));
+    });
+
     testWidgets(
       'one pin per place, colored by level, grey without information',
       (tester) async {
@@ -215,7 +232,9 @@ void main() {
     ) async {
       repo = RepoLugarFalso(
         alBuscar: (p) => resultado(
-          p.categoria == CategoriaLugar.mercado ? [_mercado] : [_kennedy, _mercado],
+          p.categoria == CategoriaLugar.mercado
+              ? [_mercado]
+              : [_kennedy, _mercado],
         ),
       );
       await abrir(tester);
