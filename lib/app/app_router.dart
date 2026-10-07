@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/map/tipos_mapa.dart';
@@ -29,6 +30,7 @@ import '../features/perfil/acerca/acerca_page.dart';
 import '../features/perfil/cambiar_password/cambiar_password_page.dart';
 import '../features/reportes/mis_reportes/mis_reportes_page.dart';
 import '../core/map/centro_compartido.dart';
+import '../features/validacion/data/validacion_repository.dart';
 import '../features/validacion/detalle_reporte/detalle_reporte_page.dart';
 import '../features/validacion/estado/estado_validacion_page.dart';
 import '../features/validacion/pendientes/validar_page.dart';
@@ -147,7 +149,10 @@ GoRouter crearRouter(SesionCubit sesion, {String ubicacionInicial = Rutas.mapa})
                 ),
                 _pagina(_hija(Rutas.perfilPassword, Rutas.perfil), (_) => const CambiarPasswordPage()),
                 _pagina(_hija(Rutas.perfilAcerca, Rutas.perfil), (_) => const AcercaPage()),
-                _pagina(_hija(Rutas.perfilReportes, Rutas.perfil), (_) => const MisReportesPage()),
+                GoRoute(
+                  path: _hija(Rutas.perfilReportes, Rutas.perfil),
+                  builder: (context, _) => MisReportesPage(validacion: context.read<ValidacionRepository>()),
+                ),
                 _pagina(_hija(Rutas.perfilValidaciones, Rutas.perfil), (_) => const EstadoValidacionPage()),
               ],
             ),

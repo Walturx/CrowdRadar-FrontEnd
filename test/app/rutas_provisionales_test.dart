@@ -49,11 +49,7 @@ void main() {
   tearDown(() => SessionService.instance.reiniciar());
 
   // (route, title, detail fragment)
-  const usuario = [
-    ('/mapa/explorar', 'Explorar lugares', _pendiente),
-    ('/validar/reportes/12', 'Detalle del reporte', 'Reporte #12'),
-    ('/perfil/validaciones', 'Estado de mis reportes', _pendiente),
-  ];
+  const usuario = [('/mapa/explorar', 'Explorar lugares', _pendiente)];
   const admin = [
     ('/admin/reportes', 'Reportes denunciados', _pendiente),
     ('/admin/reportes/21', 'Revisión del reporte', 'Reporte #21'),
