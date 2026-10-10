@@ -22,7 +22,7 @@ import '../features/auth/recuperar/recuperar_page.dart';
 import '../features/exploracion/explorar/explorar_page.dart';
 import '../features/lugares/buscar/buscar_lugar_page.dart';
 import '../features/lugares/detalle/detalle_lugar_page.dart';
-import '../features/moderacion/reportes_denunciados/reportes_denunciados_page.dart';
+import '../features/moderacion/denunciados/denunciados_page.dart';
 import '../features/moderacion/revision_reporte/revision_reporte_page.dart';
 import '../features/moderacion/usuario_detalle/usuario_admin_detalle_page.dart';
 import '../features/moderacion/usuarios/usuarios_admin_page.dart';
@@ -204,7 +204,7 @@ GoRouter crearRouter(
             routes: [
               _pagina(
                 Rutas.adminReportes,
-                (_) => const ReportesDenunciadosPage(),
+                (_) => const DenunciadosPage(),
                 routes: [
                   _pagina(
                     _hija(Rutas.adminReportePlantilla, Rutas.adminReportes),

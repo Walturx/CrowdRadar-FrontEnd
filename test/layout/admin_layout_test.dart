@@ -72,6 +72,13 @@ void main() {
     expect(find.text('Carlos Méndez'), findsOneWidget);
   });
 
+  testWidgets('the Reportes tab shows the moderation queue', (tester) async {
+    await _abrirAdmin(tester, '/admin/reportes');
+
+    expect(find.text('3 REPORTES POR REVISAR'), findsOneWidget);
+    expect(find.text('Jockey Plaza'), findsOneWidget);
+  });
+
   testWidgets('the admin lands on the user directory with fake data', (
     tester,
   ) async {

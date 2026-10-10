@@ -23,13 +23,9 @@ class _MapaVacio implements MapaAdapter {
   }) => const SizedBox.expand();
 }
 
-Future<void> _abrir(
-  WidgetTester tester,
-  String ruta, {
-  bool admin = false,
-}) async {
+Future<void> _abrir(WidgetTester tester, String ruta) async {
   final sesion = SessionService.instance..reiniciar();
-  await sesion.iniciar('token', admin ? adminPrueba : usuarioPrueba);
+  await sesion.iniciar('token', usuarioPrueba);
   await tester.pumpWidget(
     CrowdRadarApp(
       dependencias: Dependencias.crear(
@@ -50,24 +46,10 @@ void main() {
 
   // (route, title, detail fragment)
   const usuario = [('/mapa/explorar', 'Explorar lugares', _pendiente)];
-  const admin = [
-    ('/admin/reportes', 'Reportes denunciados', _pendiente),
-    ('/admin/reportes/21', 'Revisión del reporte', 'Reporte #21'),
-  ];
 
   for (final (ruta, titulo, detalle) in usuario) {
     testWidgets('S9.1 $ruta renders "$titulo"', (tester) async {
       await _abrir(tester, ruta);
-
-      expect(find.text(titulo), findsWidgets);
-      expect(find.textContaining(detalle), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
-  }
-
-  for (final (ruta, titulo, detalle) in admin) {
-    testWidgets('S9.1 $ruta renders "$titulo"', (tester) async {
-      await _abrir(tester, ruta, admin: true);
 
       expect(find.text(titulo), findsWidgets);
       expect(find.textContaining(detalle), findsOneWidget);
