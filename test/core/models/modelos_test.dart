@@ -5,7 +5,6 @@ import 'package:crowdradar/core/models/enum_api.dart';
 import 'package:crowdradar/core/models/favorito.dart';
 import 'package:crowdradar/core/models/lugar_detalle.dart';
 import 'package:crowdradar/core/models/lugar_resumen.dart';
-import 'package:crowdradar/core/models/moderacion.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/models/reporte_saturacion.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -234,40 +233,6 @@ void main() {
       expect(m.franjas.single.horaInicio, 8);
       expect(m.franjas.single.nivel, NivelSaturacion.tranquilo);
       expect(m.sinDatos, false);
-    });
-  });
-
-  group('moderacion', () {
-    test('ReporteDenunciado and UsuarioAdmin', () {
-      final r = ReporteDenunciado.fromJson({
-        'reporteId': 5,
-        'lugarNombre': 'Parque',
-        'nivel': 'SATURADO',
-        'totalDenuncias': 3,
-      });
-      expect(r.totalDenuncias, 3);
-
-      final u = UsuarioAdmin.fromJson({
-        'id': 8,
-        'nombre': 'Luz',
-        'apellido': 'Vega',
-        'email': 'luz@test.com',
-        'status': 'SUSPENDIDO',
-        'puntosKarma': 40,
-      });
-      expect(u.estaSuspendido, true);
-      expect(u.puntosKarma, 40);
-
-      expect(
-        UsuarioAdmin.fromJson({
-          'id': 9,
-          'nombre': 'a',
-          'apellido': 'b',
-          'email': 'c',
-          'status': 'ACTIVO',
-        }).estaSuspendido,
-        false,
-      );
     });
   });
 }

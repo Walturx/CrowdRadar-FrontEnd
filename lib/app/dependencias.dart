@@ -185,7 +185,10 @@ class Dependencias {
         comportamiento: comportamiento,
         sesion: sesion,
       ),
-      moderacion: ModeracionRepositoryFake(comportamiento: comportamiento),
+      moderacion: ModeracionRepositoryFake(
+        comportamiento: comportamiento,
+        sesion: sesion,
+      ),
     );
   }
 }

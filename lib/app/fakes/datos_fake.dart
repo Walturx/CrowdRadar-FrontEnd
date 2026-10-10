@@ -6,12 +6,25 @@ import '../../core/network/respuesta_api.dart';
 const String emailFake = 'ana@test.com';
 const String passwordFake = 'Secreta1';
 
+/// Admin credentials accepted by the fakes (same password).
+const String emailAdminFake = 'admin@test.com';
+
 const Usuario usuarioFake = Usuario(
   id: 1,
   nombre: 'Ana',
   apellido: 'Paz',
   email: emailFake,
   rol: 'USUARIO',
+  distrito: 'Miraflores',
+  status: 'ACTIVO',
+);
+
+const Usuario usuarioAdminFake = Usuario(
+  id: 10,
+  nombre: 'Admin',
+  apellido: 'CrowdRadar',
+  email: emailAdminFake,
+  rol: 'ADMIN',
   distrito: 'Miraflores',
   status: 'ACTIVO',
 );
