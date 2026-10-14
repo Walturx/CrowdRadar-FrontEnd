@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/rutas.dart';
 import '../../../core/map/tipos_mapa.dart';
 import '../../../core/models/lugar_detalle.dart';
 import '../../../core/models/nivel_saturacion.dart';
@@ -165,6 +167,11 @@ class _Contenido extends StatelessWidget {
           onPressed: onReportar,
           icon: const Icon(Icons.campaign_outlined),
           label: const Text('Reportar saturación'),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => context.push(Rutas.historial(detalle.id)),
+          icon: const Icon(Icons.bar_chart),
+          label: const Text('Ver historial'),
         ),
         const EtiquetaSeccion('INFORMACIÓN'),
         if (detalle.direccion != null) _Fila('Dirección', detalle.direccion!),
