@@ -90,6 +90,10 @@ class ComparacionPeriodos extends Equatable {
   final bool suficiente;
   final String? mensaje;
 
+  /// True when the data is synthetic demo data; the backend flags it on the
+  /// response, not on each period.
+  final bool sintetico;
+
   const ComparacionPeriodos(
     this.periodoA,
     this.periodoB, {
@@ -97,20 +101,21 @@ class ComparacionPeriodos extends Equatable {
     this.resumen,
     this.suficiente = true,
     this.mensaje,
+    this.sintetico = false,
   });
 
   bool get sinDatos => !suficiente || periodoA.sinDatos || periodoB.sinDatos;
-
-  bool get sintetico => periodoA.sintetico || periodoB.sintetico;
 
   /// Periods arrive either as the 24 hourly slots (backend) or as a series.
   factory ComparacionPeriodos.fromJson(Map<String, dynamic> j) {
     SerieSaturacion periodo(Object? o) => o is List
         ? SerieSaturacion(puntos: _puntos(o))
         : SerieSaturacion.fromJson(aMapa(o));
+    final a = periodo(j['periodoA']);
+    final b = periodo(j['periodoB']);
     return ComparacionPeriodos(
-      periodo(j['periodoA']),
-      periodo(j['periodoB']),
+      a,
+      b,
       diferencias: [
         for (final d in aLista(j['diferencias']))
           DiferenciaHora(
@@ -121,6 +126,7 @@ class ComparacionPeriodos extends Equatable {
       resumen: aTexto(j['resumen']),
       suficiente: aBool(j['suficiente']) ?? true,
       mensaje: aTexto(j['mensaje']),
+      sintetico: aBool(j['sintetico']) ?? (a.sintetico || b.sintetico),
     );
   }
 
@@ -132,6 +138,7 @@ class ComparacionPeriodos extends Equatable {
     resumen,
     suficiente,
     mensaje,
+    sintetico,
   ];
 }
 
