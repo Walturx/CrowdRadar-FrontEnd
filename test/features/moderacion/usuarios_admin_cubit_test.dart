@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'json_moderacion.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements ModeracionRepository {}
 
@@ -471,5 +472,51 @@ void main() {
 
     await expectLater(futuro, completes);
     expect(c.state, const UsuariosAdminCargando());
+  });
+
+  group('common errors', () {
+    When<Future<Pagina<UsuarioAdmin>>> cuandoPide() => when(
+      () => repo.usuarios(
+        q: any(named: 'q'),
+        status: any(named: 'status'),
+        orden: any(named: 'orden'),
+        page: any(named: 'page'),
+        size: any(named: 'size'),
+      ),
+    );
+
+    testErroresComunes('a failed first load ends as UsuariosAdminError', (
+      caso,
+    ) async {
+      cuandoPide().thenThrow(caso.error);
+      final c = cubit();
+
+      await c.cargar();
+
+      expect(
+        c.state,
+        UsuariosAdminError(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      await c.close();
+    });
+
+    testErroresComunes('a failed filter change keeps the list with an aviso', (
+      caso,
+    ) async {
+      final c = await cargado(_pagina([1, 2]));
+      cuandoPide().thenThrow(caso.error);
+
+      await c.filtrar(EstadoCuenta.suspendido);
+
+      final estado = c.state as UsuariosAdminCargado;
+      expect(estado.usuarios.map((u) => u.id), [1, 2]);
+      expect(estado.actualizando, isFalse);
+      expect(estado.aviso, caso.mensaje);
+      await c.close();
+    });
   });
 }

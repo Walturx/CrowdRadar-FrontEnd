@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'json_moderacion.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements ModeracionRepository {}
 
@@ -205,6 +206,42 @@ void main() {
       respuesta.complete(_eliminado);
 
       await expectLater(futuro, completes);
+    });
+  });
+
+  group('common errors', () {
+    testErroresComunes('a failed load ends as a retryable Error', (caso) async {
+      when(() => repo.reporteDenunciado(201)).thenThrow(caso.error);
+      final c = cubit();
+
+      await c.cargar();
+
+      expect(
+        c.state,
+        RevisionReporteError(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      await c.close();
+    });
+
+    testErroresComunes('a failed decision rolls back to the buttons', (
+      caso,
+    ) async {
+      final c = await cargado();
+      when(
+        () => repo.resolver(201, any(), comentario: any(named: 'comentario')),
+      ).thenThrow(caso.error);
+
+      await c.resolver(DecisionModeracion.eliminar);
+
+      expect(
+        c.state,
+        RevisionReporteCargado(detalle: _detalle, aviso: caso.mensaje),
+      );
+      await c.close();
     });
   });
 }

@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'json_moderacion.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements ModeracionRepository {}
 
@@ -264,6 +265,63 @@ void main() {
       expect(s.usuario.estaSuspendido, isTrue);
       expect(s.aviso, 'Falló');
       expect(s.enCurso, isFalse);
+      await c.close();
+    });
+  });
+
+  group('common errors', () {
+    testErroresComunes('a failed load ends as UsuarioAdminDetalleError', (
+      caso,
+    ) async {
+      when(() => repo.usuario(12)).thenThrow(caso.error);
+      final c = cubit();
+
+      await c.cargar();
+
+      expect(
+        c.state,
+        UsuarioAdminDetalleError(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      await c.close();
+    });
+
+    testErroresComunes('a failed suspension keeps the user active', (
+      caso,
+    ) async {
+      final c = await cargado(_activo);
+      when(
+        () => repo.suspender(
+          12,
+          dias: any(named: 'dias'),
+          motivo: any(named: 'motivo'),
+        ),
+      ).thenThrow(caso.error);
+
+      await c.suspender(7, _motivo);
+
+      expect(
+        c.state,
+        UsuarioAdminDetalleCargado(usuario: _activo, aviso: caso.mensaje),
+      );
+      await c.close();
+    });
+
+    testErroresComunes('a failed reactivation keeps the user suspended', (
+      caso,
+    ) async {
+      final c = await cargado(_suspendido);
+      when(() => repo.reactivar(12)).thenThrow(caso.error);
+
+      await c.reactivar();
+
+      expect(
+        c.state,
+        UsuarioAdminDetalleCargado(usuario: _suspendido, aviso: caso.mensaje),
+      );
       await c.close();
     });
   });

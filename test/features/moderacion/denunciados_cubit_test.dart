@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'json_moderacion.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements ModeracionRepository {}
 
@@ -239,6 +240,51 @@ void main() {
       expect(s.reportes, hasLength(1));
       expect(s.aviso, 'Falló');
       expect(s.cargandoMas, isFalse);
+      await c.close();
+    });
+  });
+
+  group('common errors', () {
+    void falla(ErrorComun caso, {int page = 1}) => when(
+      () => repo.reportesDenunciados(
+        page: page,
+        size: DenunciadosCubit.tamanoPagina,
+      ),
+    ).thenThrow(caso.error);
+
+    testErroresComunes('a failed first load ends as DenunciadosError', (
+      caso,
+    ) async {
+      falla(caso);
+      final c = cubit();
+
+      await c.cargar();
+
+      expect(
+        c.state,
+        DenunciadosError(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      await c.close();
+    });
+
+    testErroresComunes('a failed next page keeps the queue with an aviso', (
+      caso,
+    ) async {
+      stub(_pagina([201], totalPaginas: 2, total: 21));
+      falla(caso, page: 2);
+      final c = cubit();
+      await c.cargar();
+
+      await c.cargarMas();
+
+      final estado = c.state as DenunciadosCargado;
+      expect(estado.reportes.map((r) => r.reporteId), [201]);
+      expect(estado.cargandoMas, isFalse);
+      expect(estado.aviso, caso.mensaje);
       await c.close();
     });
   });
