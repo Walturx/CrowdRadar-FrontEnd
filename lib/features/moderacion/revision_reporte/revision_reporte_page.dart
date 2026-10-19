@@ -1,3 +1,4 @@
+import '../../../core/widgets/lista_perezosa.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -108,9 +109,9 @@ class _DetalleState extends State<_Detalle> {
     final d = widget.estado.detalle;
     final fecha = d.fechaHora;
     final ocupado = widget.estado.resolviendo;
-    return ListView(
+    return ListaPerezosa.secciones(
       padding: const EdgeInsets.all(16),
-      children: [
+      secciones: [
         Text(
           d.lugar.nombre,
           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),

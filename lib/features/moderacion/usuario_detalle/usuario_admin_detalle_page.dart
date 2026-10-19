@@ -1,3 +1,4 @@
+import '../../../core/widgets/lista_perezosa.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -58,9 +59,9 @@ class _Contenido extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final u = estado.usuario;
-    return ListView(
+    return ListaPerezosa.secciones(
       padding: const EdgeInsets.all(16),
-      children: [
+      secciones: [
         Text(
           u.nombreCompleto,
           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
