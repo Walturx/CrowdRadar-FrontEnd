@@ -4,6 +4,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:crowdradar/core/models/analitica.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
+import 'package:crowdradar/features/analitica/comun/analitica_cubit.dart';
 import 'package:crowdradar/features/analitica/comun/analitica_state.dart';
 import 'package:crowdradar/features/analitica/comparar/comparar_periodos_cubit.dart';
 import 'package:crowdradar/features/analitica/data/analitica_repository.dart';
@@ -11,6 +12,7 @@ import 'package:crowdradar/features/analitica/historial/historial_lugar_cubit.da
 import 'package:crowdradar/features/analitica/mejor_horario/mejor_horario_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements AnaliticaRepository {}
 
@@ -270,5 +272,63 @@ void main() {
         expect(c.state, isA<AnaliticaSinDatos<MejorHorario>>());
       },
     );
+  });
+
+  group('common errors (AnaliticaCubit base, every screen)', () {
+    Future<void> esperarError<T>(
+      AnaliticaCubit<T> cubit,
+      ErrorComun caso,
+    ) async {
+      await cubit.cargar();
+
+      expect(
+        cubit.state,
+        AnaliticaError<T>(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      expect(cubit.enVuelo, isFalse, reason: 'a retry must be possible');
+      await cubit.close();
+    }
+
+    testErroresComunes('HistorialLugarCubit ends in Error', (caso) {
+      when(
+        () => repo.historial(
+          7,
+          desde: any(named: 'desde'),
+          hasta: any(named: 'hasta'),
+          agrupacion: any(named: 'agrupacion'),
+        ),
+      ).thenThrow(caso.error);
+      return esperarError(
+        HistorialLugarCubit(repo, 7, reloj: () => _hoy),
+        caso,
+      );
+    });
+
+    testErroresComunes('CompararPeriodosCubit ends in Error', (caso) {
+      when(
+        () => repo.comparar(
+          7,
+          desdeA: any(named: 'desdeA'),
+          hastaA: any(named: 'hastaA'),
+          desdeB: any(named: 'desdeB'),
+          hastaB: any(named: 'hastaB'),
+          diasA: any(named: 'diasA'),
+          diasB: any(named: 'diasB'),
+        ),
+      ).thenThrow(caso.error);
+      return esperarError(
+        CompararPeriodosCubit(repo, 7, reloj: () => _hoy),
+        caso,
+      );
+    });
+
+    testErroresComunes('MejorHorarioCubit ends in Error', (caso) {
+      when(() => repo.mejorHorario(7)).thenThrow(caso.error);
+      return esperarError(MejorHorarioCubit(repo, 7), caso);
+    });
   });
 }
