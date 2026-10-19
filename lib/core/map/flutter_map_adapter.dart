@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../network/cliente_http_factory.dart';
 import '../widgets/pin_saturacion.dart';
 import 'mapa_adapter.dart';
 import 'tipos_mapa.dart';
@@ -11,7 +12,9 @@ import 'tipos_mapa.dart';
 class FlutterMapAdapter implements MapaAdapter {
   static const String urlTiles =
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-  static const String userAgent = 'com.crowdradar.app';
+
+  /// OSM tile usage policy: identify the app (its Android applicationId).
+  static const String userAgent = 'com.example.crowdradar';
 
   /// TextSourceAttribution prepends the copyright sign itself.
   static const String atribucion = 'OpenStreetMap contributors';
@@ -20,11 +23,39 @@ class FlutterMapAdapter implements MapaAdapter {
   static const double _tamanoUbicacion = 20;
   static const Color _colorUbicacion = Colors.blue;
 
+  /// Upper bound of the on-disk tile cache.
+  static const int tamanoMaximoCache = 200 * 1024 * 1024;
+
   /// Injectable so tests never hit the network.
   final TileProvider? _tileProvider;
 
-  FlutterMapAdapter({TileProvider? tileProvider})
-    : _tileProvider = tileProvider;
+  /// Created on the first real map only (it touches the file system).
+  final MapCachingProvider Function() _cacheTiles;
+
+  /// Shared by every map: the layer disposes its provider, never this client.
+  late final _clienteTiles = const ClienteHttpFactory().crear();
+
+  FlutterMapAdapter({
+    TileProvider? tileProvider,
+    MapCachingProvider Function()? cacheTiles,
+  }) : _tileProvider = tileProvider,
+       _cacheTiles = cacheTiles ?? _cacheEnDisco;
+
+  /// flutter_map's built-in disk cache, which honours the tile server's
+  /// HTTP freshness headers (OSM policy) and survives app restarts.
+  static MapCachingProvider _cacheEnDisco() =>
+      BuiltInMapCachingProvider.getOrCreateInstance(
+        maxCacheSize: tamanoMaximoCache,
+      );
+
+  /// A fresh provider per [TileLayer], since the layer disposes it.
+  @visibleForTesting
+  TileProvider proveedorTiles() =>
+      _tileProvider ??
+      NetworkTileProvider(
+        httpClient: _clienteTiles,
+        cachingProvider: _cacheTiles(),
+      );
 
   @override
   Widget construirMapa({
@@ -58,7 +89,7 @@ class FlutterMapAdapter implements MapaAdapter {
         TileLayer(
           urlTemplate: urlTiles,
           userAgentPackageName: userAgent,
-          tileProvider: _tileProvider,
+          tileProvider: proveedorTiles(),
           errorTileCallback: alErrorTile == null
               ? null
               : (_, _, _) => alErrorTile(),

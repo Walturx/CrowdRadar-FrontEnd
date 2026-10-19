@@ -270,4 +270,49 @@ void main() {
       expect(cargados, 0);
     });
   });
+
+  group('disk tile cache', () {
+    test('by default tiles go through the network with the disk cache', () {
+      const cache = _CacheFalso();
+      final proveedor = FlutterMapAdapter(
+        cacheTiles: () => cache,
+      ).proveedorTiles();
+
+      expect(proveedor, isA<NetworkTileProvider>());
+      expect((proveedor as NetworkTileProvider).cachingProvider, same(cache));
+    });
+
+    test('an injected tile provider wins over the cache', () {
+      final local = _TileProviderLocal();
+
+      expect(
+        FlutterMapAdapter(
+          tileProvider: local,
+          cacheTiles: () => throw StateError('must not be created'),
+        ).proveedorTiles(),
+        same(local),
+      );
+    });
+
+    test('the cache keeps at most 200 MB of tiles', () {
+      expect(FlutterMapAdapter.tamanoMaximoCache, 200 * 1024 * 1024);
+    });
+
+    testWidgets('requests identify the app per the OSM tile policy', (
+      tester,
+    ) async {
+      await _montar(tester, adapter);
+
+      final capa = tester.widget<TileLayer>(find.byType(TileLayer));
+      expect(
+        capa.tileProvider.headers['User-Agent'],
+        'flutter_map (${FlutterMapAdapter.userAgent})',
+      );
+      expect(FlutterMapAdapter.userAgent, 'com.example.crowdradar');
+    });
+  });
+}
+
+class _CacheFalso with DisabledMapCachingProvider {
+  const _CacheFalso();
 }
