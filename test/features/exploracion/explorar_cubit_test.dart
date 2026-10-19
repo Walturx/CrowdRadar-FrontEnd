@@ -11,6 +11,7 @@ import 'package:crowdradar/features/exploracion/explorar/explorar_cubit.dart';
 import 'package:crowdradar/features/exploracion/explorar/explorar_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements ExploracionRepository {}
 
@@ -143,6 +144,30 @@ void main() {
       await pumpEventQueue();
 
       expect(estados, isEmpty);
+    });
+  });
+
+  group('common errors', () {
+    testErroresComunes('a failed categories load ends as ExplorarError', (
+      caso,
+    ) async {
+      final cubit = ExplorarCubit(
+        ExploracionRepositoryFake(
+          comportamiento: ComportamientoFake(fallo: caso.error),
+        ),
+      );
+
+      await cubit.cargarCategorias();
+
+      expect(
+        cubit.state,
+        ExplorarError(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      await cubit.close();
     });
   });
 }
