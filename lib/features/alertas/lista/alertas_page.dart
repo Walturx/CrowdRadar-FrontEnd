@@ -1,3 +1,4 @@
+import '../../../core/widgets/lista_perezosa.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -60,9 +61,10 @@ class _AlertasPageState extends State<AlertasPage> {
               title: AlertasPage.mensajeVacio,
               subtitle: AlertasPage.ayudaVacio,
             ),
-          AlertasCargado() => ListView(
+          AlertasCargado(:final alertas) => ListaPerezosa(
             padding: const EdgeInsets.all(16),
-            children: [for (final a in state.alertas) _Tarjeta(a)],
+            cantidad: alertas.length,
+            fila: (_, i) => _Tarjeta(alertas[i]),
           ),
         },
       ),
