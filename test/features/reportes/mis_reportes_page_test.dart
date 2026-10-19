@@ -7,6 +7,7 @@ import 'package:crowdradar/core/models/reporte_saturacion.dart';
 import 'package:crowdradar/features/reportes/data/reporte_repository.dart';
 import 'package:crowdradar/features/reportes/mis_reportes/mis_reportes_page.dart';
 import 'package:crowdradar/core/models/validacion.dart';
+import 'package:crowdradar/core/widgets/lista_perezosa.dart';
 import 'package:crowdradar/features/validacion/data/validacion_repository.dart';
 import 'package:crowdradar/features/validacion/widgets/chip_estado_validacion.dart';
 import 'package:flutter/material.dart';
@@ -24,8 +25,9 @@ void main() {
     ReporteRepository repo, {
     int size = 20,
     ValidacionRepository? validacion,
+    double alto = 3200,
   }) async {
-    tester.view.physicalSize = const Size(800, 3200);
+    tester.view.physicalSize = Size(800, alto);
     addTearDown(tester.view.resetPhysicalSize);
     await tester.pumpWidget(
       RepositoryProvider<ReporteRepository>.value(
@@ -141,6 +143,37 @@ void main() {
     await tester.pump();
 
     expect(find.byType(ListTile), findsNWidgets(3));
+    expect(find.text('Cargar más'), findsNothing);
+  });
+
+  testWidgets('R3-009 Cargar más below the fold appends the next page', (
+    tester,
+  ) async {
+    final repo = ReporteRepositoryFake();
+    for (var lugar = 1; lugar <= 12; lugar++) {
+      await repo.reportar(lugar, NivelSaturacion.tranquilo);
+    }
+    // 10 rows overflow this short screen, so the footer is built lazily.
+    await abrir(tester, repo, size: 10, alto: 1200);
+    expect(find.text('Cargar más'), findsNothing);
+    final lista = find.descendant(
+      of: find.byType(ListaPerezosa),
+      matching: find.byType(Scrollable),
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Cargar más'),
+      300,
+      scrollable: lista,
+    );
+    await tester.tap(find.text('Cargar más'));
+    await tester.pump();
+    await tester.pump();
+    // The oldest report (place 1) arrives with the second page.
+    final primero = lugaresFake.firstWhere((l) => l.id == 1).nombre;
+    await tester.scrollUntilVisible(find.text(primero), 300, scrollable: lista);
+
+    expect(find.text(primero), findsOneWidget);
     expect(find.text('Cargar más'), findsNothing);
   });
 }
