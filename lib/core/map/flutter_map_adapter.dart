@@ -14,6 +14,8 @@ class FlutterMapAdapter implements MapaAdapter {
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
   /// OSM tile usage policy: identify the app (its Android applicationId).
+  /// Must change together with `applicationId` in android/app/build.gradle.kts
+  /// before publishing (`com.example.*` is a placeholder id).
   static const String userAgent = 'com.example.crowdradar';
 
   /// TextSourceAttribution prepends the copyright sign itself.
@@ -32,14 +34,23 @@ class FlutterMapAdapter implements MapaAdapter {
   /// Created on the first real map only (it touches the file system).
   final MapCachingProvider Function() _cacheTiles;
 
-  /// Shared by every map: the layer disposes its provider, never this client.
-  late final _clienteTiles = const ClienteHttpFactory().crear();
+  final ClienteHttpFactory _fabricaCliente;
+
+  /// Owned by this adapter: a [NetworkTileProvider] never closes a client it
+  /// was given, so only [cerrar] does.
+  late final _clienteTiles = _fabricaCliente.crear();
+
+  /// Created with the first real map and reused by every later one.
+  NetworkTileProvider? _proveedorRed;
+  bool _cerrado = false;
 
   FlutterMapAdapter({
     TileProvider? tileProvider,
     MapCachingProvider Function()? cacheTiles,
+    ClienteHttpFactory fabricaCliente = const ClienteHttpFactory(),
   }) : _tileProvider = tileProvider,
-       _cacheTiles = cacheTiles ?? _cacheEnDisco;
+       _cacheTiles = cacheTiles ?? _cacheEnDisco,
+       _fabricaCliente = fabricaCliente;
 
   /// flutter_map's built-in disk cache, which honours the tile server's
   /// HTTP freshness headers (OSM policy) and survives app restarts.
@@ -48,14 +59,25 @@ class FlutterMapAdapter implements MapaAdapter {
         maxCacheSize: tamanoMaximoCache,
       );
 
-  /// A fresh provider per [TileLayer], since the layer disposes it.
+  /// One provider shared by every [TileLayer]: a layer disposing it is
+  /// harmless, since [NetworkTileProvider.dispose] leaves an external client
+  /// open and holds no other state.
   @visibleForTesting
   TileProvider proveedorTiles() =>
       _tileProvider ??
-      NetworkTileProvider(
+      (_proveedorRed ??= NetworkTileProvider(
         httpClient: _clienteTiles,
         cachingProvider: _cacheTiles(),
-      );
+      ));
+
+  /// Closes the tile HTTP client. The adapter lives as long as the app (the
+  /// composition root, `Dependencias`, has no disposal path), so this exists
+  /// for owners with a shorter lifetime; maps must not be built afterwards.
+  void cerrar() {
+    if (_cerrado) return;
+    _cerrado = true;
+    if (_proveedorRed != null) _clienteTiles.close();
+  }
 
   @override
   Widget construirMapa({
