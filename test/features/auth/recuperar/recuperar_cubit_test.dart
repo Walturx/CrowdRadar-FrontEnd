@@ -5,6 +5,7 @@ import 'package:crowdradar/features/auth/recuperar/recuperar_cubit.dart';
 import 'package:crowdradar/features/auth/recuperar/recuperar_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../../helpers/errores_comunes.dart';
 
 class _AuthRepoMock extends Mock implements AuthRepository {}
 
@@ -127,5 +128,26 @@ void main() {
     final envio = cubit.enviar('ana@test.com');
     await cubit.close();
     await expectLater(envio, completes);
+  });
+
+  group('common errors', () {
+    testErroresComunes('ends as Fallido and accepts a retry', (caso) async {
+      when(() => repo.solicitarRecuperacion(any())).thenThrow(caso.error);
+      final c = RecuperarCubit(repo);
+
+      await c.enviar('ana@test.com');
+
+      expect(
+        c.state,
+        RecuperarFallido(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      when(() => repo.solicitarRecuperacion(any())).thenAnswer((_) async {});
+      await c.enviar('ana@test.com');
+      expect(c.state, const RecuperarEnviado(RecuperarCubit.mensajeNeutral));
+    });
   });
 }

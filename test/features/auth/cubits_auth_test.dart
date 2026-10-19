@@ -11,6 +11,7 @@ import 'package:crowdradar/features/auth/registro/registro_state.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _AuthRepoMock extends Mock implements AuthRepository {}
 
@@ -300,6 +301,68 @@ void main() {
           distrito: any(named: 'distrito'),
         ),
       ).called(1);
+    });
+  });
+
+  group('LoginCubit common errors', () {
+    testErroresComunes('ends as Fallido and accepts a retry', (caso) async {
+      when(() => repo.iniciarSesion(any(), any())).thenThrow(caso.error);
+      final c = LoginCubit(repo);
+
+      await c.iniciarSesion('a@b.c', 'x');
+
+      expect(
+        c.state,
+        LoginFallido(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      when(
+        () => repo.iniciarSesion(any(), any()),
+      ).thenAnswer((_) async => _user);
+      await c.iniciarSesion('a@b.c', 'x');
+      expect(c.state, const LoginExitoso(_user));
+    });
+  });
+
+  group('RegistroCubit common errors', () {
+    testErroresComunes('ends as Fallido and accepts a retry', (caso) async {
+      When<Future<Usuario>> cuandoRegistra() => when(
+        () => repo.registrar(
+          nombre: any(named: 'nombre'),
+          apellido: any(named: 'apellido'),
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+          telefono: any(named: 'telefono'),
+          distrito: any(named: 'distrito'),
+        ),
+      );
+      Future<void> registrar(RegistroCubit c) => c.registrar(
+        nombre: 'Ana',
+        apellido: 'Paz',
+        email: 'a@b.c',
+        password: 'Secreta1',
+        telefono: '',
+        distrito: 'Lima',
+      );
+      cuandoRegistra().thenThrow(caso.error);
+      final c = RegistroCubit(repo);
+
+      await registrar(c);
+
+      expect(
+        c.state,
+        RegistroFallido(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      cuandoRegistra().thenAnswer((_) async => _user);
+      await registrar(c);
+      expect(c.state, const RegistroExitoso());
     });
   });
 }
