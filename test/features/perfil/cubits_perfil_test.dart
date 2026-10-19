@@ -10,6 +10,7 @@ import 'package:crowdradar/features/perfil/ver/perfil_cubit.dart';
 import 'package:crowdradar/features/perfil/ver/perfil_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _PerfilRepoMock extends Mock implements PerfilRepository {}
 
@@ -299,5 +300,62 @@ void main() {
         verify(() => repo.actualizar(any())).called(1);
       },
     );
+  });
+
+  group('PerfilCubit common errors', () {
+    testErroresComunes('a failed load ends as PerfilError', (caso) async {
+      when(() => repo.obtener()).thenThrow(caso.error);
+      final c = PerfilCubit(repo);
+
+      await c.cargar();
+
+      expect(
+        c.state,
+        PerfilError(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      await c.close();
+    });
+
+    testErroresComunes('a failed refresh keeps the profile with a warning', (
+      caso,
+    ) async {
+      when(() => repo.obtener()).thenAnswer((_) async => _user);
+      final c = PerfilCubit(repo);
+      await c.cargar();
+      when(() => repo.obtener()).thenThrow(caso.error);
+
+      await c.refrescar();
+
+      expect(c.state, PerfilCargado(_user, errorActualizacion: caso.mensaje));
+      await c.close();
+    });
+  });
+
+  group('EditarPerfilCubit common errors', () {
+    testErroresComunes('a failed save ends as Fallido and accepts a retry', (
+      caso,
+    ) async {
+      when(() => repo.actualizar(any())).thenThrow(caso.error);
+      final c = EditarPerfilCubit(repo);
+
+      await c.guardar({'nombre': 'Beatriz'});
+
+      expect(
+        c.state,
+        EditarPerfilFallido(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      when(() => repo.actualizar(any())).thenAnswer((_) async => _editado);
+      await c.guardar({'nombre': 'Beatriz'});
+      expect(c.state, const EditarPerfilGuardado(_editado));
+      await c.close();
+    });
   });
 }
