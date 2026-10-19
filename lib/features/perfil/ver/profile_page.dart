@@ -1,3 +1,4 @@
+import '../../../core/widgets/lista_perezosa.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -104,9 +105,9 @@ class _ProfileViewState extends State<_ProfileView> {
             ),
           );
 
-          return ListView(
+          return ListaPerezosa.secciones(
             padding: const EdgeInsets.only(bottom: 24),
-            children: [
+            secciones: [
               Container(
                 width: double.infinity,
                 color: AppColors.primary,
