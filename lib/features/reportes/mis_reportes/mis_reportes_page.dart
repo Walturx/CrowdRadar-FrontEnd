@@ -6,6 +6,7 @@ import '../../../core/utils/formato_fecha.dart';
 import '../../../core/widgets/cargando.dart';
 import '../../../core/widgets/chip_saturacion.dart';
 import '../../../core/widgets/estado_error.dart';
+import '../../../core/widgets/lista_perezosa.dart';
 import '../../../theme/app_colors.dart';
 import '../../../core/models/validacion.dart';
 import '../../validacion/data/validacion_repository.dart';
@@ -83,16 +84,17 @@ class _Lista extends StatelessWidget {
     final estados = conEstados
         ? context.watch<EstadoValidacionCubit>().state
         : null;
-    return ListView(
+    final reportes = estado.reportes;
+    return ListaPerezosa(
       padding: const EdgeInsets.only(bottom: 24),
-      children: [
-        for (final r in estado.reportes)
-          _Fila(
-            r,
-            validacion: estados is EstadoValidacionCargado
-                ? estados.estadoDe(r.id)
-                : null,
-          ),
+      cantidad: reportes.length,
+      fila: (context, i) => _Fila(
+        reportes[i],
+        validacion: estados is EstadoValidacionCargado
+            ? estados.estadoDe(reportes[i].id)
+            : null,
+      ),
+      pie: [
         for (final error in [estado.errorActualizacion, estado.errorMas])
           if (error != null)
             Padding(
