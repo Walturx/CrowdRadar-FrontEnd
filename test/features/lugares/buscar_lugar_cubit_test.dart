@@ -11,6 +11,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../fakes/lugar_repo_falso.dart';
+import '../../helpers/errores_comunes.dart';
 
 const _kennedy = LugarResumen(
   id: 1,
@@ -420,5 +421,41 @@ void main() {
         });
       },
     );
+  });
+
+  group('common errors', () {
+    testErroresComunes('a failed search ends as BuscarError, retryable', (
+      caso,
+    ) {
+      final error = caso.error;
+      fakeAsync((reloj) {
+        final repo = RepoLugarFalso(alBuscar: (_) async => throw error);
+        final cubit = BuscarLugarCubit(repo);
+
+        cubit.alCambiarTexto('Par');
+        reloj.elapse(_espera);
+        reloj.flushMicrotasks();
+
+        expect(
+          cubit.state,
+          BuscarError(
+            caso.esSinConexion
+                ? BuscarLugarCubit.mensajeSinConexion
+                : BuscarLugarCubit.mensajeError,
+            consulta: 'Par',
+            codigo: error.code,
+            esSinConexion: caso.esSinConexion,
+          ),
+        );
+        repo.alBuscar = (_) async => resultado([_kennedy]);
+        cubit.reintentar();
+        reloj.flushMicrotasks();
+        expect(
+          cubit.state,
+          const BuscarResultados([_kennedy], consulta: 'Par'),
+        );
+        cubit.close();
+      });
+    });
   });
 }
