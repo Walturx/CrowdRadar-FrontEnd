@@ -1,3 +1,4 @@
+import '../../../core/widgets/lista_perezosa.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/config/entorno.dart';
@@ -17,9 +18,9 @@ class AcercaPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Acerca de')),
-    body: ListView(
+    body: ListaPerezosa.secciones(
       padding: const EdgeInsets.all(24),
-      children: [
+      secciones: [
         const Text(
           'CrowdRadar',
           style: TextStyle(
