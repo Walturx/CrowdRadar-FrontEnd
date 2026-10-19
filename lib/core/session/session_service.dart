@@ -95,17 +95,17 @@ class SessionService {
 
   /// On the startup path: both reads go out together, and an empty storage
   /// (signed out) skips the wipe round-trip.
+  ///
+  /// [Future.wait] listens to both reads from the start, so a read failing
+  /// while the other is pending (or after the timeout) is never an uncaught
+  /// error: the first failure reaches [restaurar], later ones are dropped.
   Future<void> _leerPersistida(int generacion) async {
-    final lecturaToken = _storage.leerToken();
-    final lecturaUsuario = _storage.leerUsuario();
-    final String? token;
-    try {
-      token = await lecturaToken;
-    } catch (_) {
-      lecturaUsuario.ignore();
-      rethrow;
-    }
-    final usuario = await lecturaUsuario;
+    final lecturas = await Future.wait<Object?>([
+      _storage.leerToken(),
+      _storage.leerUsuario(),
+    ], eagerError: true);
+    final token = lecturas[0] as String?;
+    final usuario = lecturas[1] as UsuarioSesion?;
     if (generacion != _generacionRestauracion) return;
     if (token == null && usuario == null) return;
     if (token == null ||
@@ -142,6 +142,8 @@ class SessionService {
   /// Memory is cleared and [SesionCerrada] is always emitted; a storage
   /// failure is reported but must never keep the app authenticated.
   Future<void> cerrar(MotivoCierre motivo) async {
+    // A restore still reading storage must not bring the session back.
+    _generacionRestauracion++;
     _token = null;
     _usuario = null;
     try {

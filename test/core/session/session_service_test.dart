@@ -101,6 +101,98 @@ void main() {
       expect(sesion.usuario, usuarioPrueba);
     });
 
+    test(
+      'R3-001 user read failing while the token read is pending is handled',
+      () async {
+        final registro = RegistroFalso();
+        final contador = _StorageContador()
+          ..token = tokenVigente
+          ..usuario = usuarioPrueba
+          ..errorUsuario = StateError('keystore user')
+          ..retenerToken = Completer<void>();
+        sesion.configurar(contador, reloj: () => ahora, registro: registro);
+        final noCapturados = <Object>[];
+        final terminado = Completer<void>();
+
+        runZonedGuarded(() async {
+          await sesion.restaurar();
+          terminado.complete();
+        }, (e, _) => noCapturados.add(e));
+        await pumpEventQueue();
+        contador.retenerToken!.complete();
+        await terminado.future;
+        await pumpEventQueue();
+
+        expect(noCapturados, isEmpty);
+        expect(sesion.token, isNull);
+        expect(sesion.usuario, isNull);
+        expect(registro.registros.single.error, isA<StateError>());
+      },
+    );
+
+    test(
+      'R3-001 user read failing after the timeout is not an uncaught error',
+      () => fakeAsync((reloj) {
+        final contador = _StorageContador()
+          ..token = tokenVigente
+          ..usuario = usuarioPrueba
+          ..errorUsuario = StateError('keystore user')
+          ..retrasoUsuario = const Duration(milliseconds: 100)
+          ..retenerToken = Completer<void>();
+        sesion.configurar(
+          contador,
+          reloj: () => ahora,
+          registro: RegistroFalso(),
+          timeoutRestaurar: const Duration(milliseconds: 20),
+        );
+        final noCapturados = <Object>[];
+
+        var restaurada = false;
+        runZonedGuarded(
+          () => sesion.restaurar().then((_) => restaurada = true),
+          (e, _) => noCapturados.add(e),
+        );
+        reloj.elapse(const Duration(milliseconds: 20));
+        expect(restaurada, isTrue);
+        reloj.elapse(const Duration(milliseconds: 200));
+        reloj.flushMicrotasks();
+
+        expect(noCapturados, isEmpty);
+        expect(sesion.token, isNull);
+        expect(sesion.usuario, isNull);
+      }),
+    );
+
+    test(
+      'R3-002 logout during a parallel restore discards the stale read',
+      () async {
+        final contador = _StorageContador()
+          ..token = tokenVigente
+          ..usuario = usuarioPrueba
+          ..retenerToken = Completer<void>();
+        sesion.configurar(contador, reloj: () => ahora);
+
+        final restauracion = sesion.restaurar();
+        await pumpEventQueue();
+        await sesion.cerrar(MotivoCierre.usuario);
+        contador.retenerToken!.complete();
+        await restauracion;
+
+        expect(sesion.token, isNull);
+        expect(sesion.usuario, isNull);
+      },
+    );
+
+    test('R3-002 token present but user missing still wipes storage', () async {
+      final contador = _StorageContador()..token = tokenVigente;
+      sesion.configurar(contador, reloj: () => ahora);
+
+      await sesion.restaurar();
+
+      expect(sesion.token, isNull);
+      expect(contador.borrados, 1);
+    });
+
     test('S4.5 storage failure means no session and no crash', () async {
       sesion.configurar(StorageQueFalla(), reloj: () => ahora);
 
@@ -392,21 +484,31 @@ void main() {
   });
 }
 
-/// Counts wipes and user reads; can hold the token read open.
+/// Counts wipes and user reads; can hold the token read open and make the
+/// user read fail (optionally after a delay).
 class _StorageContador extends MemoriaTokenStorage {
   int borrados = 0;
   int lecturasUsuario = 0;
   Completer<void>? retenerToken;
+  Object? errorUsuario;
+  Duration? retrasoUsuario;
 
+  /// Returns the token stored when the read started, like a real read
+  /// already in flight.
   @override
   Future<String?> leerToken() async {
+    final leido = token;
     await retenerToken?.future;
-    return token;
+    return leido;
   }
 
   @override
   Future<UsuarioSesion?> leerUsuario() async {
     lecturasUsuario++;
+    final retraso = retrasoUsuario;
+    if (retraso != null) await Future<void>.delayed(retraso);
+    final error = errorUsuario;
+    if (error != null) throw error;
     return usuario;
   }
 
