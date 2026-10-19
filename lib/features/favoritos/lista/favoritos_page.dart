@@ -1,3 +1,4 @@
+import '../../../core/widgets/lista_perezosa.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -121,15 +122,18 @@ class _Lista extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final favoritos = estado.favoritos;
-    return ListView(
+    return ListaPerezosa(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      children: [
+      cabecera: [
         _AlertasMaestro(estado),
         EtiquetaSeccion(_conteo(favoritos.length)),
         if (favoritos.isEmpty) const _Vacio(),
-        for (final f in favoritos)
-          _Fila(f, ocupado: estado.procesando.contains(f.lugarId)),
       ],
+      cantidad: favoritos.length,
+      fila: (_, i) {
+        final f = favoritos[i];
+        return _Fila(f, ocupado: estado.procesando.contains(f.lugarId));
+      },
     );
   }
 
