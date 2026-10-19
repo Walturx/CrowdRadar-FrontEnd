@@ -10,6 +10,7 @@ import 'package:crowdradar/core/session/sesion_cubit.dart';
 import 'package:crowdradar/core/session/sesion_state.dart';
 import 'package:crowdradar/core/session/usuario_sesion.dart';
 import 'package:crowdradar/core/storage/secure_token_storage.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -198,9 +199,9 @@ void main() {
 
     test(
       'R3-F01 a late storage result after the timeout is discarded',
-      () async {
+      () => fakeAsync((reloj) {
         final lento = StorageLento();
-        await lento.guardar(tokenVigente, usuarioPrueba);
+        lento.guardar(tokenVigente, usuarioPrueba);
         sesion.configurar(
           lento,
           reloj: () => ahora,
@@ -210,14 +211,19 @@ void main() {
         final eventos = <EventoSesion>[];
         final sub = sesion.eventos.listen(eventos.add);
 
-        await sesion.restaurar();
-        await Future<void>.delayed(const Duration(milliseconds: 500));
-        await sub.cancel();
+        var restaurada = false;
+        sesion.restaurar().then((_) => restaurada = true);
+        reloj.elapse(const Duration(milliseconds: 20));
+        expect(restaurada, isTrue);
+        // Well past the slow read (300 ms): its late result must be dropped.
+        reloj.elapse(const Duration(milliseconds: 500));
+        sub.cancel();
+        reloj.flushMicrotasks();
 
         expect(sesion.token, isNull);
         expect(sesion.usuario, isNull);
         expect(eventos, isEmpty);
-      },
+      }),
     );
 
     test('R4-004 storage failure on restore is reported', () async {
