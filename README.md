@@ -3,6 +3,14 @@
 Mobile client for CrowdRadar: live crowd saturation of places, reports,
 validation, favorites and an admin moderation area.
 
+## Requirements
+
+- Flutter stable with Dart `^3.11.5` (`pubspec.yaml`); `pubspec.lock` needs
+  Flutter `>=3.38.4`. Measured and tested with Flutter 3.41.9 / Dart 3.11.5
+  (`docs/metricas-baseline.md`).
+- Android emulator or device. For the real backend, run
+  `docker compose up` in the backend repo (API on `:3000`).
+
 ## Run
 
 ```bash
@@ -24,9 +32,46 @@ the Android **debug** manifest only.
 ```bash
 flutter analyze
 flutter test
+flutter test --coverage && dart run tool/coverage_summary.dart   # coverage/lcov.info -> Markdown tables (total, lib/features, per feature)
 ```
 
 `test/core/reglas_arquitectura_test.dart` enforces the layering rules below.
+
+Performance harness (profile mode, real backend with the bench seed from the
+backend's `scripts/bench`; the app uses the default `http://10.0.2.2:3000`):
+
+```bash
+flutter drive --profile --no-dds \
+  --driver=test_driver/perf_driver.dart \
+  --target=integration_test/perf/app_perf_test.dart \
+  --dart-define=PERF_ADMIN_PASSWORD=...   # optional: admin scenarios are skipped without it
+```
+
+`PERF_USER_EMAIL` / `PERF_USER_PASSWORD` / `PERF_ADMIN_EMAIL` default to the
+bench accounts. Results land in `build/perf/` (one JSON per scenario plus a
+Markdown table). Baseline numbers: `docs/metricas-baseline.md`.
+
+## Diagramas
+
+PlantUML sources in `docs/diagramas/` with the rendered SVG next to each one
+(rendered with the `plantuml/plantuml:1.2024.7` Docker image):
+
+| Diagram | SVG | Source |
+|---|---|---|
+| Components and layers (composition root, HTTP vs fake repositories, `ApiClient` + interceptors, `MapaAdapter`) | [componentes.svg](docs/diagramas/componentes.svg) | [componentes.puml](docs/diagramas/componentes.puml) |
+| Navigation (go_router: main and admin `StatefulShellRoute`s, guards, every path) | [navegacion.svg](docs/diagramas/navegacion.svg) | [navegacion.puml](docs/diagramas/navegacion.puml) |
+| Sequence: create a report, validate it, see its validation status (with error branches) | [secuencia-reporte-validacion.svg](docs/diagramas/secuencia-reporte-validacion.svg) | [secuencia-reporte-validacion.puml](docs/diagramas/secuencia-reporte-validacion.puml) |
+| Deployment (device, docker compose API + Postgres, OSM tiles + disk cache) | [despliegue.svg](docs/diagramas/despliegue.svg) | [despliegue.puml](docs/diagramas/despliegue.puml) |
+
+Backend diagrams (components, ER, create-report and JWT-login sequences,
+deployment) live in the backend repository under `docs/diagramas/`.
+
+Re-render (Git Bash):
+
+```bash
+MSYS_NO_PATHCONV=1 docker run --rm -v "$(pwd -W)/docs/diagramas:/data" \
+  plantuml/plantuml:1.2024.7 -tsvg /data/*.puml
+```
 
 ## Folder tree
 
@@ -40,6 +85,11 @@ lib/
     data/              <x>_repository.dart (interface) + <x>_repository_http.dart
     <screen>/          page + cubit + state
   layout/ theme/       shells (main/admin) and theming
+test/                  unit, cubit, widget and app tests (mirrors lib/)
+integration_test/perf/ frame-timing scenarios (perf harness)
+test_driver/           host side of the perf harness (writes build/perf/)
+tool/                  coverage_summary.dart
+docs/                  metricas-baseline.md, diagramas/
 ```
 
 Rules: features depend on `core` and on repository **interfaces**, never on
@@ -64,6 +114,11 @@ notifications come in an `EventosMapa` parameter object: `alMoverCamara`
 `alErrorTile` and `alTileCargado` (tile failed / loaded; the offline banner is
 shown once per outage and re-armed when a tile loads again). Bounds are
 `LimitesMapa`; the wire format of `bbox` is `minLng,minLat,maxLng,maxLat`.
+
+Tiles come from `tile.openstreetmap.org` (flutter_map 8, `NetworkTileProvider`)
+and are cached on disk with flutter_map's built-in
+`BuiltInMapCachingProvider` (`FlutterMapAdapter.tamanoMaximoCache` = 200 MB),
+which honours the server's HTTP freshness headers and survives restarts.
 
 Every places request sends `limite`: `MapaCubit.limiteLugares = 200` (map) and
 `BuscarLugarCubit.limiteResultados = 50` (search). `MapaCubit.centro` is the
@@ -177,8 +232,8 @@ list is the guaranteed channel.
   screen shows as "Ese correo no está registrado" (HU 2.1 c3). The reset form
   itself is a page served by the backend (`/recuperar/restablecer?token=`).
 - **Change password** (`/perfil/password`, `CambiarPasswordCubit`): checks the
-  match and the policy (8-64 characters, an uppercase, a digit; see
-  `requisitos_password.dart`) before calling the API. On success the session
+  match and the policy (8-64 characters, at most 72 UTF-8 bytes, an
+  uppercase, a digit; see `core/utils/politica_password.dart`) before calling the API. On success the session
   ends with `MotivoCierre.passwordCambiada` (the old token is stale on the
   server) and the login shows the notice.
 - **Login messages** (`mensajeDeLogin`): by `code`, `CREDENCIALES_INVALIDAS`,
