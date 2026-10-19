@@ -1,3 +1,4 @@
+import '../../../core/widgets/lista_perezosa.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -52,9 +53,9 @@ class _Lista extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final visibles = estado.visibles;
-    return ListView(
+    return ListaPerezosa(
       padding: const EdgeInsets.only(bottom: 24),
-      children: [
+      cabecera: [
         Padding(
           padding: const EdgeInsets.all(12),
           child: Wrap(
@@ -88,8 +89,9 @@ class _Lista extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-        for (final r in visibles) _Fila(r),
       ],
+      cantidad: visibles.length,
+      fila: (_, i) => _Fila(visibles[i]),
     );
   }
 }

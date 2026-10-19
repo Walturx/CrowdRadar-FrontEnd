@@ -1,3 +1,4 @@
+import '../../../core/widgets/lista_perezosa.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -73,9 +74,9 @@ class _Contenido extends StatelessWidget {
   Widget build(BuildContext context) {
     final voto = estado.ultimoVoto;
     final siguiente = estado.reportes.firstOrNull;
-    return ListView(
+    return ListaPerezosa.secciones(
       padding: const EdgeInsets.all(16),
-      children: [
+      secciones: [
         if (voto != null) _Gracias(voto),
         if (siguiente == null)
           const SizedBox(
