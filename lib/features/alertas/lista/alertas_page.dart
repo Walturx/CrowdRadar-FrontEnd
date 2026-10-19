@@ -64,6 +64,7 @@ class _AlertasPageState extends State<AlertasPage> {
           AlertasCargado(:final alertas) => ListaPerezosa(
             padding: const EdgeInsets.all(16),
             cantidad: alertas.length,
+            idFila: (i) => alertas[i].id,
             fila: (_, i) => _Tarjeta(alertas[i]),
           ),
         },

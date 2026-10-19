@@ -88,6 +88,7 @@ class _Lista extends StatelessWidget {
     return ListaPerezosa(
       padding: const EdgeInsets.only(bottom: 24),
       cantidad: reportes.length,
+      idFila: (i) => reportes[i].id,
       fila: (context, i) => _Fila(
         reportes[i],
         validacion: estados is EstadoValidacionCargado
