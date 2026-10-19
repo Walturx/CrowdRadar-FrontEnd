@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,6 +9,7 @@ import 'package:crowdradar/core/network/interceptores/auth_interceptor.dart';
 import 'package:crowdradar/core/network/interceptores/interceptor_api.dart';
 import 'package:crowdradar/core/network/interceptores/sesion_expirada_interceptor.dart';
 import 'package:crowdradar/core/session/motivo_cierre.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import '../../fakes/registro_falso.dart';
 import 'package:http/http.dart' as http;
@@ -265,20 +267,41 @@ void main() {
       expect(e.message, ApiException.mensajeSinConexion);
     });
 
-    test('S3.5 timeout maps to sinConexion', () async {
-      final api = _cliente(
-        (_) => Future.delayed(
-          const Duration(milliseconds: 300),
-          () => _json(200, {}),
-        ),
-        timeout: const Duration(milliseconds: 20),
-      );
+    test('S3.5 the default 15 s timeout maps to sinConexion', () {
+      fakeAsync((async) {
+        final registro = RegistroFalso();
+        final api = _cliente(
+          (_) => Completer<http.Response>().future,
+          registro: registro,
+        );
+        Object? error;
+        api
+            .get<Object?>('/api/x', parser: _identidad)
+            .then<void>((_) {}, onError: (Object e) => error = e);
 
-      final e = await _capturar(
-        () => api.get<Object?>('/api/x', parser: _identidad),
-      );
+        async.elapse(
+          ApiClient.timeoutPorDefecto - const Duration(milliseconds: 1),
+        );
+        expect(error, isNull, reason: 'still waiting just before 15 s');
 
-      expect(e.esSinConexion, isTrue);
+        async.elapse(const Duration(milliseconds: 1));
+        expect(
+          error,
+          isA<ApiException>()
+              .having((e) => e.status, 'status', 0)
+              .having((e) => e.esSinConexion, 'esSinConexion', isTrue)
+              .having(
+                (e) => e.message,
+                'message',
+                ApiException.mensajeSinConexion,
+              ),
+        );
+        expect(registro.registros.single.error, isA<TimeoutException>());
+      });
+    });
+
+    test('S3.5 the default timeout is 15 s', () {
+      expect(ApiClient.timeoutPorDefecto, const Duration(seconds: 15));
     });
 
     test('S3.5 http.ClientException maps to sinConexion', () async {
