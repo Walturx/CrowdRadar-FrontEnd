@@ -1,3 +1,4 @@
+import '../../../core/widgets/lista_perezosa.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -77,9 +78,9 @@ class VistaAnalitica<C extends AnaliticaCubit<T>, T> extends StatelessWidget {
           mensaje: mensaje,
           onReintentar: () => context.read<C>().cargar(),
         ),
-        AnaliticaCargado(:final datos) => ListView(
+        AnaliticaCargado(:final datos) => ListaPerezosa.secciones(
           padding: const EdgeInsets.all(16),
-          children: [
+          secciones: [
             construir(context, datos),
             if (esSintetico(datos)) const AvisoDemo(),
           ],
