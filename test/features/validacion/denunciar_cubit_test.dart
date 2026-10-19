@@ -7,6 +7,7 @@ import 'package:crowdradar/features/validacion/denunciar/denunciar_cubit.dart';
 import 'package:crowdradar/features/validacion/denunciar/denunciar_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements ValidacionRepository {}
 
@@ -167,5 +168,37 @@ void main() {
     espera.complete();
 
     await expectLater(f, completes);
+  });
+
+  group('common errors', () {
+    testErroresComunes('a failure is not blocking: back to the form', (
+      caso,
+    ) async {
+      when(
+        () => repo.denunciar(31, any(), detalle: any(named: 'detalle')),
+      ).thenThrow(caso.error);
+
+      await cubit.enviar(MotivoDenuncia.spam, '');
+
+      expect(cubit.state, DenunciarFormulario(error: caso.mensaje));
+      stubOk();
+      await cubit.enviar(MotivoDenuncia.spam, '');
+      expect(cubit.state, const DenunciarEnviado());
+    });
+
+    for (final status in [500, 502, 503]) {
+      test('$status falls back to the form with the server message', () async {
+        when(
+          () => repo.denunciar(31, any(), detalle: any(named: 'detalle')),
+        ).thenThrow(_api(status, 'ERROR_INTERNO', 'Servidor no disponible'));
+
+        await cubit.enviar(MotivoDenuncia.spam, '');
+
+        expect(
+          cubit.state,
+          const DenunciarFormulario(error: 'Servidor no disponible'),
+        );
+      });
+    }
   });
 }
