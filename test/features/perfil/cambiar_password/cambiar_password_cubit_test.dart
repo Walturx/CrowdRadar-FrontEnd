@@ -5,6 +5,7 @@ import 'package:crowdradar/features/perfil/cambiar_password/cambiar_password_sta
 import 'package:crowdradar/features/perfil/data/perfil_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../../helpers/errores_comunes.dart';
 
 class _PerfilRepoMock extends Mock implements PerfilRepository {}
 
@@ -224,5 +225,30 @@ void main() {
     final envio = cambiarValido(cubit);
     await cubit.close();
     await expectLater(envio, completes);
+  });
+
+  group('common errors', () {
+    testErroresComunes(
+      'ends as Fallido; only transport failures are uncertain',
+      (caso) async {
+        falla(caso.error);
+        final c = CambiarPasswordCubit(repo);
+
+        await cambiarValido(c);
+
+        expect(
+          c.state,
+          CambiarPasswordFallido(
+            caso.esSinConexion
+                ? CambiarPasswordCubit.mensajeResultadoIncierto
+                : caso.mensaje,
+            codigo: caso.error.code,
+            esSinConexion: caso.esSinConexion,
+            resultadoIncierto: caso.esSinConexion,
+          ),
+        );
+        await c.close();
+      },
+    );
   });
 }
