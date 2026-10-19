@@ -130,6 +130,7 @@ class _Lista extends StatelessWidget {
         if (favoritos.isEmpty) const _Vacio(),
       ],
       cantidad: favoritos.length,
+      idFila: (i) => favoritos[i].lugarId,
       fila: (_, i) {
         final f = favoritos[i];
         return _Fila(f, ocupado: estado.procesando.contains(f.lugarId));

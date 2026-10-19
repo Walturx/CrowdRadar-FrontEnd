@@ -81,6 +81,7 @@ class _Lista extends StatelessWidget {
           const SizedBox(height: 8),
         ],
         cantidad: estado.reportes.length,
+        idFila: (i) => estado.reportes[i].reporteId,
         fila: (_, i) => _Tarjeta(estado.reportes[i]),
         pie: [
           if (estado.hayMas)
