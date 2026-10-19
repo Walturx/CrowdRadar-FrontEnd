@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'json_validacion.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements ValidacionRepository {}
 
@@ -97,5 +98,46 @@ void main() {
     final c = await cargado([]);
 
     expect((c.state as EstadoValidacionCargado).reportes, isEmpty);
+  });
+
+  group('common errors', () {
+    testErroresComunes('a failed first load ends as EstadoValidacionError', (
+      caso,
+    ) async {
+      when(
+        () => repo.estadoMisReportes(size: any(named: 'size')),
+      ).thenThrow(caso.error);
+      final c = EstadoValidacionCubit(repo);
+
+      await c.cargar();
+
+      expect(
+        c.state,
+        EstadoValidacionError(caso.mensaje, esSinConexion: caso.esSinConexion),
+      );
+      await c.close();
+    });
+
+    testErroresComunes('a failed refresh keeps the list and the filter', (
+      caso,
+    ) async {
+      final c = await cargado(items);
+      c.filtrar(FiltroEstadoValidacion.rechazados);
+      when(
+        () => repo.estadoMisReportes(size: any(named: 'size')),
+      ).thenThrow(caso.error);
+
+      await c.cargar();
+
+      expect(
+        c.state,
+        EstadoValidacionCargado(
+          items,
+          filtro: FiltroEstadoValidacion.rechazados,
+          errorActualizacion: caso.mensaje,
+        ),
+      );
+      await c.close();
+    });
   });
 }

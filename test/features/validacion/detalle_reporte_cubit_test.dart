@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'json_validacion.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements ValidacionRepository {}
 
@@ -192,5 +193,38 @@ void main() {
     c.descartarAviso();
 
     expect(estado(c).aviso, isNull);
+  });
+
+  group('common errors', () {
+    testErroresComunes('a failed first load ends as DetalleError', (
+      caso,
+    ) async {
+      when(() => repo.obtenerReporte(31)).thenThrow(caso.error);
+      final c = DetalleReporteCubit(repo, 31);
+
+      await c.cargar();
+
+      expect(
+        c.state,
+        DetalleError(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      await c.close();
+    });
+
+    testErroresComunes('a failed vote keeps the detail unvoted with a notice', (
+      caso,
+    ) async {
+      final c = await cargado();
+      when(() => repo.validar(31, any())).thenThrow(caso.error);
+
+      await c.validar(TipoAccionValidacion.confirmar);
+
+      expect(c.state, DetalleCargado(_detalle(), aviso: caso.mensaje));
+      await c.close();
+    });
   });
 }

@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'json_validacion.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements ValidacionRepository {}
 
@@ -326,6 +327,47 @@ void main() {
       c.descartarAviso();
 
       expect((c.state as PendientesCargado).aviso, isNull);
+    });
+  });
+
+  group('common errors', () {
+    testErroresComunes('a failed first load ends as PendientesError', (
+      caso,
+    ) async {
+      when(
+        () => repo.pendientes(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenThrow(caso.error);
+      final c = cubit();
+
+      await c.cargar();
+
+      expect(
+        c.state,
+        PendientesError(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      await c.close();
+    });
+
+    testErroresComunes('a failed vote puts the report back with a notice', (
+      caso,
+    ) async {
+      final c = await cargado([1, 2]);
+      when(() => repo.validar(1, any())).thenThrow(caso.error);
+
+      await c.votar(_r(1), TipoAccionValidacion.confirmar);
+
+      expect(
+        c.state,
+        PendientesCargado(reportes: [_r(1), _r(2)], aviso: caso.mensaje),
+      );
+      await c.close();
     });
   });
 }
