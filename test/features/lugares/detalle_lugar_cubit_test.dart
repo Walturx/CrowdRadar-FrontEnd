@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../fakes/lugar_repo_falso.dart';
+import '../../helpers/errores_comunes.dart';
 
 const _detalle = LugarDetalle(
   id: 1,
@@ -471,6 +472,53 @@ void main() {
 
       expect((await favoritos.listar()).estaVacia, isTrue);
       expect(cubit.state, const DetalleCargando());
+      await cubit.close();
+    });
+  });
+
+  group('common errors', () {
+    testErroresComunes('a failed load ends as DetalleError, retryable', (
+      caso,
+    ) async {
+      final cubit = DetalleLugarCubit(
+        RepoLugarFalso(alObtener: (_) async => throw caso.error),
+        FavoritoRepositoryFake(),
+        1,
+      );
+
+      await cubit.cargar();
+
+      expect(
+        cubit.state,
+        DetalleError(
+          DetalleLugarCubit.mensajeError,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      expect((cubit.state as DetalleError).esNoEncontrado, isFalse);
+      await cubit.close();
+    });
+
+    testErroresComunes('a failed favorite toggle keeps the flag', (caso) async {
+      final cubit = _cubit(
+        _detalle,
+        favoritos: FavoritoRepositoryFake(
+          comportamiento: ComportamientoFake(fallo: caso.error),
+        ),
+      );
+      await cubit.cargar();
+
+      await cubit.alternarFavorito();
+
+      expect(
+        cubit.state,
+        DetalleCargado(
+          _detalle,
+          esFavorito: false,
+          errorFavorito: caso.mensaje,
+        ),
+      );
       await cubit.close();
     });
   });

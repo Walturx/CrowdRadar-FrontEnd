@@ -12,6 +12,7 @@ import 'package:crowdradar/features/lugares/mapa/mapa_state.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import '../../fakes/lugar_repo_falso.dart';
+import '../../helpers/errores_comunes.dart';
 
 const _kennedy = LugarResumen(
   id: 1,
@@ -530,5 +531,31 @@ void main() {
         await cubit.close();
       },
     );
+  });
+
+  group('common errors', () {
+    testErroresComunes('a failed area load ends as MapaError, retryable', (
+      caso,
+    ) async {
+      final repo = RepoLugarFalso(alBuscar: (_) async => throw caso.error);
+      final cubit = MapaCubit(repo);
+
+      await cubit.cargar(_b1);
+
+      expect(
+        cubit.state,
+        MapaError(
+          caso.esSinConexion
+              ? MapaCubit.mensajeSinConexion
+              : MapaCubit.mensajeError,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      repo.alBuscar = (_) => resultado([_kennedy]);
+      await cubit.reintentar();
+      expect(cubit.state, const MapaCargado([_kennedy]));
+      await cubit.close();
+    });
   });
 }
