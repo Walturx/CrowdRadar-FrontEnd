@@ -93,10 +93,21 @@ class SessionService {
     }
   }
 
+  /// On the startup path: both reads go out together, and an empty storage
+  /// (signed out) skips the wipe round-trip.
   Future<void> _leerPersistida(int generacion) async {
-    final token = await _storage.leerToken();
-    final usuario = await _storage.leerUsuario();
+    final lecturaToken = _storage.leerToken();
+    final lecturaUsuario = _storage.leerUsuario();
+    final String? token;
+    try {
+      token = await lecturaToken;
+    } catch (_) {
+      lecturaUsuario.ignore();
+      rethrow;
+    }
+    final usuario = await lecturaUsuario;
     if (generacion != _generacionRestauracion) return;
+    if (token == null && usuario == null) return;
     if (token == null ||
         usuario == null ||
         JwtUtil.estaExpirado(token, ahora: _reloj())) {

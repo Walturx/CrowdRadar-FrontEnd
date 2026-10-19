@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 class AppTheme {
-  static ThemeData get lightTheme => ThemeData(
+  /// Built once: `ColorScheme.fromSeed` is not free and both the boot screen
+  /// and the app use it.
+  static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.primary,

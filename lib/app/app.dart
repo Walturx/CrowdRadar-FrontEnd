@@ -70,11 +70,15 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
     // Listen before initializing: a tap that launched the app is emitted by
     // `inicializar` itself.
     _toques = deps.receptorPush.lugarAbierto.listen(_abrirLugar);
-    unawaited(_iniciarPush());
-    // A restored session registers the device now; later sign ins on the event
-    // ([RegistroDispositivo] never sends the same token twice).
-    if (deps.sesion.token != null) unawaited(_dispositivo.registrar());
     _eventosSesion = deps.sesion.eventos.listen(_alCambiarSesion);
+    // Not needed for the first frame: push setup and the device registration
+    // of a restored session (later sign ins register on the event;
+    // [RegistroDispositivo] never sends the same token twice) wait for it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_iniciarPush());
+      if (deps.sesion.token != null) unawaited(_dispositivo.registrar());
+    });
   }
 
   void _alCambiarSesion(EventoSesion evento) {
