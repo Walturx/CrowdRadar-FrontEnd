@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:crowdradar/core/network/api_client.dart';
 import 'package:crowdradar/core/network/interceptores/interceptores_sesion.dart';
 import 'package:crowdradar/core/config/entorno.dart';
@@ -6,6 +8,7 @@ import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/core/storage/memoria_token_storage.dart';
 import 'package:crowdradar/core/session/sesion_cubit.dart';
 import 'package:crowdradar/core/session/sesion_state.dart';
+import 'package:crowdradar/core/session/usuario_sesion.dart';
 import 'package:crowdradar/core/storage/secure_token_storage.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -68,6 +71,33 @@ void main() {
 
       expect(sesion.token, isNull);
       expect(await storage.leerToken(), isNull);
+    });
+
+    test('startup: nothing stored means no wipe round-trip', () async {
+      final contador = _StorageContador();
+      sesion.configurar(contador, reloj: () => ahora);
+
+      await sesion.restaurar();
+
+      expect(sesion.token, isNull);
+      expect(contador.borrados, 0);
+    });
+
+    test('startup: token and user are read concurrently', () async {
+      final contador = _StorageContador()
+        ..token = tokenVigente
+        ..usuario = usuarioPrueba
+        ..retenerToken = Completer<void>();
+      sesion.configurar(contador, reloj: () => ahora);
+
+      final restauracion = sesion.restaurar();
+      await Future<void>.delayed(Duration.zero);
+      expect(contador.lecturasUsuario, 1);
+
+      contador.retenerToken!.complete();
+      await restauracion;
+      expect(sesion.token, tokenVigente);
+      expect(sesion.usuario, usuarioPrueba);
     });
 
     test('S4.5 storage failure means no session and no crash', () async {
@@ -354,4 +384,29 @@ void main() {
       expect(await s.leerUsuario(), isNull);
     });
   });
+}
+
+/// Counts wipes and user reads; can hold the token read open.
+class _StorageContador extends MemoriaTokenStorage {
+  int borrados = 0;
+  int lecturasUsuario = 0;
+  Completer<void>? retenerToken;
+
+  @override
+  Future<String?> leerToken() async {
+    await retenerToken?.future;
+    return token;
+  }
+
+  @override
+  Future<UsuarioSesion?> leerUsuario() async {
+    lecturasUsuario++;
+    return usuario;
+  }
+
+  @override
+  Future<void> borrar() async {
+    borrados++;
+    await super.borrar();
+  }
 }

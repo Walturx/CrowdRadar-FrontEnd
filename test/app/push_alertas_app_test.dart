@@ -12,6 +12,7 @@ import 'package:crowdradar/core/session/motivo_cierre.dart';
 import 'package:crowdradar/features/alertas/data/alerta_repository.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../fakes/jwt_falso.dart';
@@ -66,10 +67,14 @@ class _ReceptorEmisor extends _ReceptorFalso {
 class _ReceptorFalso implements ReceptorPush {
   final StreamController<int> toques = StreamController<int>();
   int inicializaciones = 0;
+  SchedulerPhase? faseAlInicializar;
   String? token = 'tok-dev';
 
   @override
-  Future<void> inicializar() async => inicializaciones++;
+  Future<void> inicializar() async {
+    faseAlInicializar ??= SchedulerBinding.instance.schedulerPhase;
+    inicializaciones++;
+  }
 
   @override
   Future<String?> obtenerToken() async => token;
@@ -121,6 +126,14 @@ void main() {
   });
 
   group('device registration', () {
+    testWidgets('startup: push setup waits until the first frame is built', (
+      tester,
+    ) async {
+      await abrir(tester);
+
+      expect(receptor.faseAlInicializar, SchedulerPhase.postFrameCallbacks);
+    });
+
     testWidgets('a restored session registers the device token', (
       tester,
     ) async {
