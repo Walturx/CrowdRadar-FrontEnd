@@ -12,6 +12,7 @@ import 'package:crowdradar/features/favoritos/lista/favoritos_cubit.dart';
 import 'package:crowdradar/features/favoritos/lista/favoritos_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements FavoritoRepository {}
 
@@ -505,5 +506,43 @@ void main() {
 
     expect(cubit.state, const FavoritosError('Caído', codigo: 'X'));
     await cubit.close();
+  });
+
+  group('common errors', () {
+    testErroresComunes('a failed load ends as FavoritosError', (caso) async {
+      final repo = _MockRepo();
+      when(() => repo.listar()).thenThrow(caso.error);
+      final cubit = FavoritosCubit(repo);
+
+      await cubit.cargar();
+
+      expect(
+        cubit.state,
+        FavoritosError(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      await cubit.close();
+    });
+
+    testErroresComunes('a failed removal keeps the row with a soft error', (
+      caso,
+    ) async {
+      final repo = _MockRepo();
+      when(() => repo.listar()).thenAnswer((_) async => _lista([_fav(1)]));
+      when(() => repo.eliminar(1)).thenThrow(caso.error);
+      final cubit = FavoritosCubit(repo);
+      await cubit.cargar();
+
+      await cubit.eliminar(1);
+
+      expect(_cargado(cubit).favoritos, [_fav(1)]);
+      expect(_cargado(cubit).error, caso.mensaje);
+      expect(_cargado(cubit).eliminado, isNull);
+      expect(_cargado(cubit).procesando, isEmpty);
+      await cubit.close();
+    });
   });
 }
