@@ -1,14 +1,17 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:crowdradar/core/map/flutter_map_adapter.dart';
 import 'package:crowdradar/core/map/mapa_adapter.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
+import 'package:crowdradar/core/network/cliente_http_factory.dart';
 import 'package:crowdradar/core/widgets/pin_saturacion.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 
 /// 1x1 transparent PNG so tests never hit the network.
 final _png = base64Decode(
@@ -298,21 +301,99 @@ void main() {
       expect(FlutterMapAdapter.tamanoMaximoCache, 200 * 1024 * 1024);
     });
 
-    testWidgets('requests identify the app per the OSM tile policy', (
-      tester,
-    ) async {
-      await _montar(tester, adapter);
+    test('R3-005 tile requests identify the app by its applicationId', () {
+      final gradle = File('android/app/build.gradle.kts').readAsStringSync();
+      final applicationId = RegExp(
+        r'applicationId\s*=\s*"([^"]+)"',
+      ).firstMatch(gradle)!.group(1);
 
-      final capa = tester.widget<TileLayer>(find.byType(TileLayer));
+      final capa = _capaDeTiles(
+        FlutterMapAdapter(cacheTiles: () => const _CacheFalso()),
+      );
+
+      // TileLayer keeps userAgentPackageName only as this derived header.
       expect(
         capa.tileProvider.headers['User-Agent'],
-        'flutter_map (${FlutterMapAdapter.userAgent})',
+        'flutter_map ($applicationId)',
       );
-      expect(FlutterMapAdapter.userAgent, 'com.example.crowdradar');
+    });
+
+    test('R3-003 consecutive maps reuse one network tile provider', () {
+      var caches = 0;
+      final adaptador = FlutterMapAdapter(
+        cacheTiles: () {
+          caches++;
+          return const _CacheFalso();
+        },
+      );
+
+      final primero = _capaDeTiles(adaptador).tileProvider;
+      final segundo = _capaDeTiles(adaptador).tileProvider;
+
+      expect(primero, isA<NetworkTileProvider>());
+      expect(segundo, same(primero));
+      expect(caches, 1);
+    });
+  });
+
+  group('R3-004 tile client lifetime', () {
+    test('cerrar closes the tile HTTP client exactly once', () {
+      final fabrica = _FabricaClienteFalsa();
+      final adaptador = FlutterMapAdapter(
+        cacheTiles: () => const _CacheFalso(),
+        fabricaCliente: fabrica,
+      );
+      _capaDeTiles(adaptador);
+
+      adaptador.cerrar();
+      adaptador.cerrar();
+
+      expect(fabrica.creados, 1);
+      expect(fabrica.cliente.cierres, 1);
+    });
+
+    test('cerrar before any map neither creates nor closes a client', () {
+      final fabrica = _FabricaClienteFalsa();
+
+      FlutterMapAdapter(
+        cacheTiles: () => const _CacheFalso(),
+        fabricaCliente: fabrica,
+      ).cerrar();
+
+      expect(fabrica.creados, 0);
     });
   });
 }
 
+TileLayer _capaDeTiles(FlutterMapAdapter adaptador) {
+  final mapa =
+      adaptador.construirMapa(centro: _centro, alTocarMarcador: (_) {})
+          as FlutterMap;
+  return mapa.children.whereType<TileLayer>().single;
+}
+
 class _CacheFalso with DisabledMapCachingProvider {
   const _CacheFalso();
+}
+
+class _ClienteFalso extends http.BaseClient {
+  int cierres = 0;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) =>
+      throw UnsupportedError('no network in tests');
+
+  @override
+  void close() => cierres++;
+}
+
+class _FabricaClienteFalsa extends ClienteHttpFactory {
+  final cliente = _ClienteFalso();
+  int creados = 0;
+
+  @override
+  http.Client crear() {
+    creados++;
+    return cliente;
+  }
 }
