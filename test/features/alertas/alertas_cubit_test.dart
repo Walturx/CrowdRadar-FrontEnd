@@ -11,6 +11,7 @@ import 'package:crowdradar/features/alertas/lista/alertas_cubit.dart';
 import 'package:crowdradar/features/alertas/lista/alertas_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements AlertaRepository {}
 
@@ -454,5 +455,48 @@ void main() {
 
     expect(cubit.state, const AlertasError('Caído', codigo: 'X'));
     await cubit.close();
+  });
+
+  group('common errors', () {
+    testErroresComunes('a failed first load ends as AlertasError', (
+      caso,
+    ) async {
+      final repo = _MockRepo();
+      when(() => repo.listar()).thenThrow(caso.error);
+      final cubit = AlertasCubit(repo);
+
+      await cubit.cargar();
+
+      expect(
+        cubit.state,
+        AlertasError(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      expect(cubit.errorCarga, isTrue);
+      expect(cubit.noLeidas, 0);
+      await cubit.close();
+    });
+
+    testErroresComunes('a failed refresh keeps the alerts with a soft error', (
+      caso,
+    ) async {
+      final repo = _MockRepo();
+      when(
+        () => repo.listar(),
+      ).thenAnswer((_) async => _pagina([_alerta(1)], 1));
+      final cubit = AlertasCubit(repo);
+      await cubit.cargar();
+      when(() => repo.listar()).thenThrow(caso.error);
+
+      await cubit.refrescar();
+
+      expect(_cargado(cubit).alertas, [_alerta(1)]);
+      expect(_cargado(cubit).noLeidas, 1);
+      expect(_cargado(cubit).error, caso.mensaje);
+      await cubit.close();
+    });
   });
 }
