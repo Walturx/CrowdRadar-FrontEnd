@@ -9,6 +9,7 @@ import 'package:crowdradar/features/reportes/reportar/reportar_cubit.dart';
 import 'package:crowdradar/features/reportes/reportar/reportar_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements ReporteRepository {}
 
@@ -271,5 +272,29 @@ void main() {
     c.seleccionarNivel(NivelSaturacion.saturado);
 
     expect(c.state, isA<ReportarEnviado>());
+  });
+
+  group('common errors', () {
+    testErroresComunes(
+      'a failed send keeps the level; only 5xx/offline retry',
+      (caso) async {
+        when(() => repo.reportar(7, any())).thenThrow(caso.error);
+        final c = cubit()..seleccionarNivel(NivelSaturacion.saturado);
+
+        await c.enviar();
+
+        expect(
+          c.state,
+          ReportarFallido(
+            caso.mensaje,
+            nivel: NivelSaturacion.saturado,
+            codigo: caso.error.code,
+            esSinConexion: caso.esSinConexion,
+            reintentable: caso != ErrorComun.sesionExpirada,
+          ),
+        );
+        await c.close();
+      },
+    );
   });
 }
