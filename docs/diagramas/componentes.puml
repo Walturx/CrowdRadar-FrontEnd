@@ -1,0 +1,108 @@
+@startuml componentes
+' Componentes del cliente Flutter CrowdRadar (derivado de lib/).
+' Cadena de una pantalla: Page -> Cubit -> <X>Repository (interfaz) -> <X>RepositoryHttp -> ApiClient -> backend
+' Composition root: lib/app/dependencias.dart (Dependencias.crear).
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam componentStyle uml2
+skinparam packageStyle rectangle
+
+title CrowdRadar Frontend - Componentes y capas
+
+actor "Usuario / Admin" as usuario
+cloud "API REST CrowdRadar\n(Express, :3000)" as backend
+cloud "tile.openstreetmap.org" as osm
+
+package "Arranque (lib/main.dart, lib/app/arranque.dart)" as arranque {
+  component "main()\n_iniciar(): Entorno.desdeDartDefine(),\nSessionService.instance.restaurar()" as main
+  component "ArranqueApp\n(PantallaErrorInicio + Reintentar)" as arr
+}
+
+package "app (composition root)" as app {
+  component "Dependencias.crear(entorno, sesion)\n<<composition root>>\nguard: esRelease && usarFakes -> StateError" as deps
+  component "_repositoriosHttp(api, sesion)\nAuthRepositoryHttp, PerfilRepositoryHttp,\nLugarRepositoryHttp, ReporteRepositoryHttp,\nAnaliticaRepositoryHttp, ValidacionRepositoryHttp,\nFavoritoRepositoryHttp, AlertaRepositoryHttp,\nExploracionRepositoryHttp, ModeracionRepositoryHttp" as reposHttp
+  component "_repositoriosFake(sesion, ComportamientoFake)\napp/fakes/*: <X>RepositoryFake\n(+ KarmaFake compartido, datos_fake.dart)" as reposFake
+  component "CrowdRadarApp\nMultiRepositoryProvider + SesionCubit\nRegistroDispositivo, MaterialApp.router" as crapp
+  component "crearRouter(SesionCubit)\nGoRouter + redirigirPorSesion\n(app_router.dart, guards.dart, rutas.dart)" as router
+}
+
+package "layout" as layout {
+  component "MainLayout / CrBottomNav\nAdminLayout" as shells
+}
+
+package "features/<feature>" as features {
+  component "Pages + Cubits (sealed states)\nauth, lugares, reportes, analitica,\nvalidacion, favoritos, alertas,\nexploracion, perfil, moderacion" as ui
+  interface "<X>Repository\n(data/<x>_repository.dart)" as irepo
+  component "<X>RepositoryHttp\n(data/<x>_repository_http.dart)\nunico lugar con endpoints" as repoHttp
+}
+
+package "core" as core {
+  package "config" {
+    component "Entorno\nAPI_URL (def. http://10.0.2.2:3000)\nUSAR_FAKES (def. false)" as entorno
+  }
+  package "network" {
+    component "ApiClient <<Facade>>\nget/post/put/patch/delete\ntimeout 15 s, RespuestaApi<T>,\nApiException" as api
+    component "ClienteHttpFactory\n<<Factory Method>>\n-> http.Client" as factory
+    component "interceptoresDeSesion(sesion)" as cadena
+    component "AuthInterceptor\nantesDeEnviar: Authorization: Bearer" as authI
+    component "SesionExpiradaInterceptor\nalRecibirError: 401 -> sesionExpirada\nCUENTA_SUSPENDIDA -> cuentaSuspendida\n(ignora /api/auth/)" as expI
+  }
+  package "session / storage" {
+    component "SessionService\n(token, eventos, expirar)" as sesion
+    component "SesionCubit <<Observer>>\nSesionAutenticada / SesionNoAutenticada" as sesionCubit
+    interface "TokenStorage" as ts
+    component "SecureTokenStorage\n(flutter_secure_storage)" as sts
+  }
+  package "map" {
+    interface "MapaAdapter <<Adapter port>>\nconstruirMapa(...)" as mapa
+    component "FlutterMapAdapter\nflutter_map 8 TileLayer\nNetworkTileProvider +\nBuiltInMapCachingProvider (200 MB)" as fma
+  }
+  package "push" {
+    interface "ReceptorPush" as rp
+    component "ReceptorPushNulo /\nReceptorPushConsola (fakes)" as rpImpl
+  }
+  component "models, utils (mensaje_error,\nlectura_json), widgets, logging" as comunes
+}
+
+usuario --> crapp
+main --> arr
+arr --> deps : iniciar()
+arr --> crapp : dependencias
+deps --> entorno
+deps --> api : crea
+deps --> reposHttp : usarFakes == false
+deps --> reposFake : usarFakes == true
+deps --> fma : mapaAdapter por defecto
+deps --> rpImpl
+crapp --> router
+router --> shells
+shells --> ui
+crapp ..> irepo : RepositoryProvider<X>Repository
+ui --> irepo : context.read / constructor
+repoHttp ..|> irepo
+reposHttp ..> repoHttp
+reposFake ..> irepo : implementa
+repoHttp --> api
+api --> factory
+api --> cadena
+cadena --> authI
+cadena --> expI
+authI ..> sesion : sesion.token
+expI ..> sesion : sesion.expirar(motivo)
+sesion --> ts
+sts ..|> ts
+sesionCubit ..> sesion : escucha eventos
+router ..> sesionCubit : refreshListenable
+ui --> mapa
+fma ..|> mapa
+rpImpl ..|> rp
+ui ..> comunes
+api --> backend : HTTPS/HTTP JSON
+fma --> osm : GET /{z}/{x}/{y}.png
+
+note bottom of deps
+  Strategy-style: ambos builders devuelven el mismo record _Repositorios;
+  las features solo conocen las interfaces <X>Repository.
+end note
+@enduml
