@@ -10,6 +10,7 @@ import 'package:crowdradar/features/reportes/mis_reportes/mis_reportes_cubit.dar
 import 'package:crowdradar/features/reportes/mis_reportes/mis_reportes_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements ReporteRepository {}
 
@@ -316,5 +317,49 @@ void main() {
         MisReportesCargado([_r(2), _r(1)]),
       ],
     );
+  });
+
+  group('common errors', () {
+    testErroresComunes('a failed first load ends as MisReportesError', (
+      caso,
+    ) async {
+      when(() => repo.listarMios(page: 1, size: 2)).thenThrow(caso.error);
+      final c = cubit();
+
+      await c.cargar();
+
+      expect(
+        c.state,
+        MisReportesError(
+          caso.mensaje,
+          codigo: caso.error.code,
+          esSinConexion: caso.esSinConexion,
+        ),
+      );
+      await c.close();
+    });
+
+    testErroresComunes('a failed next page keeps the list, retryable', (
+      caso,
+    ) async {
+      when(
+        () => repo.listarMios(page: 1, size: 2),
+      ).thenAnswer((_) async => _pagina([2, 1], totalPaginas: 2));
+      when(() => repo.listarMios(page: 2, size: 2)).thenThrow(caso.error);
+      final c = cubit();
+      await c.cargar();
+
+      await c.cargarMas();
+
+      expect(
+        c.state,
+        MisReportesCargado(
+          [_r(2), _r(1)],
+          hayMas: true,
+          errorMas: caso.mensaje,
+        ),
+      );
+      await c.close();
+    });
   });
 }
