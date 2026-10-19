@@ -7,6 +7,7 @@ import '../../../core/models/moderacion.dart';
 import '../../../core/widgets/cargando.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
+import '../../../core/widgets/lista_perezosa.dart';
 import '../../../core/widgets/mostrar_aviso.dart';
 import '../../../theme/app_colors.dart';
 import '../data/moderacion_repository.dart';
@@ -151,9 +152,9 @@ class _Lista extends StatelessWidget {
       );
     }
     final cubit = context.read<UsuariosAdminCubit>();
-    return ListView(
+    return ListaPerezosa(
       padding: const EdgeInsets.all(16),
-      children: [
+      cabecera: [
         Text(
           _encabezado,
           style: const TextStyle(
@@ -163,7 +164,10 @@ class _Lista extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        for (final u in estado.usuarios) _Fila(u),
+      ],
+      cantidad: estado.usuarios.length,
+      fila: (_, i) => _Fila(estado.usuarios[i]),
+      pie: [
         if (estado.hayMas)
           Center(
             child: estado.cargandoMas

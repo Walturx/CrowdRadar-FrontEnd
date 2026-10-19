@@ -9,6 +9,7 @@ import '../../../core/widgets/cargando.dart';
 import '../../../core/widgets/chip_saturacion.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
+import '../../../core/widgets/lista_perezosa.dart';
 import '../../../core/widgets/mostrar_aviso.dart';
 import '../../../theme/app_colors.dart';
 import '../data/moderacion_repository.dart';
@@ -66,9 +67,9 @@ class _Lista extends StatelessWidget {
     final cubit = context.read<DenunciadosCubit>();
     return RefreshIndicator(
       onRefresh: cubit.refrescar,
-      child: ListView(
+      child: ListaPerezosa(
         padding: const EdgeInsets.all(16),
-        children: [
+        cabecera: [
           Text(
             '${estado.total} REPORTES POR REVISAR',
             style: const TextStyle(
@@ -78,7 +79,10 @@ class _Lista extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          for (final r in estado.reportes) _Tarjeta(r),
+        ],
+        cantidad: estado.reportes.length,
+        fila: (_, i) => _Tarjeta(estado.reportes[i]),
+        pie: [
           if (estado.hayMas)
             Center(
               child: estado.cargandoMas
