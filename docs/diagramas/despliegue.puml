@@ -1,0 +1,54 @@
+@startuml despliegue
+' Despliegue local/demo del cliente Flutter frente al backend (docker-compose.yml del repo backend).
+' Mismo estilo que CrowdRadar-Backend/docs/diagramas/despliegue.puml.
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+left to right direction
+
+title CrowdRadar Frontend - Diagrama de despliegue
+
+node "Dispositivo Android / emulador AVD" as android {
+  node "App CrowdRadar\n(Flutter, APK debug/profile/release)" as apk {
+    artifact "Entorno.desdeDartDefine()\nAPI_URL (def. http://10.0.2.2:3000)\nUSAR_FAKES (def. false; rechazado en release)" as entorno
+    component "ApiClient\n(package:http, timeout 15 s)" as api
+    component "FlutterMapAdapter\nflutter_map 8.3 TileLayer\nNetworkTileProvider" as mapa
+    component "SecureTokenStorage\n(flutter_secure_storage)" as tokens
+  }
+  storage "Cache de tiles en disco\nBuiltInMapCachingProvider\n(max 200 MB, respeta cabeceras HTTP;\nlectura y escritura de tiles)" as cacheTiles
+  storage "Keystore / almacenamiento\nseguro (JWT)" as keystore
+}
+
+cloud "Internet" as internet {
+  node "tile.openstreetmap.org\n(OSM tile server)" as osm
+}
+
+node "Host Docker\n(PC de desarrollo / demo)" as host {
+  node "Red de compose (bridge)" as red {
+    node "api\n<<container>>\nnode:22-alpine\n(Express 5 + Sequelize 6)" as apiC
+    node "migrate\n<<container one-shot>>" as migrate
+    node "postgres\n<<container>>\npostgres:16-alpine" as postgres {
+      database "crowdradar" as bd
+    }
+  }
+  storage "volumen pgdata" as pgdata
+}
+
+entorno ..> api : baseUrl
+api --> apiC : HTTP/JSON REST :3000\n(emulador: 10.0.2.2 = host;\nhost PUERTO:-3000 -> contenedor 3000)\nAuthorization: Bearer JWT
+mapa --> osm : HTTPS GET /{z}/{x}/{y}.png\nUser-Agent: com.example.crowdradar
+mapa --> cacheTiles
+tokens --> keystore
+apiC --> bd : TCP postgres:5432
+migrate --> bd : DDL (migraciones)
+postgres --> pgdata
+apiC ..> migrate : depends_on\nservice_completed_successfully
+apiC ..> postgres : depends_on\nservice_healthy
+
+note bottom of apk
+  Con USAR_FAKES=true no hay trafico a la API:
+  cada <X>Repository es un <X>RepositoryFake en memoria.
+  HTTP en claro solo en el manifest de debug
+  (android:usesCleartextTraffic="true").
+end note
+@enduml

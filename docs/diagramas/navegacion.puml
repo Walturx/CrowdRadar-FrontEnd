@@ -1,0 +1,88 @@
+@startuml navegacion
+' Navegacion go_router (lib/app/app_router.dart, rutas.dart, guards.dart).
+' Dos StatefulShellRoute.indexedStack: MainLayout (4 ramas) y AdminLayout (2 ramas).
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam packageStyle rectangle
+left to right direction
+
+title CrowdRadar Frontend - Navegacion (go_router)
+
+rectangle "GoRouter (crearRouter)\ninitialLocation: /mapa\nrefreshListenable: _RefrescoPorSesion(SesionCubit.stream)\nredirect: redirigirPorSesion(sesion.state, uri.path)" as gr
+
+package "Rutas publicas (Rutas.publicas)" as pub {
+  rectangle "/login\nLoginPage" as login
+  rectangle "/registro\nRegisterPage" as registro
+  rectangle "/recuperar\nRecuperarPage" as recuperar
+}
+
+package "StatefulShellRoute.indexedStack -> MainLayout (CrBottomNav)" as main {
+  package "Rama 0: Mapa" as b0 {
+    rectangle "/mapa\nMapPage(centroCompartido)" as mapa
+    rectangle "/mapa/explorar\nExplorarPage (provisional)" as explorar
+    rectangle "/mapa/buscar\nBuscarLugarPage(centroMapa: extra)" as buscar
+    rectangle "/mapa/lugares/:id\nDetalleLugarPage(lugarId, centroMapa)" as lugar
+    rectangle "/mapa/lugares/:id/historial\nHistorialPage" as historial
+    rectangle "/mapa/lugares/:id/comparar\nCompararPage" as comparar
+    rectangle "/mapa/lugares/:id/mejor-horario\nMejorHorarioPage" as mejor
+  }
+  package "Rama 1: Validar" as b1 {
+    rectangle "/validar\nValidarPage(centro)" as validar
+    rectangle "/validar/reportes/:id\nDetalleReportePage(reporteId)" as detRep
+  }
+  package "Rama 2: Favoritos" as b2 {
+    rectangle "/favoritos\nFavoritosPage" as favoritos
+    rectangle "/favoritos/alertas\nAlertasPage" as alertas
+  }
+  package "Rama 3: Perfil" as b3 {
+    rectangle "/perfil\nProfilePage" as perfil
+    rectangle "/perfil/editar\nEditProfilePage(user: extra)" as editar
+    rectangle "/perfil/password\nCambiarPasswordPage" as password
+    rectangle "/perfil/acerca\nAcercaPage" as acerca
+    rectangle "/perfil/reportes\nMisReportesPage(validacion)" as misRep
+    rectangle "/perfil/validaciones\nEstadoValidacionPage" as estVal
+  }
+}
+
+package "StatefulShellRoute.indexedStack -> AdminLayout (solo esAdmin)" as admin {
+  package "Rama 0: Reportes" as a0 {
+    rectangle "/admin/reportes\nDenunciadosPage" as denunciados
+    rectangle "/admin/reportes/:id\nRevisionReportePage(reporteId)" as revision
+  }
+  package "Rama 1: Usuarios" as a1 {
+    rectangle "/admin/usuarios\nUsuariosAdminPage" as usuarios
+    rectangle "/admin/usuarios/:id\nUsuarioAdminDetallePage(usuarioId)" as usuario
+  }
+}
+
+gr --> pub
+gr --> main
+gr --> admin
+
+mapa --> explorar
+mapa --> buscar
+mapa --> lugar
+lugar --> historial
+lugar --> comparar
+lugar --> mejor
+validar --> detRep
+favoritos --> alertas
+perfil --> editar
+perfil --> password
+perfil --> acerca
+perfil --> misRep
+perfil --> estVal
+denunciados --> revision
+usuarios --> usuario
+
+note right of gr
+  <b>redirigirPorSesion</b> (guards.dart), ruta normalizada sin "/" final:
+  - SesionNoAutenticada y ruta no publica -> /login
+  - SesionAutenticada en ruta publica -> /admin/reportes si esAdmin, si no /mapa
+  - SesionAutenticada !esAdmin en /admin o /admin/... -> /mapa
+  - en otro caso -> null (se queda)
+  Notificacion push: CrowdRadarApp hace router.push(Rutas.lugar(id))
+  (se guarda en _toquePendiente hasta iniciar sesion).
+end note
+@enduml

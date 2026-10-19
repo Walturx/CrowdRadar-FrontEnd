@@ -1,0 +1,137 @@
+@startuml secuencia-reporte-validacion
+' Flujo M4 + M5 en el cliente: un usuario reporta, otro valida y el autor ve el estado.
+' Derivado de reportar_sheet.dart, ReportarCubit, ReporteRepositoryHttp, PendientesCubit,
+' ValidacionRepositoryHttp, EstadoValidacionCubit, ApiClient y los interceptores.
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 220
+
+title CrowdRadar Frontend - Crear reporte, validarlo y ver su estado
+
+actor "Autor" as autor
+actor "Validador" as validador
+participant "DetalleLugarPage /\nReportarSheet\n(mostrarReportarSheet)" as sheet
+participant "ReportarCubit" as rcubit
+participant "ValidarPage" as vpage
+participant "PendientesCubit" as pcubit
+participant "EstadoValidacionPage" as epage
+participant "EstadoValidacionCubit" as ecubit
+participant "ReporteRepositoryHttp" as rrepo
+participant "ValidacionRepositoryHttp" as vrepo
+participant "ApiClient" as api
+participant "AuthInterceptor /\nSesionExpiradaInterceptor" as inter
+participant "SessionService /\nSesionCubit" as sesion
+participant "API REST\n:3000" as backend
+
+== 1. El autor crea un reporte (HU M4) ==
+autor -> sheet : toca "Reportar" en el detalle del lugar
+sheet -> rcubit : ReportarCubit(reporteRepository, lugarId)
+rcubit --> sheet : ReportarEditando()
+autor -> sheet : elige nivel
+sheet -> rcubit : seleccionarNivel(nivel)
+rcubit --> sheet : ReportarEditando(nivel)
+autor -> sheet : "Enviar"
+sheet -> rcubit : enviar()
+alt sin nivel elegido
+  rcubit --> sheet : ReportarEditando(error: mensajeSinNivel)
+else nivel elegido
+  rcubit --> sheet : ReportarEnviando(nivel)
+  rcubit -> rrepo : reportar(lugarId, nivel)
+  rrepo -> api : post('/api/reportes',\nbody {lugarId, nivel: valorApi(nivel)})
+  api -> inter : antesDeEnviar(solicitud)
+  inter -> sesion : sesion.token
+  inter --> api : Authorization: Bearer <JWT>
+  api -> backend : POST /api/reportes (timeout 15 s)
+  alt 2xx (reporte creado)
+    backend --> api : {message, data: ReporteCreado}
+    api --> rrepo : RespuestaApi<ReporteCreado>
+    rrepo --> rcubit : ReporteCreado(puntosGanados, totalKarma, motivoSinPuntos)
+    rcubit --> sheet : ReportarEnviado(mensajeGracias, puntosGanados, totalKarma,\nmotivoSinPuntos: null | mensajeTopeDiario | mensajeSinPuntos)
+    sheet --> autor : "¡Gracias por reportar!" (+karma);\nsheet completa con true -> DetalleLugarCubit.refrescar()
+  else 422 REPORTE_EN_ESPERA (cooldown)
+    backend --> api : 422 {code: REPORTE_EN_ESPERA, message: minutos restantes}
+    api -> inter : alRecibirError(error) (no es 401: sin efecto)
+    api --> rrepo : throw ApiException(422, REPORTE_EN_ESPERA)
+    rrepo --> rcubit : ApiException
+    rcubit --> sheet : ReportarFallido(mensaje del servidor | mensajeEnEspera,\ncodigo: REPORTE_EN_ESPERA)
+  else 401 sesion expirada
+    backend --> api : 401
+    api -> inter : alRecibirError(error)
+    inter -> sesion : SessionService.expirar(MotivoCierre.sesionExpirada)
+    sesion --> sesion : SesionCerrada -> SesionCubit emite SesionNoAutenticada
+    note right of sesion
+      GoRouter refresca: redirigirPorSesion -> /login
+      CrowdRadarApp muestra "Tu sesión terminó"
+    end note
+    api --> rcubit : throw ApiException(401)
+    rcubit --> sheet : ReportarFallido(mensaje)
+  else sin red / timeout
+    api -> api : TimeoutException / SocketException\n-> ApiException.sinConexion() (status 0)
+    api --> rcubit : throw ApiException.sinConexion()
+    rcubit --> sheet : ReportarFallido(mensajeSinConexion,\nesSinConexion: true, reintentable: true) -> "Reintentar"
+  else 403 / 404
+    api --> rcubit : throw ApiException(403|404)
+    rcubit --> sheet : ReportarFallido(bloqueante: true) -> solo "Cerrar"
+  end
+end
+
+== 2. Otro usuario valida el reporte (HU 5.1 / 5.2) ==
+validador -> vpage : abre la pestaña Validar (/validar)
+vpage -> pcubit : cargar()
+pcubit --> vpage : PendientesCargando()
+pcubit -> vrepo : pendientes(lat, lng) (centro de CentroMapaCompartido)
+vrepo -> api : get('/api/validaciones/pendientes',\nquery {lat, lng, radioKm: 5, horas: 3, page, size})
+api -> backend : GET /api/validaciones/pendientes
+backend --> api : 200 {data: Pagina<ReportePendiente>}
+api --> vrepo : RespuestaApi
+vrepo --> pcubit : Pagina<ReportePendiente>
+pcubit --> vpage : PendientesCargado(reportes)
+validador -> vpage : "Confirmar" / "Rechazar"
+vpage -> pcubit : votar(reporte, TipoAccionValidacion.confirmar | rechazar)
+pcubit --> vpage : PendientesCargado(reporte quitado, votando: {id}) (optimista)
+pcubit -> vrepo : validar(reporte.id, accion)
+vrepo -> api : post('/api/reportes/:id/validaciones',\nbody {tipoAccion: CONFIRMAR | RECHAZAR})
+api -> backend : POST /api/reportes/:id/validaciones (Bearer JWT)
+alt 2xx (voto registrado)
+  backend --> api : {data: ResultadoVoto(puntosGanados, confiabilidad, estadoValidacion)}
+  api --> vrepo : RespuestaApi<ResultadoVoto>
+  vrepo --> pcubit : ResultadoVoto
+  pcubit --> vpage : PendientesCargado(ultimoVoto: VotoRegistrado(puntosGanados))
+else 404 / 409 VALIDACION_DUPLICADA / 422 AUTOVALIDACION_NO_PERMITIDA
+  api --> pcubit : throw ApiException(404|409|422)
+  pcubit --> vpage : PendientesCargado(aviso: mensajeYaParticipo | mensaje)\n(definitivo: el reporte no vuelve a la lista)
+else 429 limite de intentos
+  api --> pcubit : throw ApiException(429, reintentarEnSegundos)
+  pcubit --> vpage : PendientesCargado(aviso: mensajeEspera(...)) y el reporte vuelve
+else 401 sesion expirada
+  api -> inter : alRecibirError -> SessionService.expirar(sesionExpirada)
+  api --> pcubit : throw ApiException(401)
+  pcubit --> vpage : PendientesCargado(aviso) y el reporte vuelve; router -> /login
+else sin red / timeout
+  api --> pcubit : throw ApiException.sinConexion()
+  pcubit --> vpage : PendientesCargado(aviso: mensajeSinConexion) y el reporte vuelve a su posicion
+end
+
+== 3. El autor consulta el estado de validacion (HU 5.3) ==
+autor -> epage : Perfil -> /perfil/validaciones
+epage -> ecubit : cargar()
+ecubit --> epage : EstadoValidacionCargando()
+ecubit -> vrepo : estadoMisReportes(size: 50)
+vrepo -> api : get('/api/reportes/mios/validacion', query {page: 1, size: 50})
+api -> backend : GET /api/reportes/mios/validacion
+alt 200
+  backend --> api : {data: Pagina<EstadoReporteValidacion>}
+  api --> vrepo : RespuestaApi
+  vrepo --> ecubit : Pagina<EstadoReporteValidacion>
+  ecubit --> epage : EstadoValidacionCargado(reportes, filtro: todos)
+  epage --> autor : ChipEstadoValidacion por reporte\n(EstadoValidacion: sinValidaciones | enValidacion | validado | rechazado)
+  autor -> epage : filtro Validados / En validación / Rechazados
+  epage -> ecubit : filtrar(FiltroEstadoValidacion.x)
+  ecubit --> epage : EstadoValidacionCargado(reportes, filtro: x) (filtrado en cliente)
+else error (sin red, 5xx, 401)
+  api --> ecubit : throw ApiException
+  ecubit --> epage : EstadoValidacionError(mensaje, esSinConexion)\n(o Cargado con errorActualizacion si ya habia datos)
+end
+@enduml
