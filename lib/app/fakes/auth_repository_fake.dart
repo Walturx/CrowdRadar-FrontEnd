@@ -19,14 +19,16 @@ class AuthRepositoryFake implements AuthRepository {
   @override
   Future<Usuario> iniciarSesion(String email, String password) async {
     await _comportamiento.aplicar();
-    if (email != emailFake || password != passwordFake) {
+    final usuario = switch (email) {
+      emailFake => usuarioFake,
+      emailAdminFake => usuarioAdminFake,
+      _ => null,
+    };
+    if (usuario == null || password != passwordFake) {
       throw errorFake(401, 'CREDENCIALES_INVALIDAS', 'Credenciales inválidas');
     }
-    await _sesion.iniciar(
-      'token-fake',
-      UsuarioSesion.desdeUsuario(usuarioFake),
-    );
-    return usuarioFake;
+    await _sesion.iniciar('token-fake', UsuarioSesion.desdeUsuario(usuario));
+    return usuario;
   }
 
   @override

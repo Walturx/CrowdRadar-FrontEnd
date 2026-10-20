@@ -14,6 +14,7 @@ import 'package:crowdradar/core/models/moderacion.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/session/session_service.dart';
+import 'package:crowdradar/core/session/usuario_sesion.dart';
 import 'package:crowdradar/features/analitica/data/analitica_repository.dart';
 import 'package:crowdradar/features/auth/data/auth_repository.dart';
 import 'package:crowdradar/features/favoritos/data/favorito_repository.dart';
@@ -229,61 +230,159 @@ void main() {
   });
 
   group('ModeracionRepositoryFake', () {
-    test('resolver removes the reported report from the queue', () async {
-      final ModeracionRepository repo = ModeracionRepositoryFake();
-      final antes = await repo.reportesDenunciados();
-      final id = antes.items.first.reporteId;
+    test(
+      'resolver removes the report from the queue and reports the estado',
+      () async {
+        final ModeracionRepository repo = ModeracionRepositoryFake();
+        final antes = await repo.reportesDenunciados();
+        final id = antes.items.first.reporteId;
 
-      await repo.resolver(id, DecisionModeracion.eliminar);
+        final res = await repo.resolver(id, DecisionModeracion.eliminar);
 
-      expect((await repo.reportesDenunciados()).total, antes.total - 1);
-      await expectLater(
-        repo.resolver(id, DecisionModeracion.desestimar),
-        _falla(409, 'SIN_DENUNCIAS_PENDIENTES'),
-      );
-      await expectLater(
-        repo.reporteDenunciado(id),
-        _falla(404, 'REPORTE_NO_ENCONTRADO'),
-      );
+        expect(res.estado, EstadoReporteModerado.eliminado);
+        expect(res.denunciasResueltas, antes.items.first.pendientes);
+        expect((await repo.reportesDenunciados()).total, antes.total - 1);
+        await expectLater(
+          repo.resolver(id, DecisionModeracion.mantener),
+          _falla(409, 'SIN_DENUNCIAS_PENDIENTES'),
+        );
+        await expectLater(
+          repo.reporteDenunciado(id),
+          _falla(404, 'REPORTE_NO_ENCONTRADO'),
+        );
+      },
+    );
+
+    test('mantener keeps the report ACTIVO', () async {
+      final repo = ModeracionRepositoryFake();
+      final id = (await repo.reportesDenunciados()).items.first.reporteId;
+
+      final res = await repo.resolver(id, DecisionModeracion.mantener);
+
+      expect(res.estado, EstadoReporteModerado.activo);
     });
 
-    test('usuarios filters by text and status', () async {
+    test('reporteDenunciado returns motivos and the author email', () async {
+      final repo = ModeracionRepositoryFake();
+      final id = (await repo.reportesDenunciados()).items.first.reporteId;
+
+      final d = await repo.reporteDenunciado(id);
+
+      expect(d.motivos, isNotEmpty);
+      expect(d.autor.email, isNotNull);
+    });
+
+    test('usuarios filters by text and status and sorts', () async {
       final repo = ModeracionRepositoryFake();
 
       final todos = await repo.usuarios();
-      final activos = await repo.usuarios(status: 'ACTIVO');
+      final activos = await repo.usuarios(status: EstadoCuenta.activo);
       final busqueda = await repo.usuarios(q: todos.items.first.nombre);
+      final porKarma = await repo.usuarios(orden: OrdenUsuarios.karma);
 
       expect(activos.items.every((u) => !u.estaSuspendido), isTrue);
       expect(busqueda.items, isNotEmpty);
       expect(busqueda.items.length, lessThanOrEqualTo(todos.items.length));
+      final karmas = porKarma.items.map((u) => u.puntosKarma).toList();
+      expect(karmas, [...karmas]..sort((a, b) => b.compareTo(a)));
+    });
+
+    test('a suspended fake user carries the sancion with fechaFin', () async {
+      final repo = ModeracionRepositoryFake();
+
+      final s = (await repo.usuarios(status: EstadoCuenta.suspendido)).items;
+
+      expect(s, isNotEmpty);
+      expect(s.first.sancionVigente!.fechaFin, isNotNull);
     });
 
     test(
       'suspender and reactivar toggle the account with 409 on repeats',
       () async {
         final repo = ModeracionRepositoryFake();
-        final id = (await repo.usuarios(status: 'ACTIVO')).items.first.id;
+        final id = (await repo.usuarios(
+          status: EstadoCuenta.activo,
+        )).items.first.id;
 
         await expectLater(
           repo.reactivar(id),
           _falla(409, 'USUARIO_NO_SUSPENDIDO'),
         );
-        await repo.suspender(id, dias: 3, motivo: 'Spam reiterado');
-        expect((await repo.usuario(id)).estaSuspendido, isTrue);
+        final sancion = await repo.suspender(
+          id,
+          dias: 3,
+          motivo: 'Spam reiterado',
+        );
+        expect(sancion.dias, 3);
+        final detalle = await repo.usuario(id);
+        expect(detalle.estaSuspendido, isTrue);
+        expect(detalle.sancionVigente!.motivo, 'Spam reiterado');
         await expectLater(
           repo.suspender(id, dias: 7, motivo: 'Spam reiterado'),
           _falla(409, 'USUARIO_YA_SUSPENDIDO'),
         );
 
         await repo.reactivar(id);
-        expect((await repo.usuario(id)).estaSuspendido, isFalse);
+        final despues = await repo.usuario(id);
+        expect(despues.estaSuspendido, isFalse);
+        expect(despues.sancionVigente, isNull);
         await expectLater(
           repo.usuario(9999),
           _falla(404, 'USUARIO_NO_ENCONTRADO'),
         );
       },
     );
+
+    test('suspender rejects an ADMIN and a dias outside 3/7/30', () async {
+      final repo = ModeracionRepositoryFake();
+      final admin = (await repo.usuarios()).items.firstWhere((u) => u.esAdmin);
+      final id = (await repo.usuarios(
+        status: EstadoCuenta.activo,
+      )).items.firstWhere((u) => !u.esAdmin).id;
+
+      await expectLater(
+        repo.suspender(admin.id, dias: 3, motivo: 'Spam reiterado'),
+        _falla(422, 'OPERACION_NO_PERMITIDA'),
+      );
+      await expectLater(
+        repo.suspender(id, dias: 5, motivo: 'Spam reiterado'),
+        _falla(400, 'VALIDACION_FALLIDA'),
+      );
+    });
+
+    test('with a session service it needs an admin (401 / 403)', () async {
+      final sesion = SessionService.instance..reiniciar();
+      final repo = ModeracionRepositoryFake(sesion: sesion);
+      await expectLater(repo.usuarios(), _falla(401, 'NO_AUTENTICADO'));
+
+      await sesion.iniciar(
+        'token-fake',
+        UsuarioSesion.desdeUsuario(usuarioFake),
+      );
+      await expectLater(repo.usuarios(), _falla(403, 'ACCESO_DENEGADO'));
+      await expectLater(
+        repo.reportesDenunciados(),
+        _falla(403, 'ACCESO_DENEGADO'),
+      );
+
+      await sesion.iniciar(
+        'token-fake',
+        UsuarioSesion.desdeUsuario(usuarioAdminFake),
+      );
+      expect((await repo.usuarios()).items, isNotEmpty);
+      sesion.reiniciar();
+    });
+
+    test('the admin fake credentials sign in as ADMIN', () async {
+      final sesion = SessionService.instance..reiniciar();
+      final usuario = await AuthRepositoryFake(
+        sesion,
+      ).iniciarSesion(emailAdminFake, passwordFake);
+
+      expect(usuario.rol, 'ADMIN');
+      expect(sesion.usuario!.esAdmin, isTrue);
+      sesion.reiniciar();
+    });
   });
 
   group('R3-105 paginar', () {
