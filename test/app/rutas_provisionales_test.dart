@@ -53,8 +53,6 @@ void main() {
   const admin = [
     ('/admin/reportes', 'Reportes denunciados', _pendiente),
     ('/admin/reportes/21', 'Revisión del reporte', 'Reporte #21'),
-    ('/admin/usuarios', 'Usuarios', _pendiente),
-    ('/admin/usuarios/31', 'Detalle del usuario', 'Usuario #31'),
   ];
 
   for (final (ruta, titulo, detalle) in usuario) {
