@@ -128,7 +128,19 @@ void main() {
     );
 
     test('S8.3 success posts the six fields and returns the user', () async {
-      final r = repo(201, {'message': 'creado', 'data': _usuarioJson});
+      // Shape of the real POST /api/auth/register answer: the user sits next to the token.
+      final r = repo(201, {
+        'message': 'creado',
+        'data': {
+          'token': 'tkn-registro',
+          'expiraEn': '2026-10-26T18:38:14.000Z',
+          'user': {
+            ..._usuarioJson,
+            'telefono': '912345678',
+            'distrito': 'Miraflores',
+          },
+        },
+      });
 
       final user = await r.registrar(
         nombre: 'Ana',
@@ -148,7 +160,10 @@ void main() {
         'telefono': '912345678',
         'distrito': 'Miraflores',
       });
+      expect(user.nombre, 'Ana');
       expect(user.email, 'ana@test.com');
+      expect(user.telefono, '912345678');
+      expect(user.distrito, 'Miraflores');
       expect(sesion.token, isNull);
     });
 
