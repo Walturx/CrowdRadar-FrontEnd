@@ -131,13 +131,13 @@ class _EditProfileViewState extends State<_EditProfileView> {
                       labelText: 'Teléfono',
                       counterText: '',
                     ),
-                    validator: Validadores.requerido,
+                    validator: Validadores.telefono,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _distritoCtrl,
                     decoration: const InputDecoration(labelText: 'Distrito'),
-                    validator: Validadores.requerido,
+                    validator: Validadores.distrito,
                   ),
                   const SizedBox(height: 24),
                   BotonPrincipal(
