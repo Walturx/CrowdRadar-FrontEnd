@@ -7,8 +7,8 @@ import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/core/network/api_client.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/session/session_service.dart';
+import 'package:crowdradar/features/alertas/data/alerta_repository_http.dart';
 import 'package:crowdradar/features/analitica/data/analitica_repository_http.dart';
-import 'package:crowdradar/features/favoritos/data/favorito_repository.dart';
 import 'package:crowdradar/features/favoritos/data/favorito_repository_http.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository_http.dart';
 import 'package:crowdradar/features/moderacion/data/moderacion_repository.dart';
@@ -55,13 +55,6 @@ void main() {
       expect(() => r.denunciar(1, MotivoDenuncia.spam), _noImplementado);
     });
 
-    test('FavoritoRepository', () {
-      final FavoritoRepository r = FavoritoRepositoryHttp(api);
-
-      expect(() => r.listar(), _noImplementado);
-      expect(() => r.configurarAlertas(1, activadas: true), _noImplementado);
-    });
-
     test('ModeracionRepository', () {
       final ModeracionRepository r = ModeracionRepositoryHttp(api);
 
@@ -83,6 +76,7 @@ void main() {
       expect(d.analiticaRepository, isA<AnaliticaRepositoryHttp>());
       expect(d.validacionRepository, isA<ValidacionRepositoryHttp>());
       expect(d.favoritoRepository, isA<FavoritoRepositoryHttp>());
+      expect(d.alertaRepository, isA<AlertaRepositoryHttp>());
       expect(d.moderacionRepository, isA<ModeracionRepositoryHttp>());
     });
   });
