@@ -76,7 +76,7 @@ void main() {
     tearDown(() => sesion.reiniciar());
 
     Widget app(String inicial) => CrowdRadarApp(
-          dependencias: Dependencias.crear(const Entorno(), sesion),
+          dependencias: Dependencias.crear(const Entorno(usarFakes: true), sesion),
           ubicacionInicial: inicial,
         );
 
@@ -86,7 +86,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Iniciar sesión'), findsWidgets);
-      expect(find.text('Sin favoritos todavía'), findsNothing);
+      expect(find.text('Sin favoritos aún'), findsNothing);
     });
 
     testWidgets('authenticated user reaches the protected route',
@@ -95,7 +95,7 @@ void main() {
       await tester.pumpWidget(app(Rutas.favoritos));
       await tester.pumpAndSettle();
 
-      expect(find.text('Sin favoritos todavía'), findsOneWidget);
+      expect(find.text('Sin favoritos aún'), findsOneWidget);
       expect(find.text('Favoritos'), findsWidgets);
     });
 
@@ -109,7 +109,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Iniciar sesión'), findsWidgets);
-      expect(find.text('Sin favoritos todavía'), findsNothing);
+      expect(find.text('Sin favoritos aún'), findsNothing);
     });
   });
 }
