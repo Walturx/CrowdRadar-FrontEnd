@@ -22,7 +22,8 @@ class AlertasCubit extends Cubit<AlertasState> {
     : _reloj = reloj ?? DateTime.now,
       super(const AlertasCargando());
 
-  /// When the last load or refresh finished (whatever its result).
+  /// When the last load or refresh succeeded: a failure leaves it alone so the
+  /// next resume retries.
   DateTime? _ultimaCarga;
 
   /// The first load failed: there is no count to show (the badge stays empty).
@@ -52,6 +53,7 @@ class AlertasCubit extends Cubit<AlertasState> {
       final nuevo = await _leer();
       if (isClosed) return;
       emit(nuevo);
+      _ultimaCarga = _reloj();
     } catch (e) {
       if (isClosed) return;
       emit(
@@ -63,7 +65,6 @@ class AlertasCubit extends Cubit<AlertasState> {
       );
     } finally {
       _enVuelo = false;
-      _ultimaCarga = _reloj();
     }
   }
 
@@ -83,13 +84,13 @@ class AlertasCubit extends Cubit<AlertasState> {
       final nuevo = _conMarcasPendientes(await _leer());
       if (isClosed) return;
       emit(nuevo);
+      _ultimaCarga = _reloj();
     } catch (e) {
       final ahora = state;
       if (isClosed || ahora is! AlertasCargado) return;
       emit(_conError(ahora, mensajeDeError(e)));
     } finally {
       _enVuelo = false;
-      _ultimaCarga = _reloj();
     }
   }
 

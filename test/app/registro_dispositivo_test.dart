@@ -32,6 +32,9 @@ class _Alertas extends AlertaRepositoryFake {
   /// When set, `registrarDispositivo` waits for it.
   Completer<void>? bloqueoRegistrar;
 
+  /// When set, `eliminarDispositivo` waits for it.
+  Completer<void>? bloqueoEliminar;
+
   _Alertas() : super(sembrar: false);
 
   @override
@@ -46,6 +49,7 @@ class _Alertas extends AlertaRepositoryFake {
   @override
   Future<void> eliminarDispositivo(String token) async {
     llamadas.add('eliminar:$token');
+    await bloqueoEliminar?.future;
     if (error != null) throw error!;
     return super.eliminarDispositivo(token);
   }
@@ -186,6 +190,26 @@ void main() {
       await r.registrar();
 
       expect(alertas.llamadas, ['eliminar:tok-1', 'registrar:tok-1']);
+      expect(alertas.dispositivos, ['tok-1']);
+    });
+
+    test('a sign in during a DELETE in flight registers after it (R3-901)', () async {
+      final r = crear('tok-1');
+      await r.registrar();
+      alertas.bloqueoEliminar = Completer<void>();
+
+      final quitado = r.quitar();
+      await pumpEventQueue();
+      final registrado = r.registrar();
+      await pumpEventQueue();
+      alertas.bloqueoEliminar!.complete();
+      await Future.wait([quitado, registrado]);
+
+      expect(alertas.llamadas, [
+        'registrar:tok-1',
+        'eliminar:tok-1',
+        'registrar:tok-1',
+      ]);
       expect(alertas.dispositivos, ['tok-1']);
     });
 

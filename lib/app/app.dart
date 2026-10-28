@@ -45,10 +45,7 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
     receptor: widget.dependencias.receptorPush,
     alertas: widget.dependencias.alertaRepository,
   );
-  late final SesionCubit _sesion = SesionCubit(
-    widget.dependencias.sesion,
-    antesDeCerrar: _dispositivo.quitar,
-  );
+  late final SesionCubit _sesion;
   late final GoRouter _router = crearRouter(
     _sesion,
     ubicacionInicial: widget.ubicacionInicial,
@@ -65,7 +62,7 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
     super.initState();
     final deps = widget.dependencias;
     // Created first so its session listener runs before ours.
-    _sesion;
+    _sesion = SesionCubit(deps.sesion, antesDeCerrar: _dispositivo.quitar);
     // Listen before initializing: a tap that launched the app is emitted by
     // `inicializar` itself.
     _toques = deps.receptorPush.lugarAbierto.listen(_abrirLugar);

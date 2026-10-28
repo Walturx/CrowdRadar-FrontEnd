@@ -381,6 +381,23 @@ void main() {
       await cubit.close();
     });
 
+    test('a failed refresh does not stamp the throttle (R3-904)', () async {
+      final cubit = crear();
+      await cubit.cargar();
+
+      ahora = ahora.add(AlertasCubit.intervaloRefresco);
+      falla = true;
+      await cubit.alVolverAPrimerPlano();
+      expect(llamadas, 2);
+
+      ahora = ahora.add(const Duration(seconds: 1));
+      falla = false;
+      await cubit.alVolverAPrimerPlano();
+
+      expect(llamadas, 3);
+      await cubit.close();
+    });
+
     test('a failed first load is retried on the next resume and flagged', () async {
       falla = true;
       final cubit = crear();
