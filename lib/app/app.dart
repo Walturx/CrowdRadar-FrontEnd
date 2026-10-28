@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/logging/registro_errores.dart';
 import '../core/map/mapa_adapter.dart';
 import '../core/session/sesion_cubit.dart';
+import '../core/session/sesion_state.dart';
+import '../core/session/session_service.dart';
 import '../features/alertas/data/alerta_repository.dart';
 import '../features/analitica/data/analitica_repository.dart';
 import '../features/auth/data/auth_repository.dart';
@@ -17,6 +22,7 @@ import '../features/validacion/data/validacion_repository.dart';
 import '../theme/app_theme.dart';
 import 'app_router.dart';
 import 'dependencias.dart';
+import 'registro_dispositivo.dart';
 import 'rutas.dart';
 
 class CrowdRadarApp extends StatefulWidget {
@@ -34,14 +40,58 @@ class CrowdRadarApp extends StatefulWidget {
 }
 
 class _CrowdRadarAppState extends State<CrowdRadarApp> {
-  late final SesionCubit _sesion = SesionCubit(widget.dependencias.sesion);
+  late final RegistroDispositivo _dispositivo = RegistroDispositivo(
+    receptor: widget.dependencias.receptorPush,
+    alertas: widget.dependencias.alertaRepository,
+  );
+  late final SesionCubit _sesion = SesionCubit(
+    widget.dependencias.sesion,
+    antesDeCerrar: _dispositivo.quitar,
+  );
   late final GoRouter _router = crearRouter(
     _sesion,
     ubicacionInicial: widget.ubicacionInicial,
   );
+  StreamSubscription<EventoSesion>? _eventosSesion;
+  StreamSubscription<int>? _toques;
+
+  @override
+  void initState() {
+    super.initState();
+    final deps = widget.dependencias;
+    unawaited(_iniciarPush());
+    // A restored session registers the device now; later sign ins on the event.
+    if (deps.sesion.token != null) unawaited(_dispositivo.registrar());
+    _eventosSesion = deps.sesion.eventos.listen((evento) {
+      if (evento is SesionIniciada) unawaited(_dispositivo.registrar());
+    });
+    _toques = deps.receptorPush.lugarAbierto.listen(_abrirLugar);
+  }
+
+  Future<void> _iniciarPush() async {
+    try {
+      await widget.dependencias.receptorPush.inicializar();
+    } catch (e, pila) {
+      const RegistroErroresConsola().registrar('push.inicializar', e, pila);
+    }
+  }
+
+  /// A notification tap (also the one that launched the app) opens the place;
+  /// without a session there is nothing to show.
+  void _abrirLugar(int lugarId) {
+    if (_sesion.state is! SesionAutenticada) return;
+    // After the frame, so a tap that launched the app finds the router built.
+    WidgetsBinding.instance
+      ..addPostFrameCallback((_) {
+        if (mounted) _router.push(Rutas.lugar(lugarId));
+      })
+      ..scheduleFrame();
+  }
 
   @override
   void dispose() {
+    _eventosSesion?.cancel();
+    _toques?.cancel();
     _router.dispose();
     _sesion.close();
     super.dispose();
