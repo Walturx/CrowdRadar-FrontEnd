@@ -105,6 +105,45 @@ state. `widgets/` has `GraficoBarras` (plain bars, no chart dependency),
 `FIN_DE_SEMANA`). `NivelSaturacion.desdePromedio` is the only place the
 1.67 / 2.34 cutoffs live.
 
+## Favorites, alerts and filters (M3)
+
+`features/favoritos/`: `data/` (`FavoritoRepository` + HTTP; fake in
+`app/fakes/favorito_repository_fake.dart`) and `lista/`. `FavoritosCubit`
+removes a favorite (a 404 counts as already gone) and offers undo
+(`deshacerEliminar` adds it back, alert preference included). The master
+switch "Alertas de cambios" is derived (`todasConAlertas`) and toggling it
+sends one `configurarAlertas` per favorite that differs; a failure reloads
+what the server holds. The page refreshes when the tab is re-activated. A
+duplicate add is a 409 `FAVORITO_DUPLICADO`, handled by the place detail as
+"already a favorite" (no error screen).
+
+`features/exploracion/`: `data/` (`ExploracionRepository`: `explorar` with a
+`FiltroExploracion`, `listarCategorias`) and `explorar/`. `FiltrosMapa` (the
+chips and level control on `MapPage`) owns an `ExplorarCubit` (the server
+categories plus the chosen filters) and reports changes through `alCambiar`;
+the page calls `MapaCubit.aplicarFiltros`, which reloads the visible area and
+keeps the filters while panning and retrying. Under a filter an empty result
+reads with the HU 3.5 / 3.6 messages. `ExploracionRepository.explorar` (list
+ordered by distance) is ready but no screen uses it yet; `/mapa/explorar`
+is still a placeholder.
+
+`features/alertas/`: `data/` (`AlertaRepository`: list with the unread count,
+mark read, register / delete the push device) and `lista/`. `MainLayout` owns
+one `AlertasCubit` per signed-in shell: the Favoritos tab badge
+(`CrBottomNav.alertasNoLeidas`) and `AlertasPage` read it, and it reloads
+when the app returns to the foreground. Only the first page of alerts is
+shown. Tapping an alert marks it read (optimistic, restored on failure) and
+opens the place.
+
+Push: `RegistroDispositivo` (in `app/`) registers the token of the
+`ReceptorPush` after sign in and removes it in `SesionCubit`'s `antesDeCerrar`
+hook, before the session is cleared; both are best effort. `CrowdRadarApp`
+turns `ReceptorPush.lugarAbierto` taps (also a cold start) into
+`router.push(Rutas.lugar(id))` while signed in. Real delivery (FCM) is not
+part of this build: `ReceptorPushNulo` is the default and `ReceptorPushConsola`
+(fake token, `simularApertura`) is used with `USAR_FAKES`; the in-app alert
+list is the guaranteed channel.
+
 ## Naming convention
 
 Domain vocabulary is Spanish (`Lugar`, `Reporte`, `SesionCubit`,
@@ -120,7 +159,7 @@ would ripple through every stream.
 | Composition root (manual DI) | `app/dependencias.dart` (`Dependencias`) |
 | Strategy / chain of responsibility | `InterceptorApi` and its implementations in `core/network/interceptores/` |
 | Observer | `SesionCubit` listens to the `SessionService.eventos` stream |
-| Adapter | `MapaAdapter` (`FlutterMapAdapter`), `ReceptorPush` (`ReceptorPushNulo`) |
+| Adapter | `MapaAdapter` (`FlutterMapAdapter`), `ReceptorPush` (`ReceptorPushNulo`, `ReceptorPushConsola`) |
 | Repository + fakes | `<X>Repository` ports, `<x>_repository_http.dart`, `app/fakes/<x>_repository_fake.dart` (`<X>RepositoryFake`) |
 | Factory Method | `ClienteHttpFactory` builds the `http.Client` inside `core/network` |
 | Null Object (stub) | `RepositorioNoImplementado` mixin: a repository port satisfied by a 501 stub until its stream implements it |
