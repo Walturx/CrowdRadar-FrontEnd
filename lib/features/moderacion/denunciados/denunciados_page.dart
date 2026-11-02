@@ -11,6 +11,7 @@ import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
 import '../../../core/widgets/lista_perezosa.dart';
 import '../../../core/widgets/mostrar_aviso.dart';
+import '../../../core/utils/contador.dart';
 import '../../../theme/app_colors.dart';
 import '../data/moderacion_repository.dart';
 import '../widgets/etiqueta_motivo.dart';
@@ -71,7 +72,11 @@ class _Lista extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         cabecera: [
           Text(
-            '${estado.total} REPORTES POR REVISAR',
+            contador(
+              estado.total,
+              'REPORTE POR REVISAR',
+              'REPORTES POR REVISAR',
+            ),
             style: const TextStyle(
               fontSize: 12,
               letterSpacing: 0.6,
