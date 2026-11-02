@@ -9,6 +9,7 @@ import 'editar_perfil_state.dart';
 import '../../../core/models/usuario.dart';
 
 import '../../../core/widgets/boton_principal.dart';
+import '../../../core/widgets/campo_distrito.dart';
 import '../../../core/widgets/cargando.dart';
 import '../data/perfil_repository.dart';
 
@@ -42,7 +43,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
   late final TextEditingController _nombreCtrl;
   late final TextEditingController _apellidoCtrl;
   late final TextEditingController _telefonoCtrl;
-  late final TextEditingController _distritoCtrl;
+  String? _distrito;
 
   @override
   void initState() {
@@ -50,7 +51,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
     _nombreCtrl = TextEditingController(text: widget.user?.nombre ?? '');
     _apellidoCtrl = TextEditingController(text: widget.user?.apellido ?? '');
     _telefonoCtrl = TextEditingController(text: widget.user?.telefono ?? '');
-    _distritoCtrl = TextEditingController(text: widget.user?.distrito ?? '');
+    _distrito = widget.user?.distrito;
   }
 
   @override
@@ -58,7 +59,6 @@ class _EditProfileViewState extends State<_EditProfileView> {
     _nombreCtrl.dispose();
     _apellidoCtrl.dispose();
     _telefonoCtrl.dispose();
-    _distritoCtrl.dispose();
     super.dispose();
   }
 
@@ -68,7 +68,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
         'nombre': _nombreCtrl.text.trim(),
         'apellido': _apellidoCtrl.text.trim(),
         'telefono': _telefonoCtrl.text.trim(),
-        'distrito': _distritoCtrl.text.trim(),
+        'distrito': _distrito!,
       };
       context.read<EditarPerfilCubit>().guardar(cambios);
     }
@@ -134,10 +134,9 @@ class _EditProfileViewState extends State<_EditProfileView> {
                     validator: Validadores.telefono,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _distritoCtrl,
-                    decoration: const InputDecoration(labelText: 'Distrito'),
-                    validator: Validadores.distrito,
+                  CampoDistrito(
+                    inicial: _distrito,
+                    onChanged: (valor) => _distrito = valor,
                   ),
                   const SizedBox(height: 24),
                   BotonPrincipal(

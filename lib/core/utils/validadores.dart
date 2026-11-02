@@ -1,3 +1,5 @@
+import 'distritos.dart';
+
 /// Form validators shared by every screen. Return null when valid.
 class Validadores {
   const Validadores._();
@@ -16,9 +18,9 @@ class Validadores {
       ? null
       : 'Ingresá un celular de 9 dígitos que empiece en 9';
 
-  /// Mirrors the backend minimum of 2 characters.
+  /// Required and one of [distritos], as the backend demands.
   static String? distrito(String? valor) =>
-      (valor?.trim().length ?? 0) < 2 ? 'Ingresá tu distrito' : null;
+      distritos.contains(valor) ? null : 'Selecciona tu distrito';
 
   /// The one email format check (trims first).
   static bool esCorreo(String valor) => _formatoCorreo.hasMatch(valor.trim());
