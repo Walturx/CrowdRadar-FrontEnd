@@ -135,7 +135,7 @@ void main() {
         confirmar: any(named: 'confirmar'),
       ),
     );
-    expect(find.text('Ingresá tu contraseña actual'), findsOneWidget);
+    expect(find.text('Ingresa tu contraseña actual'), findsOneWidget);
   });
 
   testWidgets('a mismatch is reported without calling the repository', (

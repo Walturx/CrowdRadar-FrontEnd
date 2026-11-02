@@ -199,7 +199,7 @@ void main() {
 
       final s = c.state as PendientesCargado;
       expect([for (final r in s.reportes) r.id], [1, 2]);
-      expect(s.aviso, 'Demasiadas acciones seguidas, probá en 2 minutos');
+      expect(s.aviso, 'Demasiadas acciones seguidas, prueba en 2 minutos');
     });
     test(
       'removes the report at once, then records the vote and karma',

@@ -11,7 +11,7 @@ import 'recuperar_state.dart';
 class RecuperarCubit extends Cubit<RecuperarState> {
   static const String mensajeNeutral =
       'Si el correo está registrado, te enviamos un enlace para restablecer tu contraseña.';
-  static const String mensajeCorreoInvalido = 'Ingresá un correo válido';
+  static const String mensajeCorreoInvalido = 'Ingresa un correo válido';
   static const String mensajeCuentaNoExiste = 'Ese correo no está registrado';
   static const String codigoCuentaNoExiste = 'CUENTA_NO_EXISTE';
 

@@ -87,7 +87,7 @@ void main() {
     expect: () => [
       const RecuperarEnviando(),
       const RecuperarFallido(
-        'Demasiados intentos, probá en 2 minutos',
+        'Demasiados intentos, prueba en 2 minutos',
         codigo: 'DEMASIADAS_SOLICITUDES',
         reintentarEnSegundos: 90,
       ),

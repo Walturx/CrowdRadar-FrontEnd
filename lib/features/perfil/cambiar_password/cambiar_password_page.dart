@@ -87,7 +87,7 @@ class _CambiarPasswordViewState extends State<_CambiarPasswordView> {
                   labelText: 'Contraseña actual',
                 ),
                 validator: (v) =>
-                    _obligatorio(v, 'Ingresá tu contraseña actual'),
+                    _obligatorio(v, 'Ingresa tu contraseña actual'),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -100,7 +100,7 @@ class _CambiarPasswordViewState extends State<_CambiarPasswordView> {
                   labelText: 'Nueva contraseña',
                 ),
                 validator: (v) =>
-                    _obligatorio(v, 'Ingresá la nueva contraseña'),
+                    _obligatorio(v, 'Ingresa la nueva contraseña'),
               ),
               const SizedBox(height: 8),
               _ListaRequisitos(_nuevaCtrl.text),
@@ -114,7 +114,7 @@ class _CambiarPasswordViewState extends State<_CambiarPasswordView> {
                   labelText: 'Confirmar nueva contraseña',
                 ),
                 validator: (v) =>
-                    _obligatorio(v, 'Confirmá la nueva contraseña'),
+                    _obligatorio(v, 'Confirma la nueva contraseña'),
               ),
               if (state is CambiarPasswordFallido &&
                   state.requisitosIncumplidos.isNotEmpty) ...[

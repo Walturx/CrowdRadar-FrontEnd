@@ -65,7 +65,7 @@ void main() {
       code: 'DEMASIADOS_INTENTOS',
       reintentarEnSegundos: 125,
     ),
-    'Demasiados intentos, probá en 3 minutos',
+    'Demasiados intentos, prueba en 3 minutos',
     espera: 125,
   );
 
@@ -77,14 +77,14 @@ void main() {
       code: 'DEMASIADAS_SOLICITUDES',
       reintentarEnSegundos: 60,
     ),
-    'Demasiados intentos, probá en 1 minuto',
+    'Demasiados intentos, prueba en 1 minuto',
     espera: 60,
   );
 
   caso(
     '429 without Retry-After -> generic wait text',
     const ApiException(status: 429, message: 'x', code: 'DEMASIADOS_INTENTOS'),
-    'Demasiados intentos, probá más tarde',
+    'Demasiados intentos, prueba más tarde',
   );
 
   caso(
