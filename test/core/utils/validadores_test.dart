@@ -18,16 +18,18 @@ void main() {
     });
   });
 
-  group('distrito (at least 2 characters)', () {
-    test('rejects empty and one character', () {
-      expect(Validadores.distrito(''), 'Ingresá tu distrito');
-      expect(Validadores.distrito(' a '), 'Ingresá tu distrito');
-      expect(Validadores.distrito(null), 'Ingresá tu distrito');
+  group('distrito (required, one of the 50 of Lima and Callao)', () {
+    test('rejects no selection and values outside the list', () {
+      const mensaje = 'Selecciona tu distrito';
+      expect(Validadores.distrito(null), mensaje);
+      expect(Validadores.distrito(''), mensaje);
+      expect(Validadores.distrito('Narnia'), mensaje);
+      expect(Validadores.distrito('miraflores'), mensaje);
     });
 
-    test('accepts two characters', () {
+    test('accepts a district of Lima and one of Callao', () {
       expect(Validadores.distrito('Ate'), isNull);
-      expect(Validadores.distrito(' Ate '), isNull);
+      expect(Validadores.distrito('Ventanilla'), isNull);
     });
   });
 

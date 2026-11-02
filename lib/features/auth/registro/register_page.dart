@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/utils/politica_password.dart';
 import '../../../core/utils/validadores.dart';
 import '../../../core/widgets/boton_principal.dart';
+import '../../../core/widgets/campo_distrito.dart';
 import '../../../core/widgets/cargando.dart';
 import '../../../theme/app_colors.dart';
 import '../data/auth_repository.dart';
@@ -38,7 +39,7 @@ class _RegisterViewState extends State<_RegisterView> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _telefonoCtrl = TextEditingController();
-  final _distritoCtrl = TextEditingController();
+  String? _distrito;
 
   @override
   void dispose() {
@@ -47,7 +48,6 @@ class _RegisterViewState extends State<_RegisterView> {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _telefonoCtrl.dispose();
-    _distritoCtrl.dispose();
     super.dispose();
   }
 
@@ -59,7 +59,7 @@ class _RegisterViewState extends State<_RegisterView> {
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text,
         telefono: _telefonoCtrl.text.trim(),
-        distrito: _distritoCtrl.text.trim(),
+        distrito: _distrito!,
       );
     }
   }
@@ -166,14 +166,10 @@ class _RegisterViewState extends State<_RegisterView> {
                     validator: Validadores.telefono,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
+                  CampoDistrito(
                     key: const Key('campo-distrito'),
-                    controller: _distritoCtrl,
-                    decoration: InputDecoration(
-                      labelText: 'Distrito',
-                      errorText: errores['distrito'],
-                    ),
-                    validator: Validadores.distrito,
+                    errorText: errores['distrito'],
+                    onChanged: (valor) => _distrito = valor,
                   ),
                   const SizedBox(height: 24),
                   BotonPrincipal(

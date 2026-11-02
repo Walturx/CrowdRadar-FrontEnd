@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../fakes/enrutador_falso.dart';
+import '../../helpers/elegir_distrito.dart';
 
 class _AuthRepoMock extends Mock implements AuthRepository {}
 
@@ -50,7 +51,7 @@ void main() {
     await escribir('email', 'ana@test.com');
     await escribir('password', 'Secreta12');
     await escribir('telefono', '999999999');
-    await escribir('distrito', 'Miraflores');
+    await elegirDistrito(tester, 'Miraflores');
     await tester.ensureVisible(find.text('Registrarme'));
     await tester.tap(find.text('Registrarme'));
     await tester.pump();
@@ -172,7 +173,6 @@ void main() {
         find.byKey(const Key('campo-telefono')),
         '812345678',
       );
-      await tester.enterText(find.byKey(const Key('campo-distrito')), 'A');
       await tester.ensureVisible(find.text('Registrarme'));
       await tester.tap(find.text('Registrarme'));
       await tester.pump();
@@ -181,9 +181,64 @@ void main() {
         find.text('Ingresá un celular de 9 dígitos que empiece en 9'),
         findsOneWidget,
       );
-      expect(find.text('Ingresá tu distrito'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('campo-distrito')),
+          matching: find.text('Selecciona tu distrito'),
+        ),
+        findsWidgets,
+      );
+      verifyNever(
+        () => repo.registrar(
+          nombre: any(named: 'nombre'),
+          apellido: any(named: 'apellido'),
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+          telefono: any(named: 'telefono'),
+          distrito: any(named: 'distrito'),
+        ),
+      );
     },
   );
+
+  testWidgets('the district is picked from the dropdown and sent as chosen', (
+    tester,
+  ) async {
+    registrarLlamada().thenAnswer(
+      (_) async => const Usuario(
+        id: 1,
+        nombre: 'Ana',
+        apellido: 'Paz',
+        email: 'ana@test.com',
+      ),
+    );
+    await abrir(tester);
+    await tester.enterText(find.byKey(const Key('campo-nombre')), 'Ana');
+    await tester.enterText(find.byKey(const Key('campo-apellido')), 'Paz');
+    await tester.enterText(
+      find.byKey(const Key('campo-email')),
+      'ana@test.com',
+    );
+    await tester.enterText(
+      find.byKey(const Key('campo-password')),
+      'Secreta12',
+    );
+    await elegirDistrito(tester, 'San Martín de Porres');
+    await tester.ensureVisible(find.text('Registrarme'));
+    await tester.tap(find.text('Registrarme'));
+    await tester.pump();
+
+    verify(
+      () => repo.registrar(
+        nombre: 'Ana',
+        apellido: 'Paz',
+        email: 'ana@test.com',
+        password: 'Secreta12',
+        telefono: '',
+        distrito: 'San Martín de Porres',
+      ),
+    ).called(1);
+  });
 
   testWidgets('a server 400 errors[] for telefono and distrito show inline', (
     tester,
