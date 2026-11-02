@@ -14,8 +14,8 @@ class CambiarPasswordCubit extends Cubit<CambiarPasswordState> {
       'Contraseña actualizada. Inicia sesión con tu nueva contraseña.';
   static const String mensajeNoCoinciden = 'Las contraseñas no coinciden';
   static const String mensajeResultadoIncierto =
-      'No pudimos confirmar el cambio. Si no podés entrar con la contraseña '
-      'actual, probá con la nueva.';
+      'No pudimos confirmar el cambio. Si no puedes entrar con la contraseña '
+      'actual, prueba con la nueva.';
   static const String mensajeNoCumple =
       'La nueva contraseña no cumple los requisitos';
 
