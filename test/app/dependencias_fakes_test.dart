@@ -11,10 +11,13 @@ import 'package:crowdradar/app/fakes/perfil_repository_fake.dart';
 import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
 import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
 import 'package:crowdradar/core/config/entorno.dart';
+import 'package:crowdradar/core/location/geolocator_ubicacion_service.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/features/auth/data/auth_repository_http.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository_http.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../helpers/ubicacion_fake.dart';
 
 void main() {
   tearDown(() => SessionService.instance.reiniciar());
@@ -42,6 +45,23 @@ void main() {
 
     expect(d.authRepository, isA<AuthRepositoryHttp>());
     expect(d.lugarRepository, isA<LugarRepositoryHttp>());
+  });
+
+  test('CRO-65 the device location comes from geolocator by default', () {
+    final d = Dependencias.crear(const Entorno(), SessionService.instance);
+
+    expect(d.ubicacionService, isA<GeolocatorUbicacionService>());
+  });
+
+  test('CRO-65 the location service can be overridden (tests)', () {
+    final propio = UbicacionServiceFake();
+    final d = Dependencias.crear(
+      const Entorno(usarFakes: true),
+      SessionService.instance,
+      ubicacionService: propio,
+    );
+
+    expect(d.ubicacionService, same(propio));
   });
 
   test('R1-101 fakes in a release build are refused', () {

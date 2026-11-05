@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 import '../core/config/entorno.dart';
+import '../core/location/geolocator_ubicacion_service.dart';
+import '../core/location/ubicacion_service.dart';
 import '../core/map/flutter_map_adapter.dart';
 import '../core/map/mapa_adapter.dart';
 import '../core/network/api_client.dart';
@@ -52,6 +54,7 @@ class Dependencias {
   final SessionService sesion;
   final ApiClient apiClient;
   final MapaAdapter mapaAdapter;
+  final UbicacionService ubicacionService;
   final ReceptorPush receptorPush;
   final AuthRepository authRepository;
   final PerfilRepository perfilRepository;
@@ -69,6 +72,7 @@ class Dependencias {
     required this.sesion,
     required this.apiClient,
     required this.mapaAdapter,
+    required this.ubicacionService,
     required this.receptorPush,
     required this.authRepository,
     required this.perfilRepository,
@@ -82,8 +86,9 @@ class Dependencias {
     required this.moderacionRepository,
   });
 
-  /// [mapaAdapter], [receptorPush] and [alertaRepository] can be overridden
-  /// (tests). By default the
+  /// [mapaAdapter], [ubicacionService], [receptorPush] and [alertaRepository]
+  /// can be overridden (tests). The device location is real even with fakes:
+  /// fakes stand in for the backend, not for the phone. By default the
   /// receiver is the development console one with fakes and the no-op one
   /// otherwise (real push delivery is not part of this build).
   /// [esRelease] defaults to `kReleaseMode`; fakes are refused in release.
@@ -91,6 +96,7 @@ class Dependencias {
     Entorno entorno,
     SessionService sesion, {
     MapaAdapter? mapaAdapter,
+    UbicacionService? ubicacionService,
     ReceptorPush? receptorPush,
     AlertaRepository? alertaRepository,
     bool esRelease = kReleaseMode,
@@ -114,6 +120,7 @@ class Dependencias {
       sesion: sesion,
       apiClient: api,
       mapaAdapter: mapaAdapter ?? FlutterMapAdapter(),
+      ubicacionService: ubicacionService ?? GeolocatorUbicacionService(),
       receptorPush:
           receptorPush ??
           (entorno.usarFakes ? ReceptorPushConsola() : ReceptorPushNulo()),
