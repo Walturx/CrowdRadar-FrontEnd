@@ -80,15 +80,13 @@ class _MapViewState extends State<_MapView> {
   }
 
   /// Opens the search route, which pops the chosen place id; that place opens
-  /// its detail. Both measure distances from [_origenDistancia].
+  /// its detail. Both measure from the same [_origenDistancia], read once: a
+  /// location that arrives meanwhile must not make them disagree.
   Future<void> _abrirBusqueda() async {
-    final cubit = context.read<MapaCubit>();
-    final id = await context.push<int>(
-      Rutas.buscarLugar,
-      extra: _origenDistancia(cubit),
-    );
+    final origen = _origenDistancia(context.read<MapaCubit>());
+    final id = await context.push<int>(Rutas.buscarLugar, extra: origen);
     if (id != null && mounted) {
-      context.push(Rutas.lugar(id), extra: _origenDistancia(cubit));
+      context.push(Rutas.lugar(id), extra: origen);
     }
   }
 

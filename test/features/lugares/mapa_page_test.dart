@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:crowdradar/app/fakes/exploracion_repository_fake.dart';
 import 'package:crowdradar/app/rutas.dart';
 import 'package:crowdradar/core/location/punto_referencia.dart';
@@ -493,6 +495,33 @@ void main() {
       await tester.pumpAndSettle();
       expect(extraBusqueda, miraflores);
     });
+
+    testWidgets(
+      'a location that arrives during the search does not change the origin',
+      (tester) async {
+        repo = RepoLugarFalso(
+          alBuscar: (p) => resultado(p.q == null ? [_kennedy] : [_mercado]),
+        );
+        final ubicacion = UbicacionServiceFake()..pendiente = Completer();
+        await abrir(
+          tester,
+          referencia: PuntoReferencia(ubicacion, CentroMapaCompartido()),
+        );
+        await alCamaraQuieta(tester);
+
+        await tester.tap(find.text('Buscar lugares'));
+        await tester.pumpAndSettle();
+        ubicacion.pendiente!.complete(miraflores);
+        await tester.enterText(find.byType(TextField), 'Merc');
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.pump();
+        await tester.tap(find.text('Mercado de Surquillo'));
+        await tester.pumpAndSettle();
+
+        expect(extraBusqueda, isA<PuntoGeografico>());
+        expect(extraDetalle, extraBusqueda);
+      },
+    );
 
     testWidgets('without the device location they keep the camera centre', (
       tester,
