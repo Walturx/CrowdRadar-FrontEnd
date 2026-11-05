@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/logging/registro_errores.dart';
@@ -184,6 +185,11 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
           scaffoldMessengerKey: _mensajero,
           theme: AppTheme.lightTheme,
           debugShowCheckedModeBanner: false,
+          // Framework texts (back tooltip, field counters, tabs, pickers and
+          // dialogs) are read by TalkBack, so they must be Spanish too.
+          locale: const Locale('es', 'PE'),
+          supportedLocales: const [Locale('es', 'PE')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
           routerConfig: _router,
         ),
       ),
