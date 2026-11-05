@@ -87,7 +87,7 @@ void main() {
           RepositoryProvider<ReporteRepository>.value(value: reportes),
         ],
         child: MaterialApp(
-          home: DetalleLugarPage(lugarId: 1, centroMapa: centro),
+          home: DetalleLugarPage(lugarId: 1, origenDistancia: centro),
         ),
       ),
     );

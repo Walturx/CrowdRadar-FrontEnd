@@ -1,5 +1,6 @@
 import 'package:crowdradar/app/fakes/exploracion_repository_fake.dart';
 import 'package:crowdradar/app/rutas.dart';
+import 'package:crowdradar/core/location/punto_referencia.dart';
 import 'package:crowdradar/core/map/centro_compartido.dart';
 import 'package:crowdradar/core/map/mapa_adapter.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
@@ -21,6 +22,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../fakes/lugar_repo_falso.dart';
+import '../../helpers/ubicacion_fake.dart';
 
 const _kennedy = LugarResumen(
   id: 1,
@@ -85,25 +87,33 @@ void main() {
   late _MapaFalso mapa;
   late RepoLugarFalso repo;
   Object? extraDetalle;
+  Object? extraBusqueda;
   CentroMapaCompartido? centroCompartido;
 
-  Future<void> abrir(WidgetTester tester) async {
+  Future<void> abrir(WidgetTester tester, {PuntoReferencia? referencia}) async {
     mapa = _MapaFalso();
     extraDetalle = null;
+    extraBusqueda = null;
     final router = GoRouter(
       initialLocation: Rutas.mapa,
       routes: [
         GoRoute(
           path: Rutas.mapa,
-          builder: (_, _) => MapPage(centroCompartido: centroCompartido),
+          builder: (_, _) => MapPage(
+            centroCompartido: centroCompartido,
+            referencia: referencia,
+          ),
         ),
         GoRoute(
           path: Rutas.buscarLugar,
-          builder: (_, s) => BuscarLugarPage(
-            centroMapa: s.extra is PuntoGeografico
-                ? s.extra as PuntoGeografico
-                : null,
-          ),
+          builder: (_, s) {
+            extraBusqueda = s.extra;
+            return BuscarLugarPage(
+              origenDistancia: s.extra is PuntoGeografico
+                  ? s.extra as PuntoGeografico
+                  : null,
+            );
+          },
         ),
         GoRoute(
           path: Rutas.lugarPlantilla,
@@ -438,6 +448,68 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('DETALLE 2'), findsOneWidget);
+      final centro = extraDetalle as PuntoGeografico;
+      expect(centro.latitud, closeTo(-12.12, 1e-9));
+      expect(centro.longitud, closeTo(-77.03, 1e-9));
+    });
+  });
+
+  group('CRO-65 S3 one reference point', () {
+    testWidgets('the map asks for the device location once when it opens', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy]));
+      final ubicacion = UbicacionServiceFake(miraflores);
+
+      await abrir(
+        tester,
+        referencia: PuntoReferencia(ubicacion, CentroMapaCompartido()),
+      );
+      await tester.pump();
+
+      expect(ubicacion.llamadas, 1);
+    });
+
+    testWidgets('with the device location, detail and search measure from it', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy, _mercado]));
+      await abrir(
+        tester,
+        referencia: PuntoReferencia(
+          UbicacionServiceFake(miraflores),
+          CentroMapaCompartido(),
+        ),
+      );
+      await alCamaraQuieta(tester);
+
+      await tester.tap(find.byKey(const ValueKey('pin-2')));
+      await tester.pumpAndSettle();
+      expect(extraDetalle, miraflores);
+
+      Navigator.of(tester.element(find.text('DETALLE 2'))).pop();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Buscar lugares'));
+      await tester.pumpAndSettle();
+      expect(extraBusqueda, miraflores);
+    });
+
+    testWidgets('without the device location they keep the camera centre', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(alBuscar: (_) => resultado([_kennedy, _mercado]));
+      await abrir(
+        tester,
+        referencia: PuntoReferencia(
+          UbicacionServiceFake(),
+          CentroMapaCompartido(),
+        ),
+      );
+      await alCamaraQuieta(tester);
+
+      await tester.tap(find.byKey(const ValueKey('pin-2')));
+      await tester.pumpAndSettle();
+
       final centro = extraDetalle as PuntoGeografico;
       expect(centro.latitud, closeTo(-12.12, 1e-9));
       expect(centro.longitud, closeTo(-77.03, 1e-9));
