@@ -4,9 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/rutas.dart';
-import '../../../core/session/sesion_cubit.dart';
 import '../../../core/widgets/cargando.dart';
-import '../../../core/widgets/confirmar_accion.dart';
+import '../../../core/widgets/cerrar_sesion.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../theme/app_colors.dart';
 import '../data/perfil_repository.dart';
@@ -23,18 +22,6 @@ class ProfilePage extends StatelessWidget {
       child: const _ProfileView(),
     );
   }
-}
-
-/// HU 2.4: confirms before ending the session.
-Future<void> _confirmarCerrarSesion(BuildContext context) async {
-  final sesion = context.read<SesionCubit>();
-  final confirmado = await confirmarAccion(
-    context,
-    titulo: '¿Cerrar sesión?',
-    etiquetaConfirmar: 'Cerrar sesión',
-  );
-  // The router redirects to /login on SesionNoAutenticada.
-  if (confirmado) await sesion.cerrarSesion();
 }
 
 class _ProfileView extends StatefulWidget {
@@ -249,7 +236,7 @@ class _ProfileViewState extends State<_ProfileView> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
                     // The router redirects to /login on SesionNoAutenticada.
-                    onTap: () => _confirmarCerrarSesion(context),
+                    onTap: () => confirmarCerrarSesion(context),
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),

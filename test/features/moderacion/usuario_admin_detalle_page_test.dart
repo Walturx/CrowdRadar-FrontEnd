@@ -1,6 +1,7 @@
 import 'package:crowdradar/app/fakes/moderacion_repository_fake.dart';
 import 'package:crowdradar/features/moderacion/data/moderacion_repository.dart';
 import 'package:crowdradar/features/moderacion/usuario_detalle/usuario_admin_detalle_page.dart';
+import 'package:crowdradar/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -61,6 +62,48 @@ void main() {
           .onPressed,
       isNull,
     );
+  });
+
+  testWidgets('the motivo field is labelled just "Motivo"', (tester) async {
+    await abrir(tester, idCarlos);
+    await tester.tap(find.text('Suspender usuario'));
+    await tester.pumpAndSettle();
+
+    final campo = tester.widget<TextField>(
+      find.descendant(of: dialogo, matching: find.byType(TextField)),
+    );
+    expect(campo.decoration?.labelText, 'Motivo');
+  });
+
+  testWidgets('"Mínimo 10 caracteres" is red until the motivo reaches 10', (
+    tester,
+  ) async {
+    await abrir(tester, idCarlos);
+    await tester.tap(find.text('Suspender usuario'));
+    await tester.pumpAndSettle();
+    final minimo = find.descendant(
+      of: dialogo,
+      matching: find.text('Mínimo 10 caracteres'),
+    );
+    Color? color() => tester.widget<Text>(minimo).style?.color;
+
+    expect(minimo, findsOneWidget);
+    expect(color(), AppColors.danger);
+
+    await tester.enterText(
+      find.descendant(of: dialogo, matching: find.byType(TextField)),
+      'corto',
+    );
+    await tester.pump();
+    expect(color(), AppColors.danger);
+
+    await tester.enterText(
+      find.descendant(of: dialogo, matching: find.byType(TextField)),
+      'Reportes fraudulentos reiterados',
+    );
+    await tester.pump();
+    expect(minimo, findsOneWidget);
+    expect(color(), isNot(AppColors.danger));
   });
 
   testWidgets('Confirmar needs a duration and a motivo of 10+ characters', (

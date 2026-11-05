@@ -56,6 +56,15 @@ void main() {
       expect(redirigirPorSesion(_usuario, '/admin/usuarios/4'), Rutas.mapa);
     });
 
+    test('CRO-63 ADMIN on a user route goes to /admin/reportes', () {
+      expect(redirigirPorSesion(_admin, Rutas.mapa), Rutas.adminReportes);
+      expect(redirigirPorSesion(_admin, '/perfil/editar'), Rutas.adminReportes);
+      expect(
+        redirigirPorSesion(_admin, '/mapa/lugares/7'),
+        Rutas.adminReportes,
+      );
+    });
+
     test('R3-005 public routes match exactly, ignoring a trailing slash', () {
       expect(redirigirPorSesion(_anonimo, '/login/'), isNull);
       expect(redirigirPorSesion(_anonimo, '/loginx'), Rutas.login);
