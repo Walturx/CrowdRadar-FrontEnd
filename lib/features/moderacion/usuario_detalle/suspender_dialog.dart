@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../theme/app_colors.dart';
 import 'usuario_admin_detalle_cubit.dart';
 
 /// Choice made in the suspend dialog.
@@ -36,9 +37,10 @@ class _SuspenderDialogState extends State<_SuspenderDialog> {
     super.dispose();
   }
 
-  bool get _valido =>
-      _dias != null &&
-      _motivo.text.trim().length >= UsuarioAdminDetalleCubit.motivoMinimo;
+  bool get _motivoCorto =>
+      _motivo.text.trim().length < UsuarioAdminDetalleCubit.motivoMinimo;
+
+  bool get _valido => _dias != null && !_motivoCorto;
 
   @override
   Widget build(BuildContext context) {
@@ -70,8 +72,14 @@ class _SuspenderDialogState extends State<_SuspenderDialog> {
               maxLength: UsuarioAdminDetalleCubit.motivoMaximo,
               maxLines: 3,
               onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(
-                labelText: 'Motivo (mínimo 10 caracteres)',
+              // Red while too short; Confirmar stays disabled until then.
+              decoration: InputDecoration(
+                labelText: 'Motivo',
+                helperText:
+                    'Mínimo ${UsuarioAdminDetalleCubit.motivoMinimo} caracteres',
+                helperStyle: _motivoCorto
+                    ? const TextStyle(color: AppColors.danger)
+                    : null,
               ),
             ),
           ],

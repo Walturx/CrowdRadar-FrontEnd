@@ -6,6 +6,7 @@ import '../../../app/rutas.dart';
 import '../../../core/models/moderacion.dart';
 import '../../../core/utils/formato_fecha.dart';
 import '../../../core/widgets/cargando.dart';
+import '../../../core/widgets/cerrar_sesion.dart';
 import '../../../core/widgets/chip_saturacion.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
@@ -37,7 +38,10 @@ class DenunciadosPage extends StatelessWidget {
           context.read<DenunciadosCubit>().descartarAviso();
         },
         builder: (context, state) => Scaffold(
-          appBar: AppBar(title: const Text('Reportes denunciados')),
+          appBar: AppBar(
+            title: const Text('Reportes denunciados'),
+            actions: const [BotonCerrarSesion()],
+          ),
           body: switch (state) {
             DenunciadosCargando() => const Cargando(),
             DenunciadosError() => EstadoError(

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/rutas.dart';
 import '../../../core/models/moderacion.dart';
 import '../../../core/widgets/cargando.dart';
+import '../../../core/widgets/cerrar_sesion.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
 import '../../../core/widgets/lista_perezosa.dart';
@@ -31,7 +32,10 @@ class UsuariosAdminPage extends StatelessWidget {
           context.read<UsuariosAdminCubit>().descartarAviso();
         },
         builder: (context, state) => Scaffold(
-          appBar: AppBar(title: const Text('Usuarios registrados')),
+          appBar: AppBar(
+            title: const Text('Usuarios registrados'),
+            actions: const [BotonCerrarSesion()],
+          ),
           body: Column(
             children: [
               _Filtros(state),
