@@ -41,9 +41,7 @@ class _Plataforma extends GeolocatorPlatform {
   }
 
   @override
-  Future<Position> getCurrentPosition({
-    LocationSettings? locationSettings,
-  }) {
+  Future<Position> getCurrentPosition({LocationSettings? locationSettings}) {
     ajustes = locationSettings;
     return actual();
   }
@@ -90,12 +88,15 @@ void main() {
     expect(await servicio.obtenerUbicacion(), isNull);
   });
 
-  test('a permanently refused permission returns null without asking', () async {
-    plataforma.permiso = LocationPermission.deniedForever;
+  test(
+    'a permanently refused permission returns null without asking',
+    () async {
+      plataforma.permiso = LocationPermission.deniedForever;
 
-    expect(await servicio.obtenerUbicacion(), isNull);
-    expect(plataforma.pedidos, 0);
-  });
+      expect(await servicio.obtenerUbicacion(), isNull);
+      expect(plataforma.pedidos, 0);
+    },
+  );
 
   test('location services turned off return null without asking', () async {
     plataforma.servicioActivo = false;

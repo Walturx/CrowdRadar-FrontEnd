@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/location/punto_referencia.dart';
 import '../../../core/models/validacion.dart';
 
 /// The vote the user just cast, shown with the thanks and the karma earned.
@@ -40,15 +41,20 @@ class PendientesCargado extends PendientesState {
   /// Notice for the user (failed vote, already voted, soft refresh error).
   final String? aviso;
 
+  /// Point the reports were searched around (CRO-65); the page says so when
+  /// it is the map centre instead of the device.
+  final OrigenReferencia origen;
+
   const PendientesCargado({
     required this.reportes,
     this.votando = const {},
     this.ultimoVoto,
     this.aviso,
+    this.origen = OrigenReferencia.dispositivo,
   });
 
   @override
-  List<Object?> get props => [reportes, votando, ultimoVoto, aviso];
+  List<Object?> get props => [reportes, votando, ultimoVoto, aviso, origen];
 }
 
 class PendientesError extends PendientesState {

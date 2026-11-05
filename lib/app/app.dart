@@ -48,6 +48,8 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
   late final SesionCubit _sesion;
   late final GoRouter _router = crearRouter(
     _sesion,
+    centroMapa: widget.dependencias.centroMapa,
+    referencia: widget.dependencias.puntoReferencia,
     ubicacionInicial: widget.ubicacionInicial,
   );
 

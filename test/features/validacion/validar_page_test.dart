@@ -1,5 +1,6 @@
 import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
 import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
+import 'package:crowdradar/core/location/punto_referencia.dart';
 import 'package:crowdradar/core/map/centro_compartido.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
@@ -11,12 +12,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../helpers/ubicacion_fake.dart';
 import 'json_validacion.dart';
 
 class _MockRepo extends Mock implements ValidacionRepository {}
 
 void main() {
-  Future<void> abrir(WidgetTester tester, ValidacionRepository repo) async {
+  Future<void> abrir(
+    WidgetTester tester,
+    ValidacionRepository repo, {
+    bool conUbicacion = true,
+  }) async {
     tester.view.physicalSize = const Size(800, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -24,7 +30,14 @@ void main() {
     await tester.pumpWidget(
       RepositoryProvider<ValidacionRepository>.value(
         value: repo,
-        child: MaterialApp(home: ValidarPage(centro: CentroMapaCompartido())),
+        child: MaterialApp(
+          home: ValidarPage(
+            referencia: PuntoReferencia(
+              UbicacionServiceFake(conUbicacion ? miraflores : null),
+              CentroMapaCompartido(),
+            ),
+          ),
+        ),
       ),
     );
     await tester.pump();
@@ -125,5 +138,61 @@ void main() {
     );
 
     expect(find.text('Reintentar'), findsOneWidget);
+  });
+
+  group('CRO-65 where the reports are searched', () {
+    _MockRepo vacio() {
+      final repo = _MockRepo();
+      when(
+        () => repo.pendientes(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer(
+        (_) async => const Pagina<ReportePendiente>(
+          items: [],
+          page: 1,
+          size: 20,
+          total: 0,
+          totalPaginas: 1,
+        ),
+      );
+      return repo;
+    }
+
+    testWidgets('S1 with the device location there is no map-centre notice', (
+      tester,
+    ) async {
+      await abrir(tester, ValidacionRepositoryFake());
+
+      expect(find.text('Parque Kennedy'), findsOneWidget);
+      expect(find.text(ValidarPage.avisoCentroMapa), findsNothing);
+    });
+
+    testWidgets('S2 without the location it says the map centre is used', (
+      tester,
+    ) async {
+      await abrir(tester, ValidacionRepositoryFake(), conUbicacion: false);
+
+      expect(find.text(ValidarPage.avisoCentroMapa), findsOneWidget);
+      expect(find.text('Parque Kennedy'), findsOneWidget);
+    });
+
+    testWidgets('S2 the empty state names the map centre too', (tester) async {
+      await abrir(tester, vacio(), conUbicacion: false);
+
+      expect(find.text(ValidarPage.tituloVacio), findsOneWidget);
+      expect(find.text(ValidarPage.mensajeVacioCentroMapa), findsOneWidget);
+      expect(find.text(ValidarPage.mensajeVacio), findsNothing);
+    });
+
+    testWidgets('S1 the empty state near the user keeps its message', (
+      tester,
+    ) async {
+      await abrir(tester, vacio());
+
+      expect(find.text(ValidarPage.mensajeVacio), findsOneWidget);
+      expect(find.text(ValidarPage.avisoCentroMapa), findsNothing);
+    });
   });
 }

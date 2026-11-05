@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 
 import '../core/config/entorno.dart';
 import '../core/location/geolocator_ubicacion_service.dart';
+import '../core/location/punto_referencia.dart';
 import '../core/location/ubicacion_service.dart';
+import '../core/map/centro_compartido.dart';
 import '../core/map/flutter_map_adapter.dart';
 import '../core/map/mapa_adapter.dart';
 import '../core/network/api_client.dart';
@@ -55,6 +57,13 @@ class Dependencias {
   final ApiClient apiClient;
   final MapaAdapter mapaAdapter;
   final UbicacionService ubicacionService;
+
+  /// The map writes its centre here; [puntoReferencia] falls back to it.
+  final CentroMapaCompartido centroMapa;
+
+  /// Device location or map centre, shared by every screen that measures
+  /// distances or searches nearby (CRO-65).
+  final PuntoReferencia puntoReferencia;
   final ReceptorPush receptorPush;
   final AuthRepository authRepository;
   final PerfilRepository perfilRepository;
@@ -73,6 +82,8 @@ class Dependencias {
     required this.apiClient,
     required this.mapaAdapter,
     required this.ubicacionService,
+    required this.centroMapa,
+    required this.puntoReferencia,
     required this.receptorPush,
     required this.authRepository,
     required this.perfilRepository,
@@ -115,12 +126,16 @@ class Dependencias {
     final repos = entorno.usarFakes
         ? _repositoriosFake(sesion, const ComportamientoFake())
         : _repositoriosHttp(api, sesion);
+    final ubicacion = ubicacionService ?? GeolocatorUbicacionService();
+    final centroMapa = CentroMapaCompartido();
     return Dependencias._(
       entorno: entorno,
       sesion: sesion,
       apiClient: api,
       mapaAdapter: mapaAdapter ?? FlutterMapAdapter(),
-      ubicacionService: ubicacionService ?? GeolocatorUbicacionService(),
+      ubicacionService: ubicacion,
+      centroMapa: centroMapa,
+      puntoReferencia: PuntoReferencia(ubicacion, centroMapa),
       receptorPush:
           receptorPush ??
           (entorno.usarFakes ? ReceptorPushConsola() : ReceptorPushNulo()),

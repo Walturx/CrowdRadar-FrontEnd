@@ -29,6 +29,7 @@ import '../features/moderacion/usuarios/usuarios_admin_page.dart';
 import '../features/perfil/acerca/acerca_page.dart';
 import '../features/perfil/cambiar_password/cambiar_password_page.dart';
 import '../features/reportes/mis_reportes/mis_reportes_page.dart';
+import '../core/location/punto_referencia.dart';
 import '../core/map/centro_compartido.dart';
 import '../features/validacion/data/validacion_repository.dart';
 import '../features/validacion/detalle_reporte/detalle_reporte_page.dart';
@@ -70,12 +71,14 @@ GoRoute _pagina(
   List<RouteBase> routes = const [],
 }) => GoRoute(path: path, builder: (_, state) => pagina(state), routes: routes);
 
+/// [centroMapa] is written by the map; [referencia] (device location, else
+/// that centre) is read by the validation tab. Both come from [Dependencias].
 GoRouter crearRouter(
   SesionCubit sesion, {
+  required CentroMapaCompartido centroMapa,
+  required PuntoReferencia referencia,
   String ubicacionInicial = Rutas.mapa,
 }) {
-  // The map writes its centre here and the validation tab reads it.
-  final centroMapa = CentroMapaCompartido();
   return GoRouter(
     initialLocation: ubicacionInicial,
     refreshListenable: _RefrescoPorSesion(sesion.stream),
@@ -134,7 +137,7 @@ GoRouter crearRouter(
             routes: [
               GoRoute(
                 path: Rutas.validar,
-                builder: (_, _) => ValidarPage(centro: centroMapa),
+                builder: (_, _) => ValidarPage(referencia: referencia),
                 routes: [
                   _pagina(
                     _hija(Rutas.reporteValidarPlantilla, Rutas.validar),

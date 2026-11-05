@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/map/centro_compartido.dart';
+import '../../../core/location/punto_referencia.dart';
 import '../../../core/models/validacion.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/mensaje_error.dart';
@@ -8,16 +8,17 @@ import '../../../core/utils/mensaje_espera.dart';
 import '../data/validacion_repository.dart';
 import 'pendientes_state.dart';
 
-/// HU 5.1: reports around the map centre waiting for the user's vote.
+/// HU 5.1: reports near the user waiting for their vote, searched around the
+/// device location or, without it, the map centre (CRO-65).
 class PendientesCubit extends Cubit<PendientesState> {
   /// HU 5.1 c3.
   static const String mensajeYaParticipo =
       'Ya participaste en la validación de este reporte.';
 
   final ValidacionRepository _repositorio;
-  final CentroMapaCompartido _centro;
+  final PuntoReferencia _referencia;
 
-  PendientesCubit(this._repositorio, this._centro)
+  PendientesCubit(this._repositorio, this._referencia)
     : super(const PendientesCargando());
 
   bool _cargando = false;
@@ -28,7 +29,9 @@ class PendientesCubit extends Cubit<PendientesState> {
     final actual = state;
     if (actual is! PendientesCargado) emit(const PendientesCargando());
     try {
-      final centro = _centro.actual;
+      final referencia = await _referencia.actualizar();
+      if (isClosed) return;
+      final centro = referencia.punto;
       final pagina = await _repositorio.pendientes(
         lat: centro.latitud,
         lng: centro.longitud,
@@ -44,8 +47,12 @@ class PendientesCubit extends Cubit<PendientesState> {
                 ],
                 votando: ahora.votando,
                 ultimoVoto: ahora.ultimoVoto,
+                origen: referencia.origen,
               )
-            : PendientesCargado(reportes: pagina.items),
+            : PendientesCargado(
+                reportes: pagina.items,
+                origen: referencia.origen,
+              ),
       );
     } catch (e) {
       if (isClosed) return;
@@ -79,6 +86,7 @@ class PendientesCubit extends Cubit<PendientesState> {
         reportes: [...actual.reportes]..removeAt(posicion),
         votando: {...actual.votando, reporte.id},
         ultimoVoto: actual.ultimoVoto,
+        origen: actual.origen,
       ),
     );
     try {
@@ -121,6 +129,7 @@ class PendientesCubit extends Cubit<PendientesState> {
         reportes: actual.reportes,
         votando: actual.votando,
         ultimoVoto: actual.ultimoVoto,
+        origen: actual.origen,
       ),
     );
   }
@@ -143,6 +152,7 @@ class PendientesCubit extends Cubit<PendientesState> {
         votando: {...actual.votando}..remove(id),
         ultimoVoto: ultimoVoto ?? actual.ultimoVoto,
         aviso: aviso,
+        origen: actual.origen,
       ),
     );
   }
@@ -153,5 +163,6 @@ class PendientesCubit extends Cubit<PendientesState> {
         votando: s.votando,
         ultimoVoto: s.ultimoVoto,
         aviso: aviso,
+        origen: s.origen,
       );
 }

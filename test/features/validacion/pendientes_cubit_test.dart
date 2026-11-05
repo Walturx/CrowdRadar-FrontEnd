@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
+import 'package:crowdradar/core/location/punto_referencia.dart';
 import 'package:crowdradar/core/map/centro_compartido.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
 import 'package:crowdradar/core/models/validacion.dart';
@@ -14,6 +15,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'json_validacion.dart';
 import '../../helpers/errores_comunes.dart';
+import '../../helpers/ubicacion_fake.dart';
 
 class _MockRepo extends Mock implements ValidacionRepository {}
 
@@ -41,15 +43,18 @@ ApiException _api(int status, String code, [String msg = 'mensaje del API']) =>
 void main() {
   late _MockRepo repo;
   late CentroMapaCompartido centro;
+  late UbicacionServiceFake ubicacion;
 
   setUpAll(() => registerFallbackValue(TipoAccionValidacion.confirmar));
 
   setUp(() {
     repo = _MockRepo();
     centro = CentroMapaCompartido();
+    ubicacion = UbicacionServiceFake(miraflores);
   });
 
-  PendientesCubit cubit() => PendientesCubit(repo, centro);
+  PendientesCubit cubit() =>
+      PendientesCubit(repo, PuntoReferencia(ubicacion, centro));
 
   void stubPendientes(List<int> ids) => when(
     () => repo.pendientes(
@@ -67,7 +72,7 @@ void main() {
 
   group('cargar', () {
     blocTest<PendientesCubit, PendientesState>(
-      'uses the last map centre',
+      'CRO-65 S1 searches around the device location',
       setUp: () {
         centro.actualizar(
           const LimitesMapa(norte: -12, sur: -13, este: -76, oeste: -77),
@@ -80,18 +85,59 @@ void main() {
         const PendientesCargando(),
         PendientesCargado(reportes: [_r(1), _r(2)]),
       ],
+      verify: (_) => verify(
+        () =>
+            repo.pendientes(lat: miraflores.latitud, lng: miraflores.longitud),
+      ).called(1),
+    );
+
+    test('CRO-65 S1 a refresh reads the device location again', () async {
+      final c = await cargado([1]);
+      ubicacion.punto = const PuntoGeografico(-12.05, -77.04);
+
+      await c.cargar();
+
+      expect(ubicacion.llamadas, 2);
+      verify(() => repo.pendientes(lat: -12.05, lng: -77.04)).called(1);
+      await c.close();
+    });
+
+    blocTest<PendientesCubit, PendientesState>(
+      'CRO-65 S2 without the device location uses the last map centre',
+      setUp: () {
+        ubicacion.punto = null;
+        centro.actualizar(
+          const LimitesMapa(norte: -12, sur: -13, este: -76, oeste: -77),
+        );
+        stubPendientes([1, 2]);
+      },
+      build: cubit,
+      act: (c) => c.cargar(),
+      expect: () => [
+        const PendientesCargando(),
+        PendientesCargado(
+          reportes: [_r(1), _r(2)],
+          origen: OrigenReferencia.centroMapa,
+        ),
+      ],
       verify: (_) =>
           verify(() => repo.pendientes(lat: -12.5, lng: -76.5)).called(1),
     );
 
     blocTest<PendientesCubit, PendientesState>(
       'falls back to the centre of Lima without a map centre',
-      setUp: () => stubPendientes([]),
+      setUp: () {
+        ubicacion.punto = null;
+        stubPendientes([]);
+      },
       build: cubit,
       act: (c) => c.cargar(),
       expect: () => [
         const PendientesCargando(),
-        const PendientesCargado(reportes: []),
+        const PendientesCargado(
+          reportes: [],
+          origen: OrigenReferencia.centroMapa,
+        ),
       ],
       verify: (_) => verify(
         () => repo.pendientes(
@@ -163,6 +209,32 @@ void main() {
   });
 
   group('votar', () {
+    test('CRO-65 S2 votes and notices keep the map-centre origin', () async {
+      ubicacion.punto = null;
+      final c = await cargado([1, 2]);
+      when(
+        () => repo.validar(1, TipoAccionValidacion.confirmar),
+      ).thenAnswer((_) async => _voto);
+      when(
+        () => repo.validar(2, TipoAccionValidacion.confirmar),
+      ).thenThrow(const ApiException.sinConexion());
+
+      await c.votar(_r(1), TipoAccionValidacion.confirmar);
+      expect(
+        (c.state as PendientesCargado).origen,
+        OrigenReferencia.centroMapa,
+      );
+      await c.votar(_r(2), TipoAccionValidacion.confirmar);
+      expect((c.state as PendientesCargado).aviso, isNotNull);
+      c.descartarAviso();
+
+      expect(
+        (c.state as PendientesCargado).origen,
+        OrigenReferencia.centroMapa,
+      );
+      await c.close();
+    });
+
     test('cargar during a vote keeps votando and ultimoVoto and does not '
         'resurrect the report', () async {
       final c = await cargado([1, 2]);
