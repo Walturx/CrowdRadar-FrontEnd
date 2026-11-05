@@ -61,8 +61,9 @@ String _hija(String completa, String padre) => Rutas.relativa(completa, padre);
 int _id(GoRouterState state) =>
     int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
 
-/// Map centre passed as `extra` by the screens that open a place or the search.
-PuntoGeografico? _centroDe(GoRouterState state) =>
+/// Point distances are measured from, passed as `extra` by the screens that
+/// open a place or the search.
+PuntoGeografico? _origenDe(GoRouterState state) =>
     state.extra is PuntoGeografico ? state.extra as PuntoGeografico : null;
 
 GoRoute _pagina(
@@ -72,7 +73,7 @@ GoRoute _pagina(
 }) => GoRoute(path: path, builder: (_, state) => pagina(state), routes: routes);
 
 /// [centroMapa] is written by the map; [referencia] (device location, else
-/// that centre) is read by the validation tab. Both come from [Dependencias].
+/// that centre) is read by the map, search, place detail and validation tab. Both come from [Dependencias].
 GoRouter crearRouter(
   SesionCubit sesion, {
   required CentroMapaCompartido centroMapa,
@@ -95,7 +96,10 @@ GoRouter crearRouter(
             routes: [
               GoRoute(
                 path: Rutas.mapa,
-                builder: (_, _) => MapPage(centroCompartido: centroMapa),
+                builder: (_, _) => MapPage(
+                  centroCompartido: centroMapa,
+                  referencia: referencia,
+                ),
                 routes: [
                   _pagina(
                     _hija(Rutas.explorar, Rutas.mapa),
@@ -103,13 +107,13 @@ GoRouter crearRouter(
                   ),
                   _pagina(
                     _hija(Rutas.buscarLugar, Rutas.mapa),
-                    (s) => BuscarLugarPage(centroMapa: _centroDe(s)),
+                    (s) => BuscarLugarPage(origenDistancia: _origenDe(s)),
                   ),
                   _pagina(
                     _hija(Rutas.lugarPlantilla, Rutas.mapa),
                     (s) => DetalleLugarPage(
                       lugarId: _id(s),
-                      centroMapa: _centroDe(s),
+                      origenDistancia: _origenDe(s),
                     ),
                     routes: [
                       _pagina(

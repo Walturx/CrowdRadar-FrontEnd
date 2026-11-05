@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/rutas.dart';
+import '../../../core/location/punto_referencia.dart';
 import '../../../core/map/mapa_adapter.dart';
 import '../../../core/map/centro_compartido.dart';
 import '../../../core/map/tipos_mapa.dart';
@@ -20,37 +23,50 @@ class MapPage extends StatelessWidget {
   /// Where the camera centre is published for the other tabs.
   final CentroMapaCompartido? centroCompartido;
 
-  const MapPage({super.key, this.centroCompartido});
+  /// Point the search and place detail measure distances from (CRO-65).
+  final PuntoReferencia? referencia;
+
+  const MapPage({super.key, this.centroCompartido, this.referencia});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => MapaCubit(context.read<LugarRepository>()),
-      child: _MapView(centroCompartido),
+      child: _MapView(centroCompartido, referencia),
     );
   }
 }
 
 class _MapView extends StatefulWidget {
   final CentroMapaCompartido? centroCompartido;
+  final PuntoReferencia? referencia;
 
-  const _MapView(this.centroCompartido);
+  const _MapView(this.centroCompartido, this.referencia);
 
   @override
   State<_MapView> createState() => _MapViewState();
 }
 
 class _MapViewState extends State<_MapView> {
-  static const PuntoGeografico _centroLima = PuntoGeografico(
-    -12.0464,
-    -77.0428,
-  );
   static const String _tituloError = 'No pudimos cargar el mapa';
 
   /// The offline banner is shown once per outage: tiles fail in bursts.
   bool _avisoMostrado = false;
   bool _avisoVisible = false;
   bool _errorDescartado = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // The map is the first screen: ask for the location (and its permission)
+    // now, so the first search or detail already measures from the device.
+    final referencia = widget.referencia;
+    if (referencia != null) unawaited(referencia.actualizar());
+  }
+
+  /// The device location when known, else the live camera centre.
+  PuntoGeografico? _origenDistancia(MapaCubit cubit) =>
+      widget.referencia?.dispositivo ?? cubit.centro;
 
   void _alCamaraQuieta(LimitesMapa limites) {
     widget.centroCompartido?.actualizar(limites);
@@ -64,12 +80,15 @@ class _MapViewState extends State<_MapView> {
   }
 
   /// Opens the search route, which pops the chosen place id; that place opens
-  /// its detail from the current map centre.
+  /// its detail. Both measure distances from [_origenDistancia].
   Future<void> _abrirBusqueda() async {
     final cubit = context.read<MapaCubit>();
-    final id = await context.push<int>(Rutas.buscarLugar, extra: cubit.centro);
+    final id = await context.push<int>(
+      Rutas.buscarLugar,
+      extra: _origenDistancia(cubit),
+    );
     if (id != null && mounted) {
-      context.push(Rutas.lugar(id), extra: cubit.centro);
+      context.push(Rutas.lugar(id), extra: _origenDistancia(cubit));
     }
   }
 
@@ -145,15 +164,17 @@ class _MapViewState extends State<_MapView> {
                 children: [
                   Positioned.fill(
                     child: context.read<MapaAdapter>().construirMapa(
-                      centro: _centroLima,
+                      centro: CentroMapaCompartido.lima,
                       zoom: 12,
                       marcadores: marcadoresDe(switch (state) {
                         MapaCargado() => state.lugares,
                         MapaCargando() => state.lugares,
                         MapaError() => const [],
                       }),
-                      alTocarMarcador: (id) =>
-                          context.push(Rutas.lugar(id), extra: cubit.centro),
+                      alTocarMarcador: (id) => context.push(
+                        Rutas.lugar(id),
+                        extra: _origenDistancia(cubit),
+                      ),
                       eventos: EventosMapa(
                         alMoverCamara: cubit.alMoverCamara,
                         alCamaraQuieta: _alCamaraQuieta,

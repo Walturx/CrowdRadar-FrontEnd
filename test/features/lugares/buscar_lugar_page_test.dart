@@ -66,7 +66,7 @@ void main() {
               GoRoute(
                 path: Rutas.buscarLugar,
                 builder: (_, s) => BuscarLugarPage(
-                  centroMapa: s.extra is PuntoGeografico
+                  origenDistancia: s.extra is PuntoGeografico
                       ? s.extra as PuntoGeografico
                       : null,
                 ),

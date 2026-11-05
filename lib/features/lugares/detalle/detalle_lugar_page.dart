@@ -23,17 +23,22 @@ import '../data/lugar_repository.dart';
 import 'detalle_lugar_cubit.dart';
 import 'detalle_lugar_state.dart';
 
-/// Place detail (`/mapa/lugares/:id`); [centroMapa] is the map centre the user
-/// came from, used for the distance (omitted when unknown).
+/// Place detail (`/mapa/lugares/:id`); [origenDistancia] is the point the
+/// distance is measured from: the device location, else the map centre the
+/// user came from (omitted when unknown).
 class DetalleLugarPage extends StatelessWidget {
   static const String tituloError = 'Información no disponible';
   static const String mensajeSinInformacion =
       'Aún no hay reportes suficientes para determinar la saturación de este lugar.';
 
   final int lugarId;
-  final PuntoGeografico? centroMapa;
+  final PuntoGeografico? origenDistancia;
 
-  const DetalleLugarPage({super.key, required this.lugarId, this.centroMapa});
+  const DetalleLugarPage({
+    super.key,
+    required this.lugarId,
+    this.origenDistancia,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,15 +48,15 @@ class DetalleLugarPage extends StatelessWidget {
         context.read<FavoritoRepository>(),
         lugarId,
       )..cargar(),
-      child: _DetalleView(centroMapa),
+      child: _DetalleView(origenDistancia),
     );
   }
 }
 
 class _DetalleView extends StatelessWidget {
-  final PuntoGeografico? centroMapa;
+  final PuntoGeografico? origenDistancia;
 
-  const _DetalleView(this.centroMapa);
+  const _DetalleView(this.origenDistancia);
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +104,7 @@ class _DetalleView extends StatelessWidget {
           ),
           DetalleCargado() => _Contenido(
             state.detalle,
-            centroMapa,
+            origenDistancia,
             () => _reportar(context, state.detalle),
           ),
         },
@@ -148,10 +153,10 @@ class _DetalleView extends StatelessWidget {
 
 class _Contenido extends StatelessWidget {
   final LugarDetalle detalle;
-  final PuntoGeografico? centroMapa;
+  final PuntoGeografico? origenDistancia;
   final VoidCallback onReportar;
 
-  const _Contenido(this.detalle, this.centroMapa, this.onReportar);
+  const _Contenido(this.detalle, this.origenDistancia, this.onReportar);
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +186,7 @@ class _Contenido extends StatelessWidget {
                       detalle.categoria,
                       detalle.latitud,
                       detalle.longitud,
-                      centroMapa,
+                      origenDistancia,
                     ),
                     style: const TextStyle(color: AppColors.textMuted),
                   ),

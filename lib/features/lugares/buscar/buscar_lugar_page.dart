@@ -15,30 +15,31 @@ import 'buscar_lugar_cubit.dart';
 import 'buscar_lugar_state.dart';
 
 /// Search by name (HU 3.4). Pops with the id of the chosen place; the caller
-/// decides where to go. [centroMapa] enables the distance in each result.
+/// decides where to go. [origenDistancia] (the user's reference point)
+/// enables the distance in each result.
 class BuscarLugarPage extends StatelessWidget {
   static const int maximoCaracteres = 60;
   static const String ayuda =
       'Escribe al menos ${BuscarLugarCubit.minimoCaracteres} caracteres para buscar';
   static const EdgeInsets _relleno = EdgeInsets.fromLTRB(16, 12, 16, 4);
 
-  final PuntoGeografico? centroMapa;
+  final PuntoGeografico? origenDistancia;
 
-  const BuscarLugarPage({super.key, this.centroMapa});
+  const BuscarLugarPage({super.key, this.origenDistancia});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => BuscarLugarCubit(context.read<LugarRepository>()),
-      child: _BuscarView(centroMapa),
+      child: _BuscarView(origenDistancia),
     );
   }
 }
 
 class _BuscarView extends StatelessWidget {
-  final PuntoGeografico? centroMapa;
+  final PuntoGeografico? origenDistancia;
 
-  const _BuscarView(this.centroMapa);
+  const _BuscarView(this.origenDistancia);
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +65,7 @@ class _BuscarView extends StatelessWidget {
             subtitle: BuscarLugarPage.ayuda,
           ),
           BuscarBuscando() => const Cargando(),
-          BuscarResultados() => _Lista(state.lugares, centroMapa),
+          BuscarResultados() => _Lista(state.lugares, origenDistancia),
           BuscarSinResultados() => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -93,9 +94,9 @@ class _BuscarView extends StatelessWidget {
 
 class _Lista extends StatelessWidget {
   final List<LugarResumen> lugares;
-  final PuntoGeografico? centroMapa;
+  final PuntoGeografico? origenDistancia;
 
-  const _Lista(this.lugares, this.centroMapa);
+  const _Lista(this.lugares, this.origenDistancia);
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +124,7 @@ class _Lista extends StatelessWidget {
                     l.categoria,
                     l.latitud,
                     l.longitud,
-                    centroMapa,
+                    origenDistancia,
                   ),
                 ),
                 trailing: ChipSaturacion(nivel: l.saturacion),
