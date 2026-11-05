@@ -12,6 +12,7 @@ import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
 import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
 import 'package:crowdradar/core/config/entorno.dart';
 import 'package:crowdradar/core/location/geolocator_ubicacion_service.dart';
+import 'package:crowdradar/core/map/tipos_mapa.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/features/auth/data/auth_repository_http.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository_http.dart';
@@ -63,6 +64,28 @@ void main() {
 
     expect(d.ubicacionService, same(propio));
   });
+
+  test(
+    'CRO-65 the reference point joins that service and the map centre',
+    () async {
+      final ubicacion = UbicacionServiceFake();
+      final d = Dependencias.crear(
+        const Entorno(usarFakes: true),
+        SessionService.instance,
+        ubicacionService: ubicacion,
+      );
+      d.centroMapa.actualizar(
+        const LimitesMapa(norte: -12, sur: -13, este: -76, oeste: -77),
+      );
+
+      expect(
+        (await d.puntoReferencia.actualizar()).punto,
+        const PuntoGeografico(-12.5, -76.5),
+      );
+      ubicacion.punto = miraflores;
+      expect((await d.puntoReferencia.actualizar()).punto, miraflores);
+    },
+  );
 
   test('R1-101 fakes in a release build are refused', () {
     expect(
