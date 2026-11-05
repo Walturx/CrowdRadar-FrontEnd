@@ -56,6 +56,7 @@ class _LoginViewState extends State<_LoginView> {
     return BlocConsumer<LoginCubit, LoginState>(
       listener: (context, state) {
         if (state is LoginExitoso) {
+          // The session guard sends an ADMIN on to the moderation panel.
           context.go(Rutas.mapa);
         } else if (state is LoginFallido) {
           ScaffoldMessenger.of(
