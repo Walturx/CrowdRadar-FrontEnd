@@ -96,7 +96,7 @@ void main() {
       await guardar(tester);
 
       expect(
-        find.text('Ingresá un celular de 9 dígitos que empiece en 9'),
+        find.text('Ingresa un celular de 9 dígitos que empiece en 9'),
         findsOneWidget,
       );
       verifyNever(() => repo.actualizar(any()));

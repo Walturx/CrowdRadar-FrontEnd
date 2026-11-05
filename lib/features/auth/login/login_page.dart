@@ -109,7 +109,7 @@ class _LoginViewState extends State<_LoginView> {
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Ingresá tu correo';
+                          return 'Ingresa tu correo';
                         }
                         return Validadores.correo(value);
                       },
@@ -123,7 +123,7 @@ class _LoginViewState extends State<_LoginView> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Ingresá tu contraseña';
+                          return 'Ingresa tu contraseña';
                         }
                         return null;
                       },

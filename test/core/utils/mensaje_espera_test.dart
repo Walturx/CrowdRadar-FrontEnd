@@ -5,15 +5,15 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('rounds the wait up to whole minutes with singular and plural', () {
     expect(segundosPorMinuto, 60);
-    expect(mensajeEspera(1), 'Demasiados intentos, probá en 1 minuto');
-    expect(mensajeEspera(60), 'Demasiados intentos, probá en 1 minuto');
-    expect(mensajeEspera(61), 'Demasiados intentos, probá en 2 minutos');
-    expect(mensajeEspera(125), 'Demasiados intentos, probá en 3 minutos');
+    expect(mensajeEspera(1), 'Demasiados intentos, prueba en 1 minuto');
+    expect(mensajeEspera(60), 'Demasiados intentos, prueba en 1 minuto');
+    expect(mensajeEspera(61), 'Demasiados intentos, prueba en 2 minutos');
+    expect(mensajeEspera(125), 'Demasiados intentos, prueba en 3 minutos');
   });
 
   test('no wait information falls back to a generic text', () {
-    expect(mensajeEspera(null), 'Demasiados intentos, probá más tarde');
-    expect(mensajeEspera(0), 'Demasiados intentos, probá más tarde');
+    expect(mensajeEspera(null), 'Demasiados intentos, prueba más tarde');
+    expect(mensajeEspera(0), 'Demasiados intentos, prueba más tarde');
   });
 
   test('a rate limit is a 429 or one of its codes', () {
