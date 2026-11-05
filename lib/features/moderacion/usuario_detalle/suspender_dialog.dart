@@ -70,9 +70,9 @@ class _SuspenderDialogState extends State<_SuspenderDialog> {
               maxLength: UsuarioAdminDetalleCubit.motivoMaximo,
               maxLines: 3,
               onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(
-                labelText: 'Motivo (mínimo 10 caracteres)',
-              ),
+              // Confirmar stays disabled until the motivo reaches
+              // [UsuarioAdminDetalleCubit.motivoMinimo] characters.
+              decoration: const InputDecoration(labelText: 'Motivo'),
             ),
           ],
         ),

@@ -63,6 +63,23 @@ void main() {
     );
   });
 
+  testWidgets('the motivo field is labelled "Motivo" without the length rule', (
+    tester,
+  ) async {
+    await abrir(tester, idCarlos);
+    await tester.tap(find.text('Suspender usuario'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(of: dialogo, matching: find.text('Motivo')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: dialogo, matching: find.textContaining('mínimo')),
+      findsNothing,
+    );
+  });
+
   testWidgets('Confirmar needs a duration and a motivo of 10+ characters', (
     tester,
   ) async {
