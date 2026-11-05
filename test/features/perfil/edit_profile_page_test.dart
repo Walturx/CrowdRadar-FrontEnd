@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../fakes/enrutador_falso.dart';
+import '../../helpers/elegir_distrito.dart';
 
 class _PerfilRepoMock extends Mock implements PerfilRepository {}
 
@@ -25,10 +26,10 @@ void main() {
   setUp(() => repo = _PerfilRepoMock());
 
   /// Opens the edit page on top of `/inicio`, so `pop` has somewhere to go.
-  Future<void> abrir(WidgetTester tester) async {
+  Future<void> abrir(WidgetTester tester, {Usuario usuario = _usuario}) async {
     final router = enrutadorDe(
       ruta: '/editar',
-      pantalla: const EditProfilePage(user: _usuario),
+      pantalla: EditProfilePage(user: usuario),
     );
     await tester.pumpWidget(
       RepositoryProvider<PerfilRepository>.value(
@@ -101,14 +102,60 @@ void main() {
       verifyNever(() => repo.actualizar(any()));
     });
 
-    testWidgets('a one-letter district is rejected', (tester) async {
-      await abrir(tester);
+    testWidgets('a district outside the list must be picked again', (
+      tester,
+    ) async {
+      await abrir(
+        tester,
+        usuario: const Usuario(
+          id: 1,
+          nombre: 'Ana',
+          apellido: 'Paz',
+          email: 'ana@test.com',
+          distrito: 'miraflores',
+        ),
+      );
 
-      await escribir(tester, 'Distrito', 'M');
       await guardar(tester);
 
-      expect(find.text('Ingresá tu distrito'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(DropdownButtonFormField<String>),
+          matching: find.text('Selecciona tu distrito'),
+        ),
+        findsWidgets,
+      );
       verifyNever(() => repo.actualizar(any()));
+    });
+
+    testWidgets('a user without district cannot save until one is picked', (
+      tester,
+    ) async {
+      when(() => repo.actualizar(any())).thenAnswer((_) async => _usuario);
+      await abrir(
+        tester,
+        usuario: const Usuario(
+          id: 1,
+          nombre: 'Ana',
+          apellido: 'Paz',
+          email: 'ana@test.com',
+        ),
+      );
+
+      await guardar(tester);
+      verifyNever(() => repo.actualizar(any()));
+
+      await elegirDistrito(tester, 'Barranco');
+      await guardar(tester);
+
+      verify(
+        () => repo.actualizar({
+          'nombre': 'Ana',
+          'apellido': 'Paz',
+          'telefono': '',
+          'distrito': 'Barranco',
+        }),
+      ).called(1);
     });
 
     testWidgets('an empty phone is allowed and sent empty to clear it', (
