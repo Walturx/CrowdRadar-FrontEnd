@@ -6,6 +6,8 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>CrowdRadar usa tu ubicación para mostrarte los reportes cercanos y las distancias a cada lugar.</string>
 	<key>CFBundleDisplayName</key>
 	<string>Crowdradar</string>
 	<key>CFBundleExecutable</key>
