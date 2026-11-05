@@ -178,7 +178,7 @@ void main() {
       await tester.pump();
 
       expect(
-        find.text('Ingresá un celular de 9 dígitos que empiece en 9'),
+        find.text('Ingresa un celular de 9 dígitos que empiece en 9'),
         findsOneWidget,
       );
       expect(

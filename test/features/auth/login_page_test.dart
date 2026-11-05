@@ -72,7 +72,10 @@ void main() {
       of: find.byKey(const Key('boton-iniciar-sesion')),
       matching: find.byType(ElevatedButton),
     );
-    expect(find.text('Demasiados intentos, probá en 1 minuto'), findsOneWidget);
+    expect(
+      find.text('Demasiados intentos, prueba en 1 minuto'),
+      findsOneWidget,
+    );
     expect(find.text('Iniciar sesión (3s)'), findsOneWidget);
     expect(tester.widget<ElevatedButton>(boton).enabled, isFalse);
 
@@ -102,7 +105,7 @@ void main() {
     await tester.pump();
 
     verifyNever(() => repo.iniciarSesion(any(), any()));
-    expect(find.text('Ingresá tu correo'), findsOneWidget);
+    expect(find.text('Ingresa tu correo'), findsOneWidget);
   });
 
   testWidgets('"¿Olvidaste tu contraseña?" opens the recovery screen', (

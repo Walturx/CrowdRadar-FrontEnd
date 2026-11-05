@@ -10,7 +10,7 @@ void main() {
     });
 
     test('rejects other lengths and prefixes', () {
-      const mensaje = 'Ingresá un celular de 9 dígitos que empiece en 9';
+      const mensaje = 'Ingresa un celular de 9 dígitos que empiece en 9';
       expect(Validadores.telefono('887654321'), mensaje);
       expect(Validadores.telefono('98765432'), mensaje);
       expect(Validadores.telefono('9876543210'), mensaje);

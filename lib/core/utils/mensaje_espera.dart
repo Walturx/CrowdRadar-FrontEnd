@@ -23,9 +23,9 @@ int? esperaDeError(Object error) => esLimiteDeIntentos(error)
 /// [sujeto] is the message subject ("Demasiados intentos" by default).
 String mensajeEspera(int? segundos, {String sujeto = 'Demasiados intentos'}) {
   if (segundos == null || segundos <= 0) {
-    return '$sujeto, probá más tarde';
+    return '$sujeto, prueba más tarde';
   }
   final minutos = (segundos / segundosPorMinuto).ceil();
-  return '$sujeto, probá en $minutos '
+  return '$sujeto, prueba en $minutos '
       '${minutos == 1 ? 'minuto' : 'minutos'}';
 }

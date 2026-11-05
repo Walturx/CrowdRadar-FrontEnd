@@ -45,7 +45,7 @@ void main() {
     expect(
       cubit.state,
       const DenunciarFormulario(
-        error: 'Demasiadas acciones seguidas, probá en 60 minutos',
+        error: 'Demasiadas acciones seguidas, prueba en 60 minutos',
       ),
     );
   });

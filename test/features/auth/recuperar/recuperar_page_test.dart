@@ -79,7 +79,7 @@ void main() {
     await enviar(tester, 'sin-arroba');
 
     verifyNever(() => repo.solicitarRecuperacion(any()));
-    expect(find.text('Ingresá un correo válido'), findsOneWidget);
+    expect(find.text('Ingresa un correo válido'), findsOneWidget);
   });
 
   testWidgets('"Volver a iniciar sesión" goes back to the login', (

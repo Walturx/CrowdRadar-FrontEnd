@@ -16,7 +16,7 @@ class Validadores {
   static String? telefono(String? valor) =>
       valor == null || valor.isEmpty || _celular.hasMatch(valor)
       ? null
-      : 'Ingresá un celular de 9 dígitos que empiece en 9';
+      : 'Ingresa un celular de 9 dígitos que empiece en 9';
 
   /// Required and one of [distritos], as the backend demands.
   static String? distrito(String? valor) =>

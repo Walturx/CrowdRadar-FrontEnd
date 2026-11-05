@@ -83,7 +83,7 @@ class _Formulario extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       const Text(
-        'Ingresá el correo de tu cuenta y te enviaremos un enlace para restablecer tu contraseña.',
+        'Ingresa el correo de tu cuenta y te enviaremos un enlace para restablecer tu contraseña.',
         style: TextStyle(color: AppColors.textMuted),
       ),
       const SizedBox(height: 20),

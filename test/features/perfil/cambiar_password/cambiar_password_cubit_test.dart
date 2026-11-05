@@ -164,7 +164,7 @@ void main() {
     expect: () => [
       const CambiarPasswordEnviando(),
       const CambiarPasswordFallido(
-        'Demasiados intentos, probá en 3 minutos',
+        'Demasiados intentos, prueba en 3 minutos',
         codigo: 'DEMASIADAS_SOLICITUDES',
         reintentarEnSegundos: 125,
       ),
@@ -191,8 +191,8 @@ void main() {
   test('R4-1201 the uncertain copy tells the user to try the new password', () {
     expect(
       CambiarPasswordCubit.mensajeResultadoIncierto,
-      'No pudimos confirmar el cambio. Si no podés entrar con la contraseña '
-      'actual, probá con la nueva.',
+      'No pudimos confirmar el cambio. Si no puedes entrar con la contraseña '
+      'actual, prueba con la nueva.',
     );
   });
 
