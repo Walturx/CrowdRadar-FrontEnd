@@ -74,103 +74,112 @@ class _LoginViewState extends State<_LoginView> {
 
         return Scaffold(
           backgroundColor: AppColors.bg,
+          // Scrolls when the keyboard leaves less room than the form needs,
+          // and keeps it centred otherwise.
           body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: Image.asset(
-                        'assets/images/crowdradar-logo-transparent.png',
-                        height: 130,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Iniciar sesión',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.text,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _emailCtrl,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Correo electrónico',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Ingresá tu correo';
-                        }
-                        return Validadores.correo(value);
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _passwordCtrl,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Contraseña',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Ingresá tu contraseña';
-                        }
-                        return null;
-                      },
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () => context.push(Rutas.recuperar),
-                        child: const Text('¿Olvidaste tu contraseña?'),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    BotonConEspera(
-                      key: const Key('boton-iniciar-sesion'),
-                      texto: 'Iniciar sesión',
-                      segundos: state is LoginFallido
-                          ? state.reintentarEnSegundos
-                          : null,
-                      onPressed: () => _onLogin(context),
-                    ),
-                    const SizedBox(height: 4),
-                    Center(
-                      child: TextButton(
-                        onPressed: () => context.push(Rutas.registro),
-                        child: Text.rich(
-                          TextSpan(
-                            text: '¿No tienes cuenta? ',
-                            style: const TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+            child: LayoutBuilder(
+              builder: (context, viewport) => SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: viewport.maxHeight),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Center(
+                            child: Image.asset(
+                              'assets/images/crowdradar-logo-transparent.png',
+                              height: 130,
                             ),
-                            children: const [
-                              TextSpan(
-                                text: 'Regístrate',
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w700,
+                          ),
+                          const SizedBox(height: 32),
+                          const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Iniciar sesión',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.text,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          TextFormField(
+                            controller: _emailCtrl,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: const InputDecoration(
+                              labelText: 'Correo electrónico',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Ingresá tu correo';
+                              }
+                              return Validadores.correo(value);
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _passwordCtrl,
+                            obscureText: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Contraseña',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Ingresá tu contraseña';
+                              }
+                              return null;
+                            },
+                          ),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () => context.push(Rutas.recuperar),
+                              child: const Text('¿Olvidaste tu contraseña?'),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          BotonConEspera(
+                            key: const Key('boton-iniciar-sesion'),
+                            texto: 'Iniciar sesión',
+                            segundos: state is LoginFallido
+                                ? state.reintentarEnSegundos
+                                : null,
+                            onPressed: () => _onLogin(context),
+                          ),
+                          const SizedBox(height: 4),
+                          Center(
+                            child: TextButton(
+                              onPressed: () => context.push(Rutas.registro),
+                              child: Text.rich(
+                                TextSpan(
+                                  text: '¿No tienes cuenta? ',
+                                  style: const TextStyle(
+                                    color: AppColors.textMuted,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  children: const [
+                                    TextSpan(
+                                      text: 'Regístrate',
+                                      style: TextStyle(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

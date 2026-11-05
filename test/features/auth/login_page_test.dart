@@ -95,6 +95,23 @@ void main() {
     expect(find.text('RUTA /mapa'), findsOneWidget);
   });
 
+  testWidgets('the form scrolls instead of overflowing behind the keyboard', (
+    tester,
+  ) async {
+    // A phone-sized screen with the keyboard covering ~40 % of it.
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(412, 915);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 400);
+    addTearDown(tester.view.reset);
+    await abrir(tester);
+
+    expect(tester.takeException(), isNull);
+    final registrate = find.textContaining('¿No tienes cuenta?');
+    await tester.ensureVisible(registrate);
+    await tester.pumpAndSettle();
+    expect(registrate.hitTestable(), findsOneWidget);
+  });
+
   testWidgets('invalid input never reaches the repository', (tester) async {
     await abrir(tester);
 
