@@ -146,10 +146,13 @@ void main() {
       expect(find.byType(Cargando), findsNothing);
       expect(find.text('SATURACIÓN AHORA'), findsOneWidget);
 
-      refresco.complete(_detalle(nivel: NivelSaturacion.saturado));
+      refresco.complete(
+        _detalle(nivel: NivelSaturacion.saturado, reportes: 19),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Saturado'), findsOneWidget);
+      expect(find.text('Actualizado hace 5 min · 19 reportes'), findsOneWidget);
     });
 
     Future<void> enviarYDescartar(WidgetTester tester) async {
@@ -223,6 +226,54 @@ void main() {
       await abrir(tester);
 
       expect(find.text('Reportar saturación'), findsNothing);
+    });
+  });
+
+  group('pull to refresh', () {
+    Future<void> deslizarHaciaAbajo(WidgetTester tester) async {
+      await tester.fling(find.byType(ListView), const Offset(0, 300), 1000);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+    }
+
+    testWidgets('pulling down asks for the place again and shows the new '
+        'level and report count', (tester) async {
+      var n = 0;
+      repo = RepoLugarFalso(
+        alObtener: (_) async => n++ == 0
+            ? _detalle()
+            : _detalle(nivel: NivelSaturacion.saturado, reportes: 19),
+      );
+      await abrir(tester);
+      expect(find.text('Moderado'), findsOneWidget);
+
+      await deslizarHaciaAbajo(tester);
+      await tester.pumpAndSettle();
+
+      expect(repo.detallesPedidos, [1, 1]);
+      expect(find.byType(Cargando), findsNothing);
+      expect(find.text('Saturado'), findsOneWidget);
+      expect(find.text('Actualizado hace 5 min · 19 reportes'), findsOneWidget);
+    });
+
+    testWidgets('a failed pull keeps the detail and tells the user', (
+      tester,
+    ) async {
+      var n = 0;
+      repo = RepoLugarFalso(
+        alObtener: (_) async => n++ == 0
+            ? _detalle()
+            : throw const ApiException(status: 500, message: 'Servidor caído'),
+      );
+      await abrir(tester);
+
+      await deslizarHaciaAbajo(tester);
+      await tester.pumpAndSettle();
+
+      expect(repo.detallesPedidos, [1, 1]);
+      expect(find.text('Servidor caído'), findsOneWidget);
+      expect(find.text('Moderado'), findsOneWidget);
+      expect(find.text('Actualizado hace 5 min · 18 reportes'), findsOneWidget);
     });
   });
 
