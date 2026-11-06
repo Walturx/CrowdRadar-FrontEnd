@@ -89,10 +89,15 @@ class _LoginViewState extends State<_LoginView> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          // The logo carries the wordmark, so the screen
+                          // prints no separate app name. It is tightly
+                          // cropped (about 1.85:1), hence a lower height than
+                          // the old padded one for the same visual weight.
                           Center(
                             child: Image.asset(
-                              'assets/images/crowdradar-logo-transparent.png',
-                              height: 130,
+                              'assets/images/crowdradar-logo.png',
+                              height: 112,
+                              semanticLabel: 'CrowdRadar',
                             ),
                           ),
                           const SizedBox(height: 32),
