@@ -1,5 +1,8 @@
 import 'package:equatable/equatable.dart';
 
+import 'enum_api.dart';
+import 'tier_usuario.dart';
+
 /// Value object: equality is by every field so states holding it compare by value.
 class Usuario extends Equatable {
   final int? id;
@@ -13,8 +16,11 @@ class Usuario extends Equatable {
   final String? createdAt;
   final String? updatedAt;
 
-  /// Accumulated karma (`GET /api/users/profile`); null when not reported.
-  final int? puntosKarma;
+  /// Points the backend computes from validated reports and matching votes.
+  final int puntos;
+
+  /// Tier the backend assigns from [puntos]; shown as is, never derived here.
+  final TierUsuario tier;
 
   const Usuario({
     this.id,
@@ -27,7 +33,8 @@ class Usuario extends Equatable {
     this.status,
     this.createdAt,
     this.updatedAt,
-    this.puntosKarma,
+    this.puntos = 0,
+    this.tier = TierUsuario.crowdBaby,
   });
 
   factory Usuario.fromJson(Map<String, dynamic> json) => Usuario(
@@ -41,9 +48,8 @@ class Usuario extends Equatable {
     status: json['status'] as String?,
     createdAt: json['createdAt'] as String?,
     updatedAt: json['updatedAt'] as String?,
-    puntosKarma: json['puntosKarma'] is num
-        ? (json['puntosKarma'] as num).toInt()
-        : null,
+    puntos: json['puntos'] is num ? (json['puntos'] as num).toInt() : 0,
+    tier: TierUsuario.desdeApi(json['tier']),
   );
 
   Map<String, dynamic> toJson() => {
@@ -57,7 +63,8 @@ class Usuario extends Equatable {
     'status': status,
     'createdAt': createdAt,
     'updatedAt': updatedAt,
-    'puntosKarma': puntosKarma,
+    'puntos': puntos,
+    'tier': valorApi(tier),
   };
 
   @override
@@ -72,7 +79,8 @@ class Usuario extends Equatable {
     status,
     createdAt,
     updatedAt,
-    puntosKarma,
+    puntos,
+    tier,
   ];
 
   Usuario copyWith({
@@ -86,7 +94,8 @@ class Usuario extends Equatable {
     String? status,
     String? createdAt,
     String? updatedAt,
-    int? puntosKarma,
+    int? puntos,
+    TierUsuario? tier,
   }) {
     return Usuario(
       id: id ?? this.id,
@@ -99,7 +108,8 @@ class Usuario extends Equatable {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      puntosKarma: puntosKarma ?? this.puntosKarma,
+      puntos: puntos ?? this.puntos,
+      tier: tier ?? this.tier,
     );
   }
 }

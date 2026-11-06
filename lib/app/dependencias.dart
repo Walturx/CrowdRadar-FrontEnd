@@ -178,11 +178,7 @@ class Dependencias {
     final karma = KarmaFake();
     return (
       auth: AuthRepositoryFake(sesion, comportamiento: comportamiento),
-      perfil: PerfilRepositoryFake(
-        sesion,
-        comportamiento: comportamiento,
-        karma: karma,
-      ),
+      perfil: PerfilRepositoryFake(sesion, comportamiento: comportamiento),
       lugar: LugarRepositoryFake(comportamiento: comportamiento),
       reporte: ReporteRepositoryFake(
         comportamiento: comportamiento,
