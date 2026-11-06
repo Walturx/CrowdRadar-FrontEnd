@@ -87,7 +87,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump();
 
-    expect(find.text('1 COINCIDENCIAS'), findsOneWidget);
+    expect(find.text('1 COINCIDENCIA'), findsOneWidget);
     expect(find.text('Lucía Paredes'), findsOneWidget);
     expect(find.text('Carlos Méndez'), findsNothing);
   });

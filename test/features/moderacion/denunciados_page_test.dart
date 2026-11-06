@@ -126,6 +126,14 @@ void main() {
     expect(find.text('Reintentar'), findsOneWidget);
   });
 
+  testWidgets('a single reported report is counted in singular', (
+    tester,
+  ) async {
+    await abrir(tester, _DenunciadosPaginados(1));
+
+    expect(find.text('1 REPORTE POR REVISAR'), findsOneWidget);
+  });
+
   group('R3-009 lazy list', () {
     testWidgets('pull-to-refresh reloads the queue', (tester) async {
       final repo = _DenunciadosPaginados(3);
