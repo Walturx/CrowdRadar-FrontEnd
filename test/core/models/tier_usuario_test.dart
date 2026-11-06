@@ -46,7 +46,9 @@ void main() {
     expect(TierUsuario.values, [for (final c in casos) c.$2]);
   });
 
-  for (final crudo in [null, '', 'KARMA', 'crowd_baby', 3]) {
+  // 'crowd_royalty' pins case sensitivity: a lowercase wire value of a
+  // non-default tier must not match CROWD_ROYALTY.
+  for (final crudo in [null, '', 'KARMA', 'crowd_royalty', 3]) {
     test('an unknown or missing value ($crudo) falls back to Crowd Baby', () {
       expect(TierUsuario.desdeApi(crudo), TierUsuario.crowdBaby);
     });
