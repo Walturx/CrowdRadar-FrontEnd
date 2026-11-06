@@ -10,6 +10,7 @@ import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
 import '../../../core/widgets/lista_perezosa.dart';
 import '../../../core/widgets/mostrar_aviso.dart';
+import '../../../core/utils/contador.dart';
 import '../../../theme/app_colors.dart';
 import '../data/moderacion_repository.dart';
 import '../widgets/chip_estado_cuenta.dart';
@@ -135,11 +136,13 @@ class _Lista extends StatelessWidget {
   const _Lista(this.estado);
 
   String get _encabezado {
-    if (estado.q != null) return '${estado.total} COINCIDENCIAS';
-    if (estado.status == EstadoCuenta.suspendido) {
-      return '${estado.total} CUENTAS SUSPENDIDAS';
+    if (estado.q != null) {
+      return contador(estado.total, 'COINCIDENCIA', 'COINCIDENCIAS');
     }
-    return '${estado.total} USUARIOS';
+    if (estado.status == EstadoCuenta.suspendido) {
+      return contador(estado.total, 'CUENTA SUSPENDIDA', 'CUENTAS SUSPENDIDAS');
+    }
+    return contador(estado.total, 'USUARIO', 'USUARIOS');
   }
 
   @override
