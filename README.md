@@ -139,8 +139,13 @@ the distance).
 - **Mis reportes** (`Rutas.perfilReportes`): paginated, newest first.
   `MisReportesCubit.cargar` over a loaded list keeps it visible; "Cargar más"
   de-duplicates by `id` and stops on an empty page.
-- **Karma**: `Usuario.puntosKarma`, shown by the profile's karma card.
-  `KarmaFake` is the counter shared by the report and profile fakes.
+- **Tier** (CRO-74): `Usuario.puntos` and `Usuario.tier` come from the backend
+  (`tier`: `CROWD_BABY` | `CROWD_EXPLORER` | `CROWD_COLLABORATOR` |
+  `CROWD_ROYALTY`; unknown or missing reads as Crowd Baby). The profile shows
+  `TarjetaTier` (`features/perfil/widgets/`): the badge of
+  `TierUsuario.insignia` next to its name. The app never derives the tier from
+  the points and does not show the points (pending a team decision). The fakes
+  seed both in `datos_fake.dart`.
 - **Refresh without blanking**: `PerfilCubit.refrescar` (profile tab
   re-activation) and `DetalleLugarCubit.refrescar` (after a report) keep the
   data on screen and only add a soft error (`errorActualizacion`, snackbar).

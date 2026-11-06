@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/features/auth/data/auth_repository_http.dart';
@@ -15,6 +16,8 @@ const _usuarioJson = {
   'email': 'ana@test.com',
   'rol': 'USUARIO',
   'status': 'ACTIVO',
+  'puntos': 60,
+  'tier': 'CROWD_EXPLORER',
 };
 
 void main() {
@@ -50,6 +53,8 @@ void main() {
           'password': 'Secreta1',
         });
         expect(user.id, 7);
+        expect(user.puntos, 60);
+        expect(user.tier, TierUsuario.crowdExplorer);
         expect(sesion.token, 'tkn');
         expect(sesion.usuario?.email, 'ana@test.com');
       },
@@ -164,6 +169,8 @@ void main() {
       expect(user.email, 'ana@test.com');
       expect(user.telefono, '912345678');
       expect(user.distrito, 'Miraflores');
+      expect(user.puntos, 60);
+      expect(user.tier, TierUsuario.crowdExplorer);
       expect(sesion.token, isNull);
     });
 

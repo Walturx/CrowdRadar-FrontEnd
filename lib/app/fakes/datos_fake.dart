@@ -1,3 +1,4 @@
+import '../../core/models/tier_usuario.dart';
 import '../../core/models/usuario.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/network/respuesta_api.dart';
@@ -17,6 +18,9 @@ const Usuario usuarioFake = Usuario(
   rol: 'USUARIO',
   distrito: 'Miraflores',
   status: 'ACTIVO',
+  // C1 seed: 10 validated reports + 10 matching votes (CRO-72 example).
+  puntos: 120,
+  tier: TierUsuario.crowdExplorer,
 );
 
 const Usuario usuarioAdminFake = Usuario(

@@ -9,6 +9,7 @@ import '../../../core/widgets/cerrar_sesion.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../theme/app_colors.dart';
 import '../data/perfil_repository.dart';
+import '../widgets/tarjeta_tier.dart';
 import 'perfil_cubit.dart';
 import 'perfil_state.dart';
 
@@ -35,7 +36,7 @@ class _ProfileViewState extends State<_ProfileView> {
   bool? _activa;
 
   /// Refreshes (keeping the data on screen) when the tab becomes active again,
-  /// so the karma earned by a report sent elsewhere shows up (HU 4.2 c2).
+  /// so a tier reached elsewhere (a report validated meanwhile) shows up.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -221,7 +222,7 @@ class _ProfileViewState extends State<_ProfileView> {
               ),
               _TarjetaInfo(Icons.verified_user, 'Rol', user.rol ?? '-'),
               _TarjetaInfo(Icons.info_outline, 'Estado', user.status ?? '-'),
-              _TarjetaKarma(user.puntosKarma ?? 0),
+              TarjetaTier(user.tier),
               _FilaPerfil(
                 icono: Icons.history,
                 titulo: 'Mis reportes',
@@ -292,7 +293,7 @@ class _TarjetaInfo extends StatelessWidget {
   final String label;
   final String value;
 
-  const _TarjetaInfo(this.icon, this.label, this.value, {super.key});
+  const _TarjetaInfo(this.icon, this.label, this.value);
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -344,19 +345,6 @@ class _TarjetaInfo extends StatelessWidget {
       ),
     ),
   );
-}
-
-/// HU 4.2: the accumulated karma points.
-class _TarjetaKarma extends StatelessWidget {
-  static const Key clave = Key('perfil-karma');
-
-  final int puntos;
-
-  const _TarjetaKarma(this.puntos);
-
-  @override
-  Widget build(BuildContext context) =>
-      _TarjetaInfo(Icons.star, 'Karma', '$puntos', key: clave);
 }
 
 /// Tappable card row that opens a profile sub-screen.
