@@ -12,6 +12,7 @@ import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
 import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
 import 'package:crowdradar/core/models/moderacion.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
+import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/core/session/usuario_sesion.dart';
@@ -278,13 +279,38 @@ void main() {
       final todos = await repo.usuarios();
       final activos = await repo.usuarios(status: EstadoCuenta.activo);
       final busqueda = await repo.usuarios(q: todos.items.first.nombre);
-      final porKarma = await repo.usuarios(orden: OrdenUsuarios.karma);
+      final porNombre = await repo.usuarios(orden: OrdenUsuarios.nombre);
+      final recientes = await repo.usuarios(orden: OrdenUsuarios.recientes);
 
       expect(activos.items.every((u) => !u.estaSuspendido), isTrue);
       expect(busqueda.items, isNotEmpty);
       expect(busqueda.items.length, lessThanOrEqualTo(todos.items.length));
-      final karmas = porKarma.items.map((u) => u.puntosKarma).toList();
-      expect(karmas, [...karmas]..sort((a, b) => b.compareTo(a)));
+      final nombres = porNombre.items.map((u) => u.nombre).toList();
+      expect(nombres, [...nombres]..sort());
+      final ids = recientes.items.map((u) => u.id).toList();
+      expect(ids, [...ids]..sort((a, b) => b.compareTo(a)));
+    });
+
+    test('every fake user seeds a tier consistent with C1 points', () async {
+      final repo = ModeracionRepositoryFake();
+
+      final usuarios = (await repo.usuarios()).items;
+
+      // C1 bands (CRO-72): 0-49 / 50-149 / 150-299 / 300+.
+      TierUsuario segunC1(int p) => p >= 300
+          ? TierUsuario.crowdRoyalty
+          : p >= 150
+          ? TierUsuario.crowdCollaborator
+          : p >= 50
+          ? TierUsuario.crowdExplorer
+          : TierUsuario.crowdBaby;
+      for (final u in usuarios) {
+        expect(u.tier, segunC1(u.puntos), reason: u.email);
+      }
+      expect(usuarios.map((u) => u.tier).toSet(), TierUsuario.values.toSet());
+      final detalle = await repo.usuario(usuarios.first.id);
+      expect(detalle.tier, usuarios.first.tier);
+      expect(detalle.puntos, usuarios.first.puntos);
     });
 
     test('a suspended fake user carries the sancion with fechaFin', () async {

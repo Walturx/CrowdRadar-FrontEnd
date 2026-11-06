@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../utils/lectura_json.dart';
 import 'enum_api.dart';
 import 'nivel_saturacion.dart';
+import 'tier_usuario.dart';
 import 'validacion.dart';
 
 /// Admin verdict on a reported report (`POST .../resolucion`).
@@ -22,8 +23,7 @@ enum EstadoCuenta { activo, suspendido }
 /// Sort of the admin user directory (`orden` query parameter).
 enum OrdenUsuarios {
   recientes,
-  nombre,
-  karma;
+  nombre;
 
   String get valorApi => _valorApi(this);
 }
@@ -251,7 +251,10 @@ class UsuarioAdmin extends Equatable {
   final String email;
   final String rol;
   final EstadoCuenta status;
-  final int puntosKarma;
+
+  /// Points and tier as the backend computes them (C1); never derived here.
+  final int puntos;
+  final TierUsuario tier;
   final SancionVigente? sancionVigente;
 
   const UsuarioAdmin({
@@ -261,7 +264,8 @@ class UsuarioAdmin extends Equatable {
     required this.email,
     this.rol = 'USUARIO',
     this.status = EstadoCuenta.activo,
-    this.puntosKarma = 0,
+    this.puntos = 0,
+    this.tier = TierUsuario.crowdBaby,
     this.sancionVigente,
   });
 
@@ -272,7 +276,8 @@ class UsuarioAdmin extends Equatable {
     email: aTexto(j['email']) ?? '',
     rol: aTexto(j['rol']) ?? 'USUARIO',
     status: _estadoCuenta(j['status']),
-    puntosKarma: aInt(j['puntosKarma']),
+    puntos: aInt(j['puntos']),
+    tier: TierUsuario.desdeApi(j['tier']),
     sancionVigente: j['sancionVigente'] is Map<String, dynamic>
         ? SancionVigente.fromJson(aMapa(j['sancionVigente']))
         : null,
@@ -292,7 +297,8 @@ class UsuarioAdmin extends Equatable {
     email,
     rol,
     status,
-    puntosKarma,
+    puntos,
+    tier,
     sancionVigente,
   ];
 }
@@ -312,7 +318,8 @@ class DetalleUsuarioAdmin extends UsuarioAdmin {
     required super.email,
     super.rol,
     super.status,
-    super.puntosKarma,
+    super.puntos,
+    super.tier,
     super.sancionVigente,
     required this.reportesPublicados,
     required this.reportesDenunciados,
@@ -327,7 +334,8 @@ class DetalleUsuarioAdmin extends UsuarioAdmin {
       email: base.email,
       rol: base.rol,
       status: base.status,
-      puntosKarma: base.puntosKarma,
+      puntos: base.puntos,
+      tier: base.tier,
       sancionVigente: base.sancionVigente,
       reportesPublicados: aInt(j['reportesPublicados']),
       reportesDenunciados: aInt(j['reportesDenunciados']),

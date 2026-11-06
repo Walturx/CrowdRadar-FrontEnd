@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:crowdradar/core/models/moderacion.dart';
+import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/features/moderacion/data/moderacion_repository_http.dart';
@@ -132,7 +133,7 @@ void main() {
       final res = await r.usuarios(
         q: 'luc',
         status: EstadoCuenta.suspendido,
-        orden: OrdenUsuarios.karma,
+        orden: OrdenUsuarios.nombre,
         page: 3,
         size: 5,
       );
@@ -141,11 +142,19 @@ void main() {
       expect(visto!.url.queryParameters, {
         'q': 'luc',
         'status': 'SUSPENDIDO',
-        'orden': 'KARMA',
+        'orden': 'NOMBRE',
         'page': '3',
         'size': '5',
       });
       expect(res.items.single.nombre, 'Lucia');
+      expect(res.items.single.puntos, 60);
+      expect(res.items.single.tier, TierUsuario.crowdExplorer);
+    });
+
+    test('C5 sends orden=RECIENTES for the most recent first', () async {
+      await repo(200, paginaJson([])).usuarios(orden: OrdenUsuarios.recientes);
+
+      expect(visto!.url.queryParameters['orden'], 'RECIENTES');
     });
 
     test('omits q, status and orden when not set', () async {
@@ -179,6 +188,8 @@ void main() {
 
       expect(visto!.url.path, '/api/admin/usuarios/12');
       expect(d.reportesDenunciados, 5);
+      expect(d.puntos, 60);
+      expect(d.tier, TierUsuario.crowdExplorer);
     });
 
     test('404 USUARIO_NO_ENCONTRADO surfaces', () async {

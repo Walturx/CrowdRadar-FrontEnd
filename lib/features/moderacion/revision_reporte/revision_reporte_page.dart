@@ -95,8 +95,7 @@ class _DetalleState extends State<_Detalle> {
       final confirmado = await confirmarAccion(
         context,
         titulo: 'Eliminar reporte',
-        contenido:
-            'El reporte dejará de mostrarse y se revocará el karma que dio.',
+        contenido: 'El reporte dejará de mostrarse y ya no sumará puntos.',
         etiquetaConfirmar: 'Eliminar',
       );
       if (!confirmado) return;
