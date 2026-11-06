@@ -6,15 +6,12 @@ import '../../core/session/session_service.dart';
 import '../../features/validacion/data/validacion_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
-import 'karma_fake.dart';
 
 /// In-memory validation with the backend rules: own reports cannot be voted or
-/// reported (422), a second vote or report is a 409, a vote is worth +2 karma
-/// and fewer than 3 votes is `INSUFICIENTE`. Votes weigh 1 here (the real
-/// backend weighs them by karma).
+/// reported (422), a second vote or report is a 409, every vote weighs 1 and
+/// fewer than 3 votes is `INSUFICIENTE`. A vote answers with no points (C3).
 class ValidacionRepositoryFake implements ValidacionRepository {
   static const int idReportePropio = 103;
-  static const int _karmaPorValidacion = 2;
   static const int _minVotos = 3;
   static const double _umbralAlta = 70;
   static const double _umbralMedia = 40;
@@ -22,18 +19,15 @@ class ValidacionRepositoryFake implements ValidacionRepository {
       'Este reporte tiene pocas confirmaciones. Tómalo con precaución.';
 
   final ComportamientoFake _comportamiento;
-  final KarmaFake _karma;
 
   /// When given, every call needs a signed-in session like the real backend.
   final SessionService? _sesion;
 
   ValidacionRepositoryFake({
     ComportamientoFake comportamiento = const ComportamientoFake(),
-    KarmaFake? karma,
     SessionService? sesion,
   }) : _comportamiento = comportamiento,
-       _sesion = sesion,
-       _karma = karma ?? KarmaFake();
+       _sesion = sesion;
 
   final List<_ReporteFake> _reportes = [
     _ReporteFake(
@@ -135,11 +129,8 @@ class ValidacionRepositoryFake implements ValidacionRepository {
     } else {
       r.rechazos++;
     }
-    _karma.total += _karmaPorValidacion;
     return ResultadoVoto(
       accion: accion,
-      puntosGanados: _karmaPorValidacion,
-      totalKarma: _karma.total,
       confiabilidad: r.confiabilidad,
       estadoValidacion: r.estado,
     );

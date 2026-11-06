@@ -22,7 +22,7 @@ package "Arranque (lib/main.dart, lib/app/arranque.dart)" as arranque {
 package "app (composition root)" as app {
   component "Dependencias.crear(entorno, sesion)\n<<composition root>>\nguard: esRelease && usarFakes -> StateError" as deps
   component "_repositoriosHttp(api, sesion)\nAuthRepositoryHttp, PerfilRepositoryHttp,\nLugarRepositoryHttp, ReporteRepositoryHttp,\nAnaliticaRepositoryHttp, ValidacionRepositoryHttp,\nFavoritoRepositoryHttp, AlertaRepositoryHttp,\nExploracionRepositoryHttp, ModeracionRepositoryHttp" as reposHttp
-  component "_repositoriosFake(sesion, ComportamientoFake)\napp/fakes/*: <X>RepositoryFake\n(+ KarmaFake compartido, datos_fake.dart)" as reposFake
+  component "_repositoriosFake(sesion, ComportamientoFake)\napp/fakes/*: <X>RepositoryFake\n(datos_fake.dart: cuentas con puntos y tier)" as reposFake
   component "CrowdRadarApp\nMultiRepositoryProvider + SesionCubit\nRegistroDispositivo, MaterialApp.router" as crapp
   component "crearRouter(SesionCubit)\nGoRouter + redirigirPorSesion\n(app_router.dart, guards.dart, rutas.dart)" as router
 }

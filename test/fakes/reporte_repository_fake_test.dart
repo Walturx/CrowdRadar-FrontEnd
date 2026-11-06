@@ -1,4 +1,3 @@
-import 'package:crowdradar/app/fakes/karma_fake.dart';
 import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
@@ -14,13 +13,11 @@ Matcher _falla(int status, String code) => throwsA(
 
 void main() {
   late DateTime ahora;
-  late KarmaFake karma;
   late ReporteRepositoryFake repo;
 
   setUp(() {
     ahora = DateTime.utc(2026, 10, 5, 15);
-    karma = KarmaFake(100);
-    repo = ReporteRepositoryFake(karma: karma, reloj: () => ahora);
+    repo = ReporteRepositoryFake(reloj: () => ahora);
   });
 
   group('cooldown', () {
@@ -78,37 +75,28 @@ void main() {
         _falla(404, 'LUGAR_NO_ENCONTRADO'),
       );
       expect((await repo.listarMios()).items, isEmpty);
-      expect(karma.total, 100);
     });
   });
 
-  group('karma', () {
-    test('awards +10 per report and keeps a running total', () async {
-      final a = await repo.reportar(1, NivelSaturacion.moderado);
-      final b = await repo.reportar(2, NivelSaturacion.moderado);
+  group('points (C2 / C4)', () {
+    test('a new report is not VALIDADO yet, so it carries 0 points', () async {
+      final r = await repo.reportar(1, NivelSaturacion.moderado);
 
-      expect(a.puntosGanados, 10);
-      expect(a.totalKarma, 110);
-      expect(b.totalKarma, 120);
-      expect(karma.total, 120);
+      expect(r.reporte.puntos, 0);
+      expect(r.reporte.estado, 'ACTIVO');
     });
 
     test(
-      'the 6th report of the day earns 0 with TOPE_DIARIO, next day earns',
+      'there is no daily cap: a sixth report the same day is accepted',
       () async {
         for (var lugar = 1; lugar <= 5; lugar++) {
           await repo.reportar(lugar, NivelSaturacion.moderado);
         }
 
         final sexto = await repo.reportar(6, NivelSaturacion.moderado);
-        expect(sexto.puntosGanados, 0);
-        expect(sexto.motivoSinPuntos, 'TOPE_DIARIO');
-        expect(sexto.totalKarma, 150);
 
-        ahora = ahora.add(const Duration(days: 1));
-        final siguiente = await repo.reportar(7, NivelSaturacion.moderado);
-        expect(siguiente.puntosGanados, 10);
-        expect(siguiente.totalKarma, 160);
+        expect(sexto.reporte.lugarId, 6);
+        expect((await repo.listarMios()).total, 6);
       },
     );
   });
@@ -135,7 +123,7 @@ void main() {
   });
 
   group('listarMios', () {
-    test('lists newest first with place name, points and reason', () async {
+    test('lists newest first with place name, points and estado', () async {
       for (var lugar = 1; lugar <= 6; lugar++) {
         ahora = ahora.add(const Duration(minutes: 1));
         await repo.reportar(lugar, NivelSaturacion.saturado);
@@ -146,9 +134,8 @@ void main() {
       expect(p.total, 6);
       expect(p.items.first.lugarId, 6);
       expect(p.items.first.lugarNombre, isNotEmpty);
-      expect(p.items.first.puntosOtorgados, 0);
-      expect(p.items.first.motivoSinPuntos, 'TOPE_DIARIO');
-      expect(p.items.last.puntosOtorgados, 10);
+      expect(p.items.first.puntos, 0);
+      expect(p.items.last.puntos, 0);
       expect(p.items.first.estado, 'ACTIVO');
       expect(p.hayMas, isTrue);
     });

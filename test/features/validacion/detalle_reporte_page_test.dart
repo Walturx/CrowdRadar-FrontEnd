@@ -70,7 +70,7 @@ void main() {
     expect(find.textContaining('%'), findsNothing);
   });
 
-  testWidgets('voting thanks with +2 karma and then shows my vote', (
+  testWidgets('S15 voting thanks without points and then shows my vote', (
     tester,
   ) async {
     await abrir(tester, 101);
@@ -78,7 +78,11 @@ void main() {
     await tester.tap(find.text('Rechazar'));
     await tester.pumpAndSettle();
 
-    expect(find.text('¡Gracias por validar! +2 karma'), findsOneWidget);
+    expect(find.text('¡Gracias por validar!'), findsOneWidget);
+    expect(
+      find.textContaining(RegExp(r'\+\d|puntos|karma', caseSensitive: false)),
+      findsNothing,
+    );
     expect(find.text('Tu voto: Rechazaste este reporte'), findsOneWidget);
     expect(find.text('Confirmar'), findsNothing);
     expect(find.text('4 rechazan'), findsOneWidget);

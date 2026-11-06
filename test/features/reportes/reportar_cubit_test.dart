@@ -13,15 +13,12 @@ import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements ReporteRepository {}
 
-ReporteCreado _creado({int puntos = 10, String? motivo}) => ReporteCreado(
-  reporte: const ReporteSaturacion(
+ReporteCreado _creado() => const ReporteCreado(
+  reporte: ReporteSaturacion(
     id: 1,
     lugarId: 7,
     nivel: NivelSaturacion.moderado,
   ),
-  puntosGanados: puntos,
-  totalKarma: 120,
-  motivoSinPuntos: motivo,
 );
 
 void main() {
@@ -64,7 +61,7 @@ void main() {
   );
 
   blocTest<ReportarCubit, ReportarState>(
-    'enviar sends the chosen level and ends in Enviado with the karma earned',
+    'S14 enviar sends the chosen level and ends in Enviado with only the thanks',
     setUp: () => when(
       () => repo.reportar(7, NivelSaturacion.moderado),
     ).thenAnswer((_) async => _creado()),
@@ -75,32 +72,7 @@ void main() {
     expect: () => [
       const ReportarEditando(nivel: NivelSaturacion.moderado),
       const ReportarEnviando(NivelSaturacion.moderado),
-      const ReportarEnviado(
-        mensaje: '¡Gracias por reportar!',
-        puntosGanados: 10,
-        totalKarma: 120,
-      ),
-    ],
-  );
-
-  blocTest<ReportarCubit, ReportarState>(
-    'enviar with the daily cap reaches Enviado with 0 points and the reason',
-    setUp: () => when(
-      () => repo.reportar(7, NivelSaturacion.saturado),
-    ).thenAnswer((_) async => _creado(puntos: 0, motivo: 'TOPE_DIARIO')),
-    build: cubit,
-    act: (c) => c
-      ..seleccionarNivel(NivelSaturacion.saturado)
-      ..enviar(),
-    skip: 2,
-    expect: () => [
-      const ReportarEnviado(
-        mensaje: '¡Gracias por reportar!',
-        puntosGanados: 0,
-        totalKarma: 120,
-        motivoSinPuntos:
-            'No se otorgaron puntos por este reporte (tope diario alcanzado).',
-      ),
+      const ReportarEnviado(mensaje: '¡Gracias por reportar!'),
     ],
   );
 
@@ -242,11 +214,7 @@ void main() {
         reintentable: true,
       ),
       const ReportarEnviando(NivelSaturacion.moderado),
-      const ReportarEnviado(
-        mensaje: '¡Gracias por reportar!',
-        puntosGanados: 10,
-        totalKarma: 120,
-      ),
+      const ReportarEnviado(mensaje: '¡Gracias por reportar!'),
     ],
   );
 

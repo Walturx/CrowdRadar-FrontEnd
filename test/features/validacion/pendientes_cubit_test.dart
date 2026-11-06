@@ -31,8 +31,6 @@ Pagina<ReportePendiente> _pagina(List<int> ids) => Pagina(
 
 const _voto = ResultadoVoto(
   accion: TipoAccionValidacion.confirmar,
-  puntosGanados: 2,
-  totalKarma: 112,
   confiabilidad: Confiabilidad(porcentaje: 80, nivel: NivelConfiabilidad.alta),
   estadoValidacion: EstadoValidacion.enValidacion,
 );
@@ -273,36 +271,29 @@ void main() {
       expect([for (final r in s.reportes) r.id], [1, 2]);
       expect(s.aviso, 'Demasiadas acciones seguidas, prueba en 2 minutos');
     });
-    test(
-      'removes the report at once, then records the vote and karma',
-      () async {
-        final c = await cargado([1, 2]);
-        final espera = Completer<ResultadoVoto>();
-        when(
-          () => repo.validar(1, TipoAccionValidacion.confirmar),
-        ).thenAnswer((_) => espera.future);
+    test('removes the report at once, then records the vote', () async {
+      final c = await cargado([1, 2]);
+      final espera = Completer<ResultadoVoto>();
+      when(
+        () => repo.validar(1, TipoAccionValidacion.confirmar),
+      ).thenAnswer((_) => espera.future);
 
-        final f = c.votar(_r(1), TipoAccionValidacion.confirmar);
+      final f = c.votar(_r(1), TipoAccionValidacion.confirmar);
 
-        expect(
-          c.state,
-          PendientesCargado(reportes: [_r(2)], votando: const {1}),
-        );
-        espera.complete(_voto);
-        await f;
-        expect(
-          c.state,
-          PendientesCargado(
-            reportes: [_r(2)],
-            ultimoVoto: VotoRegistrado(
-              reporte: _r(1),
-              accion: TipoAccionValidacion.confirmar,
-              puntosGanados: 2,
-            ),
+      expect(c.state, PendientesCargado(reportes: [_r(2)], votando: const {1}));
+      espera.complete(_voto);
+      await f;
+      expect(
+        c.state,
+        PendientesCargado(
+          reportes: [_r(2)],
+          ultimoVoto: VotoRegistrado(
+            reporte: _r(1),
+            accion: TipoAccionValidacion.confirmar,
           ),
-        );
-      },
-    );
+        ),
+      );
+    });
 
     test(
       'a failure puts the report back where it was, with the message',

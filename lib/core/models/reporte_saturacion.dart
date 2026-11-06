@@ -11,9 +11,11 @@ class ReporteSaturacion extends Equatable {
 
   /// Only present in `GET /api/reportes/mios` items (`lugar{id,nombre}`).
   final String? lugarNombre;
-  final int? puntosOtorgados;
-  final String? motivoSinPuntos;
   final String? estado;
+
+  /// Points this report gives its author (`GET /api/reportes/mios`): 10 once
+  /// it is VALIDADO, 0 otherwise and in the create response.
+  final int puntos;
 
   const ReporteSaturacion({
     required this.id,
@@ -21,9 +23,8 @@ class ReporteSaturacion extends Equatable {
     required this.nivel,
     this.fechaHora,
     this.lugarNombre,
-    this.puntosOtorgados,
-    this.motivoSinPuntos,
     this.estado,
+    this.puntos = 0,
   });
 
   /// Accepts both `lugarId` (create response) and `lugar{id,nombre}` (list).
@@ -35,11 +36,8 @@ class ReporteSaturacion extends Equatable {
       nivel: NivelSaturacion.desdeApi(j['nivel']),
       fechaHora: aFecha(j['fechaHora']),
       lugarNombre: lugar['nombre'] as String?,
-      puntosOtorgados: j['puntosOtorgados'] is num
-          ? aInt(j['puntosOtorgados'])
-          : null,
-      motivoSinPuntos: j['motivoSinPuntos'] as String?,
       estado: j['estado'] as String?,
+      puntos: aInt(j['puntos']),
     );
   }
 
@@ -50,41 +48,22 @@ class ReporteSaturacion extends Equatable {
     nivel,
     fechaHora,
     lugarNombre,
-    puntosOtorgados,
-    motivoSinPuntos,
     estado,
+    puntos,
   ];
 }
 
-/// Result of `POST /api/reportes`: the report plus the karma outcome.
+/// Result of `POST /api/reportes` (`data: { reporte, saturacionLugar }`). A
+/// report earns nothing when sent: its author gets points once it is VALIDADO.
+/// The place's new saturation is read again by the detail, not from here.
 class ReporteCreado extends Equatable {
   final ReporteSaturacion reporte;
-  final int puntosGanados;
-  final int totalKarma;
-  final String? motivoSinPuntos;
 
-  const ReporteCreado({
-    required this.reporte,
-    required this.puntosGanados,
-    required this.totalKarma,
-    this.motivoSinPuntos,
-  });
+  const ReporteCreado({required this.reporte});
 
-  factory ReporteCreado.fromJson(Map<String, dynamic> j) {
-    final karma = aMapa(j['karma']);
-    return ReporteCreado(
-      reporte: ReporteSaturacion.fromJson(aMapa(j['reporte'])),
-      puntosGanados: aInt(karma['puntosGanados']),
-      totalKarma: aInt(karma['total']),
-      motivoSinPuntos: karma['motivoSinPuntos'] as String?,
-    );
-  }
+  factory ReporteCreado.fromJson(Map<String, dynamic> j) =>
+      ReporteCreado(reporte: ReporteSaturacion.fromJson(aMapa(j['reporte'])));
 
   @override
-  List<Object?> get props => [
-    reporte,
-    puntosGanados,
-    totalKarma,
-    motivoSinPuntos,
-  ];
+  List<Object?> get props => [reporte];
 }

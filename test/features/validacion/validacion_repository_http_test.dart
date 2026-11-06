@@ -98,7 +98,7 @@ void main() {
   });
 
   group('validar', () {
-    test('POSTs tipoAccion and returns the karma outcome', () async {
+    test('C3 POSTs tipoAccion and returns the vote outcome', () async {
       final r = repo(201, votoCreadoJson());
 
       final v = await r.validar(31, TipoAccionValidacion.confirmar);
@@ -106,14 +106,20 @@ void main() {
       expect(visto!.method, 'POST');
       expect(visto!.url.path, '/api/reportes/31/validaciones');
       expect(visto!.body, '{"tipoAccion":"CONFIRMAR"}');
-      expect(v.puntosGanados, 2);
-      expect(v.totalKarma, 112);
+      expect(v.accion, TipoAccionValidacion.confirmar);
+      expect(v.confiabilidad.nivel, NivelConfiabilidad.alta);
+      expect(
+        v.confiabilidad.confirmaciones,
+        confiabilidadJson()['confirmaciones'],
+      );
+      expect(v.estadoValidacion, EstadoValidacion.enValidacion);
     });
 
     test('RECHAZAR is sent as the wire value', () async {
-      final r = repo(201, votoCreadoJson());
+      final r = repo(201, votoCreadoJson(tipoAccion: 'RECHAZAR'));
 
-      await r.validar(31, TipoAccionValidacion.rechazar);
+      final v = await r.validar(31, TipoAccionValidacion.rechazar);
+      expect(v.accion, TipoAccionValidacion.rechazar);
 
       expect(visto!.body, '{"tipoAccion":"RECHAZAR"}');
     });

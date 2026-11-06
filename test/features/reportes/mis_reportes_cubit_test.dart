@@ -19,7 +19,7 @@ ReporteSaturacion _r(int id) => ReporteSaturacion(
   lugarId: id,
   nivel: NivelSaturacion.moderado,
   lugarNombre: 'Lugar $id',
-  puntosOtorgados: 10,
+  puntos: 10,
 );
 
 Pagina<ReporteSaturacion> _pagina(

@@ -23,8 +23,6 @@ DetalleReporte _detalle({
 
 const _voto = ResultadoVoto(
   accion: TipoAccionValidacion.rechazar,
-  puntosGanados: 2,
-  totalKarma: 112,
   confiabilidad: Confiabilidad(
     porcentaje: 38.46,
     nivel: NivelConfiabilidad.baja,
@@ -101,21 +99,24 @@ void main() {
   });
 
   group('validar', () {
-    test('records my vote, the new reliability and the karma notice', () async {
-      final c = await cargado();
-      when(
-        () => repo.validar(31, TipoAccionValidacion.rechazar),
-      ).thenAnswer((_) async => _voto);
+    test(
+      'S15 records my vote, the new reliability and the plain thanks',
+      () async {
+        final c = await cargado();
+        when(
+          () => repo.validar(31, TipoAccionValidacion.rechazar),
+        ).thenAnswer((_) async => _voto);
 
-      await c.validar(TipoAccionValidacion.rechazar);
+        await c.validar(TipoAccionValidacion.rechazar);
 
-      final s = estado(c);
-      expect(s.detalle.miValidacion, TipoAccionValidacion.rechazar);
-      expect(s.detalle.confiabilidad, _voto.confiabilidad);
-      expect(s.detalle.estadoValidacion, EstadoValidacion.rechazado);
-      expect(s.aviso, '¡Gracias por validar! +2 karma');
-      expect(s.votando, isFalse);
-    });
+        final s = estado(c);
+        expect(s.detalle.miValidacion, TipoAccionValidacion.rechazar);
+        expect(s.detalle.confiabilidad, _voto.confiabilidad);
+        expect(s.detalle.estadoValidacion, EstadoValidacion.rechazado);
+        expect(s.aviso, '¡Gracias por validar!');
+        expect(s.votando, isFalse);
+      },
+    );
 
     test('is in flight once: a second tap is ignored', () async {
       final c = await cargado();
