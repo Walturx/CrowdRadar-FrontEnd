@@ -101,6 +101,7 @@ class _Contenido extends StatelessWidget {
           onPressed: () => context.push(Rutas.comparar(lugarId)),
           child: const Text('Comparar periodos'),
         ),
+        const SizedBox(height: 12),
         OutlinedButton(
           onPressed: () => context.push(Rutas.mejorHorario(lugarId)),
           child: const Text('Mejor horario'),
