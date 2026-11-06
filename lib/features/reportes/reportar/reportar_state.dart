@@ -39,27 +39,15 @@ class ReportarEnviando extends ReportarState {
   List<Object?> get props => [nivel];
 }
 
-/// [motivoSinPuntos] is user-facing text, only set when no karma was awarded.
+/// The report was accepted; [mensaje] is the thanks. Sending a report earns
+/// no points (they come once it is VALIDADO), so none are announced.
 class ReportarEnviado extends ReportarState {
   final String mensaje;
-  final int puntosGanados;
-  final int totalKarma;
-  final String? motivoSinPuntos;
 
-  const ReportarEnviado({
-    required this.mensaje,
-    required this.puntosGanados,
-    required this.totalKarma,
-    this.motivoSinPuntos,
-  });
+  const ReportarEnviado({required this.mensaje});
 
   @override
-  List<Object?> get props => [
-    mensaje,
-    puntosGanados,
-    totalKarma,
-    motivoSinPuntos,
-  ];
+  List<Object?> get props => [mensaje];
 }
 
 /// [bloqueante]: retrying cannot help (suspended account, place gone), so the

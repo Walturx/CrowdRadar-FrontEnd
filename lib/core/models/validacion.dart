@@ -15,7 +15,7 @@ enum EstadoValidacion { sinValidaciones, enValidacion, validado, rechazado }
 enum NivelConfiabilidad { alta, media, baja, insuficiente }
 
 /// The reliability block shared by every M5 response. Counts are raw votes;
-/// [porcentaje] is weighted and null while the level is `insuficiente`.
+/// [porcentaje] (every vote weighs 1) is null while the level is `insuficiente`.
 class Confiabilidad extends Equatable {
   final double? porcentaje;
   final NivelConfiabilidad nivel;
@@ -179,46 +179,33 @@ class DetalleReporte extends Equatable {
   ];
 }
 
-/// `data` of `POST /api/reportes/:id/validaciones` (201).
+/// `data` of `POST /api/reportes/:id/validaciones` (201): the vote and the
+/// report's new reliability. A vote earns points only once the report ends in
+/// the state it voted for, so the response carries none.
 class ResultadoVoto extends Equatable {
   final TipoAccionValidacion? accion;
-  final int puntosGanados;
-  final int totalKarma;
   final Confiabilidad confiabilidad;
   final EstadoValidacion estadoValidacion;
 
   const ResultadoVoto({
     required this.accion,
-    required this.puntosGanados,
-    required this.totalKarma,
     required this.confiabilidad,
     required this.estadoValidacion,
   });
 
-  factory ResultadoVoto.fromJson(Map<String, dynamic> j) {
-    final karma = aMapa(j['karma']);
-    return ResultadoVoto(
-      accion: enumDesdeApi(
-        TipoAccionValidacion.values,
-        aMapa(j['validacion'])['tipoAccion'],
-      ),
-      puntosGanados: aInt(karma['puntosGanados']),
-      totalKarma: aInt(karma['total']),
-      confiabilidad: _confiabilidad(j['confiabilidad']),
-      estadoValidacion:
-          enumDesdeApi(EstadoValidacion.values, j['estadoValidacion']) ??
-          EstadoValidacion.sinValidaciones,
-    );
-  }
+  factory ResultadoVoto.fromJson(Map<String, dynamic> j) => ResultadoVoto(
+    accion: enumDesdeApi(
+      TipoAccionValidacion.values,
+      aMapa(j['validacion'])['tipoAccion'],
+    ),
+    confiabilidad: _confiabilidad(j['confiabilidad']),
+    estadoValidacion:
+        enumDesdeApi(EstadoValidacion.values, j['estadoValidacion']) ??
+        EstadoValidacion.sinValidaciones,
+  );
 
   @override
-  List<Object?> get props => [
-    accion,
-    puntosGanados,
-    totalKarma,
-    confiabilidad,
-    estadoValidacion,
-  ];
+  List<Object?> get props => [accion, confiabilidad, estadoValidacion];
 }
 
 /// One item of `GET /api/reportes/mios/validacion`.

@@ -58,7 +58,7 @@ void main() {
     expect(find.text('Rechazar'), findsOneWidget);
   });
 
-  testWidgets('confirming thanks the user with +2 karma and advances', (
+  testWidgets('S15 confirming thanks the user without points and advances', (
     tester,
   ) async {
     await abrir(tester, ValidacionRepositoryFake());
@@ -68,13 +68,18 @@ void main() {
     await tester.pump();
 
     expect(find.text('¡Gracias por validar!'), findsOneWidget);
-    expect(find.text('+2 karma'), findsOneWidget);
+    expect(
+      find.textContaining(RegExp(r'\+\d|puntos|karma', caseSensitive: false)),
+      findsNothing,
+    );
     expect(find.textContaining('Confirmaste'), findsOneWidget);
     expect(find.text('Mercado de Surquillo'), findsOneWidget);
     expect(find.text('Parque Kennedy'), findsNothing);
   });
 
-  testWidgets('a zero-karma vote explains the daily cap', (tester) async {
+  testWidgets('S15 a vote never mentions a daily cap or points', (
+    tester,
+  ) async {
     registerFallbackValue(TipoAccionValidacion.confirmar);
     final repo = _MockRepo();
     when(
@@ -94,8 +99,6 @@ void main() {
     when(() => repo.validar(any(), any())).thenAnswer(
       (_) async => const ResultadoVoto(
         accion: TipoAccionValidacion.confirmar,
-        puntosGanados: 0,
-        totalKarma: 120,
         confiabilidad: Confiabilidad(
           porcentaje: 80,
           nivel: NivelConfiabilidad.alta,
@@ -109,11 +112,13 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    expect(find.text('¡Gracias por validar!'), findsOneWidget);
+    expect(find.textContaining('Voto registrado'), findsNothing);
+    expect(find.textContaining('máximo'), findsNothing);
     expect(
-      find.text('Voto registrado (alcanzaste el máximo de karma por hoy)'),
-      findsOneWidget,
+      find.textContaining(RegExp(r'\+\d|puntos|karma', caseSensitive: false)),
+      findsNothing,
     );
-    expect(find.text('+0 karma'), findsNothing);
   });
 
   testWidgets('after the last report the empty state appears', (tester) async {

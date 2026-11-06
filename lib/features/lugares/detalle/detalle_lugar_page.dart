@@ -140,11 +140,7 @@ class _DetalleView extends StatelessWidget {
         (e) => e is! ReportarEnviando,
       );
       if (fin is! ReportarEnviado) return;
-      mensajes.showSnackBar(
-        SnackBar(
-          content: Text('Reporte enviado, +${fin.puntosGanados} puntos'),
-        ),
-      );
+      mensajes.showSnackBar(const SnackBar(content: Text('Reporte enviado')));
       await detalleCubit.refrescar();
     } finally {
       await reportar.close();

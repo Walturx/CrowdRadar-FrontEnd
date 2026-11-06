@@ -45,16 +45,17 @@ Map<String, dynamic> detalleJson({
   'esPropio': esPropio,
 };
 
-Map<String, dynamic> votoCreadoJson({int total = 112}) => {
-  'message': '¡Gracias por validar! +2 karma',
+/// C3: `201 { message: "¡Gracias por validar!", data: { validacion,
+/// confiabilidad, estadoValidacion } }`, no karma block.
+Map<String, dynamic> votoCreadoJson({String tipoAccion = 'CONFIRMAR'}) => {
+  'message': '¡Gracias por validar!',
   'data': {
     'validacion': {
       'id': 9,
       'reporteId': 31,
-      'tipoAccion': 'CONFIRMAR',
+      'tipoAccion': tipoAccion,
       'fechaHora': '2026-10-05T12:01:00.000Z',
     },
-    'karma': {'puntosGanados': 2, 'total': total},
     'confiabilidad': confiabilidadJson(),
     'estadoValidacion': 'EN_VALIDACION',
   },

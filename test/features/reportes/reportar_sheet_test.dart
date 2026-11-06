@@ -1,4 +1,3 @@
-import 'package:crowdradar/app/fakes/karma_fake.dart';
 import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/models/reporte_saturacion.dart';
@@ -62,7 +61,7 @@ void main() {
   late ReporteRepositoryFake fake;
 
   setUp(() {
-    fake = ReporteRepositoryFake(karma: KarmaFake(100));
+    fake = ReporteRepositoryFake();
     repo = fake;
   });
 
@@ -99,7 +98,7 @@ void main() {
   );
 
   testWidgets(
-    'a successful report shows thanks and +10 karma, Listo returns true',
+    'S14 a successful report shows the thanks without points, Listo returns true',
     (tester) async {
       await abrir(tester);
 
@@ -115,7 +114,11 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('+10 karma'), findsOneWidget);
+      expect(find.textContaining('+'), findsNothing);
+      expect(
+        find.textContaining(RegExp('karma|puntos', caseSensitive: false)),
+        findsNothing,
+      );
       expect(
         (await fake.listarMios()).items.single.nivel,
         NivelSaturacion.moderado,
@@ -129,7 +132,7 @@ void main() {
     },
   );
 
-  testWidgets('when no points are awarded it says so with +0 karma', (
+  testWidgets('a sixth report the same day is thanked the same way', (
     tester,
   ) async {
     for (var lugar = 2; lugar <= 6; lugar++) {
@@ -142,13 +145,9 @@ void main() {
     await tester.tap(find.text('Enviar reporte'));
     await tester.pumpAndSettle();
 
-    expect(find.text('+0 karma'), findsOneWidget);
-    expect(
-      find.text(
-        'No se otorgaron puntos por este reporte (tope diario alcanzado).',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('¡Gracias por reportar!'), findsOneWidget);
+    expect(find.textContaining('tope diario'), findsNothing);
+    expect(find.textContaining('No se otorgaron puntos'), findsNothing);
   });
 
   testWidgets('cooldown shows the HU message and lets the user close', (
@@ -169,7 +168,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('+10 karma'), findsNothing);
+    expect(find.text('¡Gracias por reportar!'), findsNothing);
     expect(find.text('Enviar reporte'), findsOneWidget);
   });
 

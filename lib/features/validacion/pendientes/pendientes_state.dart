@@ -3,20 +3,15 @@ import 'package:equatable/equatable.dart';
 import '../../../core/location/punto_referencia.dart';
 import '../../../core/models/validacion.dart';
 
-/// The vote the user just cast, shown with the thanks and the karma earned.
+/// The vote the user just cast, shown with the thanks and the choice made.
 class VotoRegistrado extends Equatable {
   final ReportePendiente reporte;
   final TipoAccionValidacion accion;
-  final int puntosGanados;
 
-  const VotoRegistrado({
-    required this.reporte,
-    required this.accion,
-    required this.puntosGanados,
-  });
+  const VotoRegistrado({required this.reporte, required this.accion});
 
   @override
-  List<Object?> get props => [reporte, accion, puntosGanados];
+  List<Object?> get props => [reporte, accion];
 }
 
 sealed class PendientesState extends Equatable {

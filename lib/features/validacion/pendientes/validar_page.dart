@@ -129,7 +129,7 @@ class _AvisoCentroMapa extends StatelessWidget {
   }
 }
 
-/// HU 5.1 c2: thanks, karma earned and the choice just made.
+/// HU 5.1 c2: thanks and the choice just made (no points are announced).
 class _Gracias extends StatelessWidget {
   final VotoRegistrado voto;
 
@@ -153,18 +153,6 @@ class _Gracias extends StatelessWidget {
             ),
             const Text('Tu aporte mejora la confiabilidad de la información.'),
             const SizedBox(height: 8),
-            if (voto.puntosGanados > 0)
-              Text(
-                '+${voto.puntosGanados} karma',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.success,
-                ),
-              )
-            else
-              const Text(
-                'Voto registrado (alcanzaste el máximo de karma por hoy)',
-              ),
             Text('$eligio el reporte de ${voto.reporte.lugar.nombre}'),
           ],
         ),

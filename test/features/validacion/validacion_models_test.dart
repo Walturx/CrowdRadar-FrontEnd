@@ -83,13 +83,11 @@ void main() {
   });
 
   group('ResultadoVoto', () {
-    test('maps the 201 data block', () {
+    test('C3 maps the 201 data block without karma', () {
       final v = ResultadoVoto.fromJson(
         votoCreadoJson()['data'] as Map<String, dynamic>,
       );
 
-      expect(v.puntosGanados, 2);
-      expect(v.totalKarma, 112);
       expect(v.accion, TipoAccionValidacion.confirmar);
       expect(v.estadoValidacion, EstadoValidacion.enValidacion);
       expect(v.confiabilidad.nivel, NivelConfiabilidad.alta);

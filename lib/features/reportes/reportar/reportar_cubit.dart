@@ -12,13 +12,8 @@ class ReportarCubit extends Cubit<ReportarState> {
       'Selecciona un nivel de saturación para enviar tu reporte.';
   static const String mensajeEnEspera =
       'Ya enviaste un reporte para este lugar. Inténtalo más tarde.';
-  static const String mensajeTopeDiario =
-      'No se otorgaron puntos por este reporte (tope diario alcanzado).';
-  static const String mensajeSinPuntos =
-      'No se otorgaron puntos por este reporte.';
 
   static const String _codigoEnEspera = 'REPORTE_EN_ESPERA';
-  static const String _motivoTopeDiario = 'TOPE_DIARIO';
 
   final ReporteRepository _repositorio;
   final int _lugarId;
@@ -47,20 +42,9 @@ class ReportarCubit extends Cubit<ReportarState> {
     _enVuelo = true;
     emit(ReportarEnviando(nivel));
     try {
-      final r = await _repositorio.reportar(_lugarId, nivel);
+      await _repositorio.reportar(_lugarId, nivel);
       if (isClosed) return;
-      emit(
-        ReportarEnviado(
-          mensaje: mensajeGracias,
-          puntosGanados: r.puntosGanados,
-          totalKarma: r.totalKarma,
-          motivoSinPuntos: r.puntosGanados > 0
-              ? null
-              : (r.motivoSinPuntos == _motivoTopeDiario
-                    ? mensajeTopeDiario
-                    : mensajeSinPuntos),
-        ),
-      );
+      emit(const ReportarEnviado(mensaje: mensajeGracias));
     } catch (e) {
       if (isClosed) return;
       final codigo = codigoDeError(e);

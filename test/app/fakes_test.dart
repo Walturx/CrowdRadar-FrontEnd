@@ -149,19 +149,23 @@ void main() {
   });
 
   group('ReporteRepositoryFake', () {
-    test('reportar awards karma and enforces the cooldown per place', () async {
-      final ReporteRepository repo = ReporteRepositoryFake();
+    test(
+      'reportar returns the report and enforces the cooldown per place',
+      () async {
+        final ReporteRepository repo = ReporteRepositoryFake();
 
-      final primero = await repo.reportar(1, NivelSaturacion.saturado);
-      final otroLugar = await repo.reportar(2, NivelSaturacion.tranquilo);
+        final primero = await repo.reportar(1, NivelSaturacion.saturado);
+        final otroLugar = await repo.reportar(2, NivelSaturacion.tranquilo);
 
-      expect(primero.puntosGanados, 10);
-      expect(otroLugar.totalKarma, primero.totalKarma + 10);
-      await expectLater(
-        repo.reportar(1, NivelSaturacion.moderado),
-        _falla(422, 'REPORTE_EN_ESPERA'),
-      );
-    });
+        expect(primero.reporte.lugarId, 1);
+        expect(primero.reporte.nivel, NivelSaturacion.saturado);
+        expect(otroLugar.reporte.lugarId, 2);
+        await expectLater(
+          repo.reportar(1, NivelSaturacion.moderado),
+          _falla(422, 'REPORTE_EN_ESPERA'),
+        );
+      },
+    );
 
     test('listarMios paginates what was reported', () async {
       final repo = ReporteRepositoryFake();

@@ -47,9 +47,9 @@ else nivel elegido
   alt 2xx (reporte creado)
     backend --> api : {message, data: ReporteCreado}
     api --> rrepo : RespuestaApi<ReporteCreado>
-    rrepo --> rcubit : ReporteCreado(puntosGanados, totalKarma, motivoSinPuntos)
-    rcubit --> sheet : ReportarEnviado(mensajeGracias, puntosGanados, totalKarma,\nmotivoSinPuntos: null | mensajeTopeDiario | mensajeSinPuntos)
-    sheet --> autor : "¡Gracias por reportar!" (+karma);\nsheet completa con true -> DetalleLugarCubit.refrescar()
+    rrepo --> rcubit : ReporteCreado(reporte)
+    rcubit --> sheet : ReportarEnviado(mensajeGracias)
+    sheet --> autor : "¡Gracias por reportar!" (sin puntos: llegan cuando el reporte\nqueda VALIDADO); sheet completa con true -> DetalleLugarCubit.refrescar()
   else 422 REPORTE_EN_ESPERA (cooldown)
     backend --> api : 422 {code: REPORTE_EN_ESPERA, message: minutos restantes}
     api -> inter : alRecibirError(error) (no es 401: sin efecto)
@@ -95,10 +95,10 @@ pcubit -> vrepo : validar(reporte.id, accion)
 vrepo -> api : post('/api/reportes/:id/validaciones',\nbody {tipoAccion: CONFIRMAR | RECHAZAR})
 api -> backend : POST /api/reportes/:id/validaciones (Bearer JWT)
 alt 2xx (voto registrado)
-  backend --> api : {data: ResultadoVoto(puntosGanados, confiabilidad, estadoValidacion)}
+  backend --> api : {message: "¡Gracias por validar!",\ndata: ResultadoVoto(validacion, confiabilidad, estadoValidacion)}
   api --> vrepo : RespuestaApi<ResultadoVoto>
   vrepo --> pcubit : ResultadoVoto
-  pcubit --> vpage : PendientesCargado(ultimoVoto: VotoRegistrado(puntosGanados))
+  pcubit --> vpage : PendientesCargado(ultimoVoto: VotoRegistrado(reporte, accion))
 else 404 / 409 VALIDACION_DUPLICADA / 422 AUTOVALIDACION_NO_PERMITIDA
   api --> pcubit : throw ApiException(404|409|422)
   pcubit --> vpage : PendientesCargado(aviso: mensajeYaParticipo | mensaje)\n(definitivo: el reporte no vuelve a la lista)

@@ -122,41 +122,29 @@ void main() {
   });
 
   group('reportes', () {
-    test('ReporteCreado exposes karma earned and total', () {
-      final r = ReporteCreado.fromJson({
-        'reporte': {
-          'id': 10,
-          'lugarId': 3,
-          'nivel': 'SATURADO',
-          'fechaHora': '2026-10-05T12:00:00.000Z',
-        },
-        'karma': {'puntosGanados': 10, 'total': 120, 'motivoSinPuntos': null},
-      });
+    test(
+      'C2 ReporteCreado reads the report of { reporte, saturacionLugar }',
+      () {
+        final r = ReporteCreado.fromJson({
+          'reporte': {
+            'id': 10,
+            'lugarId': 3,
+            'nivel': 'SATURADO',
+            'fechaHora': '2026-10-05T12:00:00.000Z',
+          },
+          'saturacionLugar': {
+            'nivel': 'SATURADO',
+            'actualizadoEn': '2026-10-05T12:00:00.000Z',
+          },
+        });
 
-      expect(r.reporte.nivel, NivelSaturacion.saturado);
-      expect(r.puntosGanados, 10);
-      expect(r.totalKarma, 120);
-      expect(r.motivoSinPuntos, isNull);
-    });
-
-    test('ReporteCreado with daily cap carries the reason', () {
-      final r = ReporteCreado.fromJson({
-        'reporte': {
-          'id': 11,
-          'lugarId': 3,
-          'nivel': 'TRANQUILO',
-          'fechaHora': '2026-10-05T12:00:00.000Z',
-        },
-        'karma': {
-          'puntosGanados': 0,
-          'total': 120,
-          'motivoSinPuntos': 'TOPE_DIARIO',
-        },
-      });
-
-      expect(r.puntosGanados, 0);
-      expect(r.motivoSinPuntos, 'TOPE_DIARIO');
-    });
+        expect(r.reporte.id, 10);
+        expect(r.reporte.lugarId, 3);
+        expect(r.reporte.nivel, NivelSaturacion.saturado);
+        expect(r.reporte.fechaHora, DateTime.utc(2026, 10, 5, 12));
+        expect(r.reporte.puntos, 0);
+      },
+    );
   });
 
   group('favoritos y alertas', () {
