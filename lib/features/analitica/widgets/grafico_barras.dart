@@ -7,6 +7,10 @@ import '../../../theme/app_colors.dart';
 
 /// Plain bar chart (no charting dependency): one bar per point, height and
 /// colour follow the crowding value (1 = tranquilo .. 3 = saturado).
+///
+/// The bars are spread evenly, so [puntos] must hold every slot of the axis:
+/// the backend sends the 24 hours, or every day of the range, and a slot
+/// without reports comes with `muestras` 0 and is drawn empty.
 class GraficoBarras extends StatelessWidget {
   static const double _alto = 120;
   static const List<String> ejeHoras = ['0h', '6h', '12h', '18h', '23h'];
@@ -36,15 +40,22 @@ class GraficoBarras extends StatelessWidget {
             children: [
               for (final p in puntos)
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 1),
-                    child: Tooltip(
-                      message: '${p.etiqueta}: ${p.valor.toStringAsFixed(1)}',
-                      child: Container(
-                        key: const Key('barra-saturacion'),
-                        height: _alto * (p.valor.clamp(0.0, 3.0) / 3),
-                        color: ChipSaturacion.colorDe(
-                          NivelSaturacion.desdePromedio(p.valor),
+                  // The tooltip covers the whole column, not just the bar,
+                  // so an empty slot (a bar 0 high) can still be pressed.
+                  child: Tooltip(
+                    message: p.muestras == 0
+                        ? '${p.etiqueta}: sin reportes'
+                        : '${p.etiqueta}: ${p.valor.toStringAsFixed(1)}',
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 1),
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Container(
+                          key: const Key('barra-saturacion'),
+                          height: _alto * (p.valor.clamp(0.0, 3.0) / 3),
+                          color: ChipSaturacion.colorDe(
+                            NivelSaturacion.desdePromedio(p.valor),
+                          ),
                         ),
                       ),
                     ),
