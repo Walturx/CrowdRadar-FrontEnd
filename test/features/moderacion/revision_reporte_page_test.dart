@@ -88,6 +88,30 @@ void main() {
     },
   );
 
+  testWidgets('S17 the confirmation does not mention karma', (tester) async {
+    await abrir(tester, ModeracionRepositoryFake());
+
+    await tester.tap(find.text('Eliminar reporte'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: dialogo,
+        matching: find.text(
+          'El reporte dejará de mostrarse y ya no sumará puntos.',
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: dialogo,
+        matching: find.textContaining(RegExp('karma', caseSensitive: false)),
+      ),
+      findsNothing,
+    );
+  });
+
   testWidgets('cancelling the confirmation sends nothing', (tester) async {
     await abrir(tester, ModeracionRepositoryFake());
 

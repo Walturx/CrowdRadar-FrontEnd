@@ -167,13 +167,13 @@ void main() {
     test('ordenar re-queries with the new orden', () async {
       final c = await cargado(_pagina([1]));
 
-      await c.ordenar(OrdenUsuarios.karma);
+      await c.ordenar(OrdenUsuarios.nombre);
 
       verify(
         () => repo.usuarios(
           q: null,
           status: null,
-          orden: OrdenUsuarios.karma,
+          orden: OrdenUsuarios.nombre,
           page: 1,
           size: UsuariosAdminCubit.tamanoPagina,
         ),
