@@ -105,7 +105,8 @@ class _DetalleView extends StatelessWidget {
           DetalleCargado() => _Contenido(
             state.detalle,
             origenDistancia,
-            () => _reportar(context, state.detalle),
+            onReportar: () => _reportar(context, state.detalle),
+            onRefrescar: context.read<DetalleLugarCubit>().refrescar,
           ),
         },
       ),
@@ -156,64 +157,77 @@ class _Contenido extends StatelessWidget {
   final PuntoGeografico? origenDistancia;
   final VoidCallback onReportar;
 
-  const _Contenido(this.detalle, this.origenDistancia, this.onReportar);
+  /// Pull to refresh: the detail stays on screen until the new one arrives.
+  final Future<void> Function() onRefrescar;
+
+  const _Contenido(
+    this.detalle,
+    this.origenDistancia, {
+    required this.onReportar,
+    required this.onRefrescar,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ListaPerezosa.secciones(
-      padding: const EdgeInsets.all(16),
-      secciones: [
-        Row(
-          children: [
-            Text(
-              emojiCategoria(detalle.categoria),
-              style: const TextStyle(fontSize: 36),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    detalle.nombre,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    subtituloLugar(
-                      detalle.categoria,
-                      detalle.latitud,
-                      detalle.longitud,
-                      origenDistancia,
-                    ),
-                    style: const TextStyle(color: AppColors.textMuted),
-                  ),
-                ],
+    return RefreshIndicator(
+      onRefresh: onRefrescar,
+      child: ListaPerezosa.secciones(
+        padding: const EdgeInsets.all(16),
+        // A detail shorter than the screen must still accept the pull gesture.
+        physics: const AlwaysScrollableScrollPhysics(),
+        secciones: [
+          Row(
+            children: [
+              Text(
+                emojiCategoria(detalle.categoria),
+                style: const TextStyle(fontSize: 36),
               ),
-            ),
-          ],
-        ),
-        const EtiquetaSeccion('SATURACIÓN AHORA'),
-        _BloqueSaturacion(detalle.saturacion),
-        const SizedBox(height: 12),
-        OutlinedButton.icon(
-          onPressed: onReportar,
-          icon: const Icon(Icons.campaign_outlined),
-          label: const Text('Reportar saturación'),
-        ),
-        const SizedBox(height: 12),
-        OutlinedButton.icon(
-          onPressed: () => context.push(Rutas.historial(detalle.id)),
-          icon: const Icon(Icons.bar_chart),
-          label: const Text('Ver historial'),
-        ),
-        const EtiquetaSeccion('INFORMACIÓN'),
-        if (detalle.direccion != null) _Fila('Dirección', detalle.direccion!),
-        if (detalle.horarioAtencion != null)
-          _Fila('Horario', detalle.horarioAtencion!),
-      ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      detalle.nombre,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      subtituloLugar(
+                        detalle.categoria,
+                        detalle.latitud,
+                        detalle.longitud,
+                        origenDistancia,
+                      ),
+                      style: const TextStyle(color: AppColors.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const EtiquetaSeccion('SATURACIÓN AHORA'),
+          _BloqueSaturacion(detalle.saturacion),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: onReportar,
+            icon: const Icon(Icons.campaign_outlined),
+            label: const Text('Reportar saturación'),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => context.push(Rutas.historial(detalle.id)),
+            icon: const Icon(Icons.bar_chart),
+            label: const Text('Ver historial'),
+          ),
+          const EtiquetaSeccion('INFORMACIÓN'),
+          if (detalle.direccion != null) _Fila('Dirección', detalle.direccion!),
+          if (detalle.horarioAtencion != null)
+            _Fila('Horario', detalle.horarioAtencion!),
+        ],
+      ),
     );
   }
 }
