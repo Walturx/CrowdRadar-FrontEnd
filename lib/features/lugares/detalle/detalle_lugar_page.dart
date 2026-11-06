@@ -203,6 +203,7 @@ class _Contenido extends StatelessWidget {
           icon: const Icon(Icons.campaign_outlined),
           label: const Text('Reportar saturación'),
         ),
+        const SizedBox(height: 12),
         OutlinedButton.icon(
           onPressed: () => context.push(Rutas.historial(detalle.id)),
           icon: const Icon(Icons.bar_chart),

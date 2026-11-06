@@ -34,7 +34,9 @@ class PuntoSerie extends Equatable {
 }
 
 /// Crowding series; `sinDatos` is a 200 response, not an error. The backend
-/// sends `hayDatos`; the frozen `sinDatos` is derived from it.
+/// sends `hayDatos`; the frozen `sinDatos` is derived from it. The history
+/// holds every slot (the 24 hours, or every day of the range); a slot without
+/// reports has `muestras` 0.
 class SerieSaturacion extends Equatable {
   final List<PuntoSerie> puntos;
   final bool sinDatos;
