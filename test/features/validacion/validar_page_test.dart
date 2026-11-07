@@ -7,6 +7,7 @@ import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/network/respuesta_api.dart';
 import 'package:crowdradar/features/validacion/data/validacion_repository.dart';
 import 'package:crowdradar/features/validacion/pendientes/validar_page.dart';
+import 'package:crowdradar/features/validacion/widgets/tarjeta_reporte.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -74,6 +75,37 @@ void main() {
     expect(find.textContaining('Confiabilidad Alta'), findsOneWidget);
     expect(find.text('Confirmar'), findsOneWidget);
     expect(find.text('Rechazar'), findsOneWidget);
+  });
+
+  testWidgets('S24 the card is built from the shared report pieces', (
+    tester,
+  ) async {
+    await abrir(tester, ValidacionRepositoryFake());
+
+    final tarjeta = find.byType(TarjetaReporte);
+    expect(tarjeta, findsOneWidget);
+    Finder enTarjeta(Finder f) => find.descendant(of: tarjeta, matching: f);
+    expect(enTarjeta(find.byType(EncabezadoReporte)), findsOneWidget);
+    expect(enTarjeta(find.text('Ayuda a la comunidad')), findsOneWidget);
+    expect(enTarjeta(find.text('400 m')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: enTarjeta(find.byType(SeccionSaturacion)),
+        matching: find.text('Saturación reportada'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: enTarjeta(find.byType(SeccionConfiabilidad)),
+        matching: find.text('Confiabilidad del reporte'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      enTarjeta(find.text('Ver detalle de confiabilidad →')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('S15 confirming thanks the user without points and advances', (
