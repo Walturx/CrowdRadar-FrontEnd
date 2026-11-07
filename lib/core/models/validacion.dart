@@ -71,6 +71,12 @@ class LugarReporte extends Equatable {
 
 Confiabilidad _confiabilidad(Object? o) => Confiabilidad.fromJson(aMapa(o));
 
+/// The tier inside an optional `{ tier }` block (`usuario` of the vote, C7;
+/// `autor` of a report, C8). Null when the block is missing or the value is
+/// unknown: the screen then shows no tier instead of a made-up Crowd Baby.
+TierUsuario? _tierOpcional(Object? bloque) =>
+    enumDesdeApi(TierUsuario.values, aMapa(bloque)['tier']);
+
 /// One item of `GET /api/validaciones/pendientes`.
 class ReportePendiente extends Equatable {
   final int id;
@@ -80,6 +86,10 @@ class ReportePendiente extends Equatable {
   final int? distanciaMetros;
   final Confiabilidad confiabilidad;
 
+  /// Author's tier from `autor.tier` (S25, C8), the only thing known about
+  /// the author, so the report stays anonymous. Null hides "Reportado por".
+  final TierUsuario? tierAutor;
+
   const ReportePendiente({
     required this.id,
     required this.lugar,
@@ -87,6 +97,7 @@ class ReportePendiente extends Equatable {
     required this.confiabilidad,
     this.fechaHora,
     this.distanciaMetros,
+    this.tierAutor,
   });
 
   factory ReportePendiente.fromJson(Map<String, dynamic> j) => ReportePendiente(
@@ -98,6 +109,7 @@ class ReportePendiente extends Equatable {
         ? aInt(j['distanciaMetros'])
         : null,
     confiabilidad: _confiabilidad(j['confiabilidad']),
+    tierAutor: _tierOpcional(j['autor']),
   );
 
   @override
@@ -108,6 +120,7 @@ class ReportePendiente extends Equatable {
     fechaHora,
     distanciaMetros,
     confiabilidad,
+    tierAutor,
   ];
 }
 
@@ -123,6 +136,10 @@ class DetalleReporte extends Equatable {
   final bool yaDenunciado;
   final bool esPropio;
 
+  /// Author's tier from `autor.tier` (S25, C8), the only thing known about
+  /// the author, so the report stays anonymous. Null hides "Reportado por".
+  final TierUsuario? tierAutor;
+
   const DetalleReporte({
     required this.id,
     required this.lugar,
@@ -133,6 +150,7 @@ class DetalleReporte extends Equatable {
     this.miValidacion,
     this.yaDenunciado = false,
     this.esPropio = false,
+    this.tierAutor,
   });
 
   factory DetalleReporte.fromJson(Map<String, dynamic> j) => DetalleReporte(
@@ -147,6 +165,7 @@ class DetalleReporte extends Equatable {
     miValidacion: enumDesdeApi(TipoAccionValidacion.values, j['miValidacion']),
     yaDenunciado: aBool(j['yaDenunciado']) ?? false,
     esPropio: aBool(j['esPropio']) ?? false,
+    tierAutor: _tierOpcional(j['autor']),
   );
 
   DetalleReporte copyWith({
@@ -164,6 +183,7 @@ class DetalleReporte extends Equatable {
     miValidacion: miValidacion ?? this.miValidacion,
     yaDenunciado: yaDenunciado ?? this.yaDenunciado,
     esPropio: esPropio,
+    tierAutor: tierAutor,
   );
 
   @override
@@ -177,6 +197,7 @@ class DetalleReporte extends Equatable {
     miValidacion,
     yaDenunciado,
     esPropio,
+    tierAutor,
   ];
 }
 
@@ -209,7 +230,7 @@ class ResultadoVoto extends Equatable {
     estadoValidacion:
         enumDesdeApi(EstadoValidacion.values, j['estadoValidacion']) ??
         EstadoValidacion.sinValidaciones,
-    tier: enumDesdeApi(TierUsuario.values, aMapa(j['usuario'])['tier']),
+    tier: _tierOpcional(j['usuario']),
   );
 
   @override

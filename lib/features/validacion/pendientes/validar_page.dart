@@ -192,6 +192,7 @@ class _TarjetaPendiente extends StatelessWidget {
           subtitulo: distancia == null
               ? null
               : formatoDistancia(distancia.toDouble()),
+          tierAutor: reporte.tierAutor,
         ),
         const SizedBox(height: 12),
         SeccionSaturacion(nivel: reporte.nivel),

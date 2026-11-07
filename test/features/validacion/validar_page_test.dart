@@ -108,6 +108,84 @@ void main() {
     );
   });
 
+  group('S25 the author tier on the card', () {
+    /// [f] inside the "Reportado por" row.
+    Finder enFila(Finder f) =>
+        find.descendant(of: find.byType(FilaAutor), matching: f);
+
+    testWidgets('"Reportado por" shows the author tier badge and name right '
+        'under the header', (tester) async {
+      await abrir(tester, ValidacionRepositoryFake());
+
+      expect(
+        find.descendant(
+          of: find.byType(EncabezadoReporte),
+          matching: find.byType(FilaAutor),
+        ),
+        findsOneWidget,
+      );
+      expect(enFila(find.text('Reportado por')), findsOneWidget);
+      expect(enFila(find.text('Crowd Collaborator')), findsOneWidget);
+      expect(
+        enFila(_insigniaTier('assets/images/tier_crowd_collaborator.png')),
+        findsOneWidget,
+      );
+      final fila = tester.getTopLeft(find.text('Reportado por')).dy;
+      expect(fila, greaterThan(tester.getTopLeft(find.text('400 m')).dy));
+      expect(
+        fila,
+        lessThan(tester.getTopLeft(find.text('Saturación reportada')).dy),
+      );
+    });
+
+    testWidgets('the next report shows its own author tier', (tester) async {
+      await abrir(tester, ValidacionRepositoryFake());
+
+      await tester.tap(find.text('Rechazar'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Mercado de Surquillo'), findsOneWidget);
+      expect(enFila(find.text('Crowd Baby')), findsOneWidget);
+      expect(
+        enFila(_insigniaTier('assets/images/tier_crowd_baby.png')),
+        findsOneWidget,
+      );
+    });
+
+    for (final (caso, autor) in [
+      ('no autor (older backend)', null),
+      ('an unknown tier', autorJson(tier: 'CROWD_LEGEND')),
+    ]) {
+      testWidgets('with $caso the row is hidden, never Crowd Baby', (
+        tester,
+      ) async {
+        final repo = _MockRepo();
+        when(
+          () => repo.pendientes(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer(
+          (_) async => Pagina(
+            items: [ReportePendiente.fromJson(pendienteJson(autor: autor))],
+            page: 1,
+            size: 20,
+            total: 1,
+            totalPaginas: 1,
+          ),
+        );
+        await abrir(tester, repo);
+
+        expect(find.text('Parque Kennedy'), findsOneWidget);
+        expect(find.byType(FilaAutor), findsNothing);
+        expect(find.text('Reportado por'), findsNothing);
+        expect(find.textContaining('Crowd '), findsNothing);
+        expect(_insigniaTier(), findsNothing);
+      });
+    }
+  });
+
   testWidgets('S15 confirming thanks the user without points and advances', (
     tester,
   ) async {

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../core/models/tier_usuario.dart';
 
-/// S23: the voter's own tier next to the "¡Gracias por validar!" thanks, its
-/// badge beside its name. A compact take on the profile's tier card; the name
-/// takes the text colour of where it sits (the thanks card or the snack bar).
+/// A tier, its badge beside its name: the voter's own tier next to the
+/// "¡Gracias por validar!" thanks (S23) and the author's tier in the
+/// "Reportado por" row of a report (S25). A compact take on the profile's tier
+/// card; the name takes the text colour of where it sits (a card or the snack
+/// bar).
 class TierCompacto extends StatelessWidget {
   /// Side of the badge, in logical pixels.
   static const double ladoInsignia = 28;

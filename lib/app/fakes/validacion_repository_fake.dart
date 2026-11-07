@@ -1,5 +1,6 @@
 import '../../core/models/categoria_lugar.dart';
 import '../../core/models/nivel_saturacion.dart';
+import '../../core/models/tier_usuario.dart';
 import '../../core/models/validacion.dart';
 import '../../core/network/respuesta_api.dart';
 import '../../core/session/session_service.dart';
@@ -11,7 +12,8 @@ import 'datos_fake.dart';
 /// reported (422), a second vote or report is a 409, every vote weighs 1 and
 /// fewer than 3 votes is `INSUFICIENTE`. A vote answers with the voter's tier
 /// (C7), the fixed seed of the fake account like the profile fake, and never
-/// with points shown to the user (C3).
+/// with points shown to the user (C3). Every report carries its author's tier
+/// (C8): a mix of tiers for the others, the fake account's for its own.
 class ValidacionRepositoryFake implements ValidacionRepository {
   static const int idReportePropio = 103;
   static const int _minVotos = 3;
@@ -40,6 +42,7 @@ class ValidacionRepositoryFake implements ValidacionRepository {
       400,
       18,
       3,
+      tierAutor: TierUsuario.crowdCollaborator,
     ),
     _ReporteFake(
       102,
@@ -49,6 +52,7 @@ class ValidacionRepositoryFake implements ValidacionRepository {
       1200,
       1,
       1,
+      tierAutor: TierUsuario.crowdBaby,
     ),
     _ReporteFake(
       104,
@@ -58,6 +62,7 @@ class ValidacionRepositoryFake implements ValidacionRepository {
       2500,
       5,
       8,
+      tierAutor: TierUsuario.crowdRoyalty,
     ),
     _ReporteFake(
       idReportePropio,
@@ -68,6 +73,7 @@ class ValidacionRepositoryFake implements ValidacionRepository {
       2,
       1,
       propio: true,
+      tierAutor: usuarioFake.tier,
     ),
   ];
 
@@ -99,6 +105,7 @@ class ValidacionRepositoryFake implements ValidacionRepository {
       miValidacion: r.mio,
       yaDenunciado: r.denunciado,
       esPropio: r.propio,
+      tierAutor: r.tierAutor,
     );
   }
 
@@ -204,6 +211,7 @@ class ValidacionRepositoryFake implements ValidacionRepository {
     fechaHora: r.fechaHora,
     distanciaMetros: r.distancia,
     confiabilidad: r.confiabilidad,
+    tierAutor: r.tierAutor,
   );
 
   _ReporteFake _buscar(int id) => _reportes.firstWhere(
@@ -219,6 +227,7 @@ class _ReporteFake {
   final NivelSaturacion nivel;
   final int distancia;
   final bool propio;
+  final TierUsuario tierAutor;
   final DateTime fechaHora = DateTime.now();
   int confirmaciones;
   int rechazos;
@@ -233,6 +242,7 @@ class _ReporteFake {
     this.distancia,
     this.confirmaciones,
     this.rechazos, {
+    required this.tierAutor,
     this.propio = false,
   }) : lugar = LugarReporte(
          id: id - 100,
