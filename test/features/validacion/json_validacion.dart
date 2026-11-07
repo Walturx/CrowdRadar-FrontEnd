@@ -17,15 +17,25 @@ Map<String, dynamic> confiabilidadJson({
 const advertenciaBaja =
     'Este reporte tiene pocas confirmaciones. Tómalo con precaución.';
 
-Map<String, dynamic> pendienteJson({int id = 31, Map<String, dynamic>? conf}) =>
-    {
-      'id': id,
-      'lugar': {'id': 7, 'nombre': 'Parque Kennedy', 'categoria': 'PARQUE'},
-      'nivel': 'SATURADO',
-      'fechaHora': '2026-10-05T12:00:00.000Z',
-      'distanciaMetros': 420,
-      'confiabilidad': conf ?? confiabilidadJson(),
-    };
+/// C8: the report author, tier only (no id, name or email).
+Map<String, dynamic> autorJson({Object? tier = 'CROWD_COLLABORATOR'}) => {
+  'tier': tier,
+};
+
+/// With [autor] it is the C8 item; without it, the one of an older backend.
+Map<String, dynamic> pendienteJson({
+  int id = 31,
+  Map<String, dynamic>? conf,
+  Object? autor,
+}) => {
+  'id': id,
+  'lugar': {'id': 7, 'nombre': 'Parque Kennedy', 'categoria': 'PARQUE'},
+  'nivel': 'SATURADO',
+  'fechaHora': '2026-10-05T12:00:00.000Z',
+  'distanciaMetros': 420,
+  'confiabilidad': conf ?? confiabilidadJson(),
+  'autor': ?autor,
+};
 
 Map<String, dynamic> detalleJson({
   String? miValidacion,
@@ -33,6 +43,7 @@ Map<String, dynamic> detalleJson({
   bool esPropio = false,
   Map<String, dynamic>? conf,
   String estado = 'VALIDADO',
+  Object? autor,
 }) => {
   'id': 31,
   'lugar': {'id': 7, 'nombre': 'Parque Kennedy', 'categoria': 'PARQUE'},
@@ -43,6 +54,7 @@ Map<String, dynamic> detalleJson({
   'miValidacion': miValidacion,
   'yaDenunciado': yaDenunciado,
   'esPropio': esPropio,
+  'autor': ?autor,
 };
 
 /// C7: the voter's points and tier after the vote is stored.

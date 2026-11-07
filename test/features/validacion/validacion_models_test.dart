@@ -6,6 +6,23 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'json_validacion.dart';
 
+/// The four C1 wire values and the tier each one means.
+const _tiers = [
+  ('CROWD_BABY', TierUsuario.crowdBaby),
+  ('CROWD_EXPLORER', TierUsuario.crowdExplorer),
+  ('CROWD_COLLABORATOR', TierUsuario.crowdCollaborator),
+  ('CROWD_ROYALTY', TierUsuario.crowdRoyalty),
+];
+
+/// `autor` blocks that carry no known tier (S25: the row is hidden).
+final _autoresSinTier = <Object?>[
+  autorJson(tier: 'CROWD_LEGEND'),
+  autorJson(tier: 'crowd_explorer'),
+  autorJson(tier: null),
+  <String, dynamic>{},
+  'CROWD_EXPLORER',
+];
+
 void main() {
   group('Confiabilidad', () {
     test('ALTA carries the weighted percentage and raw counts', () {
@@ -60,6 +77,37 @@ void main() {
       expect(r.confiabilidad.nivel, NivelConfiabilidad.alta);
       expect(r.fechaHora, DateTime.utc(2026, 10, 5, 12));
     });
+
+    for (final (wire, tier) in _tiers) {
+      test('C8 autor.tier $wire is the author tier', () {
+        final r = ReportePendiente.fromJson(
+          pendienteJson(autor: autorJson(tier: wire)),
+        );
+
+        expect(r.tierAutor, tier);
+      });
+    }
+
+    test('S25 a missing autor block means no author tier, not Crowd Baby', () {
+      expect(ReportePendiente.fromJson(pendienteJson()).tierAutor, isNull);
+      expect(
+        ReportePendiente.fromJson({
+          ...pendienteJson(),
+          'autor': null,
+        }).tierAutor,
+        isNull,
+      );
+    });
+
+    test('S25 an unknown or missing tier value means no author tier', () {
+      for (final autor in _autoresSinTier) {
+        expect(
+          ReportePendiente.fromJson(pendienteJson(autor: autor)).tierAutor,
+          isNull,
+          reason: '$autor',
+        );
+      }
+    });
   });
 
   group('DetalleReporte', () {
@@ -80,6 +128,43 @@ void main() {
 
       expect(d.miValidacion, isNull);
       expect(d.esPropio, isTrue);
+    });
+
+    for (final (wire, tier) in _tiers) {
+      test('C8 autor.tier $wire is the author tier', () {
+        final d = DetalleReporte.fromJson(
+          detalleJson(autor: autorJson(tier: wire)),
+        );
+
+        expect(d.tierAutor, tier);
+      });
+    }
+
+    test('S25 a missing autor block means no author tier, not Crowd Baby', () {
+      expect(DetalleReporte.fromJson(detalleJson()).tierAutor, isNull);
+      expect(
+        DetalleReporte.fromJson({...detalleJson(), 'autor': null}).tierAutor,
+        isNull,
+      );
+    });
+
+    test('S25 an unknown or missing tier value means no author tier', () {
+      for (final autor in _autoresSinTier) {
+        expect(
+          DetalleReporte.fromJson(detalleJson(autor: autor)).tierAutor,
+          isNull,
+          reason: '$autor',
+        );
+      }
+    });
+
+    test('copyWith after a vote keeps the author tier', () {
+      final d = DetalleReporte.fromJson(detalleJson(autor: autorJson()));
+
+      final votado = d.copyWith(miValidacion: TipoAccionValidacion.confirmar);
+
+      expect(votado.tierAutor, TierUsuario.crowdCollaborator);
+      expect(votado.miValidacion, TipoAccionValidacion.confirmar);
     });
   });
 

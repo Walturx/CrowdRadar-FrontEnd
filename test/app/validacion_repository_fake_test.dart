@@ -67,6 +67,28 @@ void main() {
     },
   );
 
+  test(
+    'S25 pending reports carry plausible author tiers, more than one',
+    () async {
+      final pendientes = (await repo.pendientes(lat: 0, lng: 0)).items;
+
+      expect(pendientes.map((r) => r.tierAutor), everyElement(isNotNull));
+      expect(pendientes.map((r) => r.tierAutor).toSet().length, greaterThan(1));
+    },
+  );
+
+  test('S25 the detail carries the same author tier as the list', () async {
+    for (final r in (await repo.pendientes(lat: 0, lng: 0)).items) {
+      expect((await repo.obtenerReporte(r.id)).tierAutor, r.tierAutor);
+    }
+    expect(
+      (await repo.obtenerReporte(
+        ValidacionRepositoryFake.idReportePropio,
+      )).tierAutor,
+      usuarioFake.tier,
+    );
+  });
+
   test('a repeated vote is 409 and counts nothing', () async {
     final id = (await ids()).first;
     await repo.validar(id, TipoAccionValidacion.confirmar);

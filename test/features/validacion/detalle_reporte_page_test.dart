@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'json_validacion.dart';
+
 /// The fake as an older backend: the vote response has no `usuario` (C7).
 class _RepoSinTier extends ValidacionRepositoryFake {
   @override
@@ -22,6 +24,16 @@ class _RepoSinTier extends ValidacionRepositoryFake {
       estadoValidacion: v.estadoValidacion,
     );
   }
+}
+
+/// The fake, but `GET /api/reportes/:id` answers with a fixed [detalle].
+class _RepoConDetalle extends ValidacionRepositoryFake {
+  final DetalleReporte detalle;
+
+  _RepoConDetalle(this.detalle);
+
+  @override
+  Future<DetalleReporte> obtenerReporte(int reporteId) async => detalle;
 }
 
 /// [f] inside the snack bar on screen.
@@ -162,6 +174,60 @@ void main() {
     });
   });
 
+  group('S25 the author tier on the detail', () {
+    /// [f] inside the "Reportado por" row.
+    Finder enFila(Finder f) =>
+        find.descendant(of: find.byType(FilaAutor), matching: f);
+
+    testWidgets('"Reportado por" shows the author tier badge and name right '
+        'under the header, like the Validar card', (tester) async {
+      await abrir(tester, 101);
+
+      expect(
+        find.descendant(
+          of: find.byType(EncabezadoReporte),
+          matching: find.byType(FilaAutor),
+        ),
+        findsOneWidget,
+      );
+      expect(enFila(find.text('Reportado por')), findsOneWidget);
+      expect(enFila(find.text('Crowd Collaborator')), findsOneWidget);
+      expect(
+        enFila(_insigniaTier('assets/images/tier_crowd_collaborator.png')),
+        findsOneWidget,
+      );
+      final fila = tester.getTopLeft(find.text('Reportado por')).dy;
+      expect(
+        fila,
+        greaterThan(tester.getTopLeft(find.text('Parque Kennedy')).dy),
+      );
+      expect(
+        fila,
+        lessThan(tester.getTopLeft(find.text('Saturación reportada')).dy),
+      );
+    });
+
+    for (final (caso, autor) in [
+      ('no autor (older backend)', null),
+      ('an unknown tier', autorJson(tier: 'CROWD_LEGEND')),
+    ]) {
+      testWidgets('with $caso the row is hidden, never Crowd Baby', (
+        tester,
+      ) async {
+        repo = _RepoConDetalle(
+          DetalleReporte.fromJson(detalleJson(autor: autor)),
+        );
+        await abrir(tester, 31);
+
+        expect(find.text('Parque Kennedy'), findsOneWidget);
+        expect(find.byType(FilaAutor), findsNothing);
+        expect(find.text('Reportado por'), findsNothing);
+        expect(find.textContaining('Crowd '), findsNothing);
+        expect(_insigniaTier(), findsNothing);
+      });
+    }
+  });
+
   testWidgets('BAJA warns to take the report with caution', (tester) async {
     await abrir(tester, 104);
 
@@ -233,8 +299,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(_enAviso(find.text('¡Gracias por validar!')), findsOneWidget);
-    expect(find.textContaining('Crowd '), findsNothing);
-    expect(_insigniaTier(), findsNothing);
+    // The author row (S25) may show a tier; the alert itself must not.
+    expect(_enAviso(find.textContaining('Crowd ')), findsNothing);
+    expect(_enAviso(_insigniaTier()), findsNothing);
     expect(find.text('Tu voto: Confirmaste este reporte'), findsOneWidget);
   });
 

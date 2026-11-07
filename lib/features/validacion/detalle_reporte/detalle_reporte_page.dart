@@ -88,6 +88,7 @@ class _Contenido extends StatelessWidget {
             EncabezadoReporte(
               lugar: d.lugar.nombre,
               estado: ChipEstadoValidacion(estado: d.estadoValidacion),
+              tierAutor: d.tierAutor,
             ),
             const SizedBox(height: 12),
             SeccionSaturacion(nivel: d.nivel),

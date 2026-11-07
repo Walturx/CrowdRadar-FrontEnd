@@ -51,6 +51,22 @@ void main() {
       expect(res.items.single.lugar.nombre, 'Parque Kennedy');
     });
 
+    test('C8 reads each item author tier from autor.tier', () async {
+      final r = repo(
+        200,
+        paginaJson([
+          pendienteJson(id: 1, autor: autorJson(tier: 'CROWD_ROYALTY')),
+          pendienteJson(id: 2),
+        ]),
+      );
+
+      final res = await r.pendientes(lat: 0, lng: 0);
+
+      expect(res.items.first.tierAutor, TierUsuario.crowdRoyalty);
+      // S25: an item without autor (older backend) has no author tier.
+      expect(res.items.last.tierAutor, isNull);
+    });
+
     test('an empty 200 is an empty page, not an error', () async {
       final res = await repo(200, paginaJson([])).pendientes(lat: 0, lng: 0);
 
@@ -76,6 +92,25 @@ void main() {
 
       expect(visto!.url.path, '/api/reportes/31');
       expect(d.estadoValidacion, EstadoValidacion.validado);
+    });
+
+    test('C8 reads the author tier from autor.tier', () async {
+      final r = repo(200, {
+        'message': 'ok',
+        'data': detalleJson(autor: autorJson(tier: 'CROWD_EXPLORER')),
+      });
+
+      final d = await r.obtenerReporte(31);
+
+      expect(d.tierAutor, TierUsuario.crowdExplorer);
+    });
+
+    test('S25 without autor (older backend) there is no author tier', () async {
+      final r = repo(200, {'message': 'ok', 'data': detalleJson()});
+
+      final d = await r.obtenerReporte(31);
+
+      expect(d.tierAutor, isNull);
     });
 
     test('404 REPORTE_NO_ENCONTRADO surfaces', () async {
