@@ -1,3 +1,4 @@
+import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/session/session_service.dart';
@@ -113,6 +114,24 @@ void main() {
         confiabilidadJson()['confirmaciones'],
       );
       expect(v.estadoValidacion, EstadoValidacion.enValidacion);
+    });
+
+    test('C7 reads the voter tier from data.usuario', () async {
+      final r = repo(201, votoCreadoJson(usuario: usuarioVotoJson()));
+
+      final v = await r.validar(31, TipoAccionValidacion.confirmar);
+
+      expect(v.tier, TierUsuario.crowdExplorer);
+      expect(v.accion, TipoAccionValidacion.confirmar);
+      expect(v.estadoValidacion, EstadoValidacion.enValidacion);
+    });
+
+    test('S23 without data.usuario (older backend) there is no tier', () async {
+      final r = repo(201, votoCreadoJson());
+
+      final v = await r.validar(31, TipoAccionValidacion.confirmar);
+
+      expect(v.tier, isNull);
     });
 
     test('RECHAZAR is sent as the wire value', () async {

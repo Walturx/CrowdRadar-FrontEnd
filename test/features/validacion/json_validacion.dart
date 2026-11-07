@@ -45,9 +45,19 @@ Map<String, dynamic> detalleJson({
   'esPropio': esPropio,
 };
 
+/// C7: the voter's points and tier after the vote is stored.
+Map<String, dynamic> usuarioVotoJson({
+  int puntos = 120,
+  Object? tier = 'CROWD_EXPLORER',
+}) => {'puntos': puntos, 'tier': tier};
+
 /// C3: `201 { message: "¡Gracias por validar!", data: { validacion,
-/// confiabilidad, estadoValidacion } }`, no karma block.
-Map<String, dynamic> votoCreadoJson({String tipoAccion = 'CONFIRMAR'}) => {
+/// confiabilidad, estadoValidacion } }`, no karma block. With [usuario] it is
+/// the C7 response (`data.usuario`); without it, the one of an older backend.
+Map<String, dynamic> votoCreadoJson({
+  String tipoAccion = 'CONFIRMAR',
+  Map<String, dynamic>? usuario,
+}) => {
   'message': '¡Gracias por validar!',
   'data': {
     'validacion': {
@@ -58,6 +68,7 @@ Map<String, dynamic> votoCreadoJson({String tipoAccion = 'CONFIRMAR'}) => {
     },
     'confiabilidad': confiabilidadJson(),
     'estadoValidacion': 'EN_VALIDACION',
+    'usuario': ?usuario,
   },
 };
 

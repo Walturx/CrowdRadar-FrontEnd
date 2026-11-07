@@ -1,5 +1,7 @@
 import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
+import 'package:crowdradar/app/fakes/datos_fake.dart';
 import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
+import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/session/session_service.dart';
@@ -52,6 +54,18 @@ void main() {
     expect(despues.miValidacion, TipoAccionValidacion.rechazar);
     expect(despues.confiabilidad, voto.confiabilidad);
   });
+
+  test(
+    'C7 a vote answers with the fake account tier (Crowd Explorer)',
+    () async {
+      final id = (await ids()).first;
+
+      final voto = await repo.validar(id, TipoAccionValidacion.confirmar);
+
+      expect(voto.tier, usuarioFake.tier);
+      expect(voto.tier, TierUsuario.crowdExplorer);
+    },
+  );
 
   test('a repeated vote is 409 and counts nothing', () async {
     final id = (await ids()).first;

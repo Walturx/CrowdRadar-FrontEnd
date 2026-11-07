@@ -12,6 +12,7 @@ import '../data/validacion_repository.dart';
 import '../denunciar/denunciar_sheet.dart';
 import '../widgets/chip_estado_validacion.dart';
 import '../widgets/insignia_confiabilidad.dart';
+import '../widgets/tier_compacto.dart';
 import 'detalle_reporte_cubit.dart';
 import 'detalle_reporte_state.dart';
 
@@ -35,7 +36,13 @@ class DetalleReportePage extends StatelessWidget {
       child: BlocConsumer<DetalleReporteCubit, DetalleState>(
         listenWhen: (a, b) => b is DetalleCargado && b.aviso != null,
         listener: (context, state) {
-          mostrarAviso(context, (state as DetalleCargado).aviso!);
+          final cargado = state as DetalleCargado;
+          final tier = cargado.tierVotante;
+          mostrarAviso(
+            context,
+            cargado.aviso!,
+            alLado: tier == null ? null : TierCompacto(tier),
+          );
           context.read<DetalleReporteCubit>().descartarAviso();
         },
         builder: (context, state) => Scaffold(

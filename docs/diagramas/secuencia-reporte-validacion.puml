@@ -95,10 +95,11 @@ pcubit -> vrepo : validar(reporte.id, accion)
 vrepo -> api : post('/api/reportes/:id/validaciones',\nbody {tipoAccion: CONFIRMAR | RECHAZAR})
 api -> backend : POST /api/reportes/:id/validaciones (Bearer JWT)
 alt 2xx (voto registrado)
-  backend --> api : {message: "¡Gracias por validar!",\ndata: ResultadoVoto(validacion, confiabilidad, estadoValidacion)}
+  backend --> api : {message: "¡Gracias por validar!",\ndata: ResultadoVoto(validacion, confiabilidad, estadoValidacion,\nusuario {puntos, tier})}
   api --> vrepo : RespuestaApi<ResultadoVoto>
-  vrepo --> pcubit : ResultadoVoto
-  pcubit --> vpage : PendientesCargado(ultimoVoto: VotoRegistrado(reporte, accion))
+  vrepo --> pcubit : ResultadoVoto (tier del votante; null sin usuario)
+  pcubit --> vpage : PendientesCargado(ultimoVoto: VotoRegistrado(reporte, accion, tier))
+  vpage --> validador : "¡Gracias por validar!" con su tier al costado\n(insignia + nombre; solo el mensaje si no hay tier)
 else 404 / 409 VALIDACION_DUPLICADA / 422 AUTOVALIDACION_NO_PERMITIDA
   api --> pcubit : throw ApiException(404|409|422)
   pcubit --> vpage : PendientesCargado(aviso: mensajeYaParticipo | mensaje)\n(definitivo: el reporte no vuelve a la lista)
