@@ -6,6 +6,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// The fake as an older backend: the vote response has no `usuario` (C7).
+class _RepoSinTier extends ValidacionRepositoryFake {
+  @override
+  Future<ResultadoVoto> validar(
+    int reporteId,
+    TipoAccionValidacion accion,
+  ) async {
+    final v = await super.validar(reporteId, accion);
+    return ResultadoVoto(
+      accion: v.accion,
+      confiabilidad: v.confiabilidad,
+      estadoValidacion: v.estadoValidacion,
+    );
+  }
+}
+
+/// [f] inside the snack bar on screen.
+Finder _enAviso(Finder f) =>
+    find.descendant(of: find.byType(SnackBar), matching: f);
+
+/// Any tier badge image, or the one at [ruta].
+Finder _insigniaTier([String? ruta]) => find.byWidgetPredicate(
+  (w) =>
+      w is Image &&
+      w.image is AssetImage &&
+      (ruta == null
+          ? (w.image as AssetImage).assetName.startsWith('assets/images/tier_')
+          : (w.image as AssetImage).assetName == ruta),
+);
+
 void main() {
   late ValidacionRepositoryFake repo;
 
@@ -86,6 +116,37 @@ void main() {
     expect(find.text('Tu voto: Rechazaste este reporte'), findsOneWidget);
     expect(find.text('Confirmar'), findsNothing);
     expect(find.text('4 rechazan'), findsOneWidget);
+  });
+
+  testWidgets('S23 the thanks alert shows the voter tier beside it (C7)', (
+    tester,
+  ) async {
+    await abrir(tester, 101);
+
+    await tester.tap(find.text('Confirmar'));
+    await tester.pumpAndSettle();
+
+    expect(_enAviso(find.text('¡Gracias por validar!')), findsOneWidget);
+    expect(_enAviso(find.text('Crowd Explorer')), findsOneWidget);
+    expect(
+      _enAviso(_insigniaTier('assets/images/tier_crowd_explorer.png')),
+      findsOneWidget,
+    );
+    expect(find.text('Tu voto: Confirmaste este reporte'), findsOneWidget);
+  });
+
+  testWidgets('S23 with no tier in the response the alert is the message '
+      'alone', (tester) async {
+    repo = _RepoSinTier();
+    await abrir(tester, 101);
+
+    await tester.tap(find.text('Confirmar'));
+    await tester.pumpAndSettle();
+
+    expect(_enAviso(find.text('¡Gracias por validar!')), findsOneWidget);
+    expect(find.textContaining('Crowd '), findsNothing);
+    expect(_insigniaTier(), findsNothing);
+    expect(find.text('Tu voto: Confirmaste este reporte'), findsOneWidget);
   });
 
   testWidgets('an already voted report shows my vote on a later visit', (

@@ -90,10 +90,14 @@ class PendientesCubit extends Cubit<PendientesState> {
       ),
     );
     try {
-      await _repositorio.validar(reporte.id, accion);
+      final voto = await _repositorio.validar(reporte.id, accion);
       _terminar(
         reporte.id,
-        ultimoVoto: VotoRegistrado(reporte: reporte, accion: accion),
+        ultimoVoto: VotoRegistrado(
+          reporte: reporte,
+          accion: accion,
+          tier: voto.tier,
+        ),
       );
     } on ApiException catch (e) {
       final definitivo = const {404, 409, 422}.contains(e.status);

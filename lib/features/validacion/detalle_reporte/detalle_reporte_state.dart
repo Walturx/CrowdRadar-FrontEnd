@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/models/tier_usuario.dart';
 import '../../../core/models/validacion.dart';
 
 sealed class DetalleState extends Equatable {
@@ -22,10 +23,19 @@ class DetalleCargado extends DetalleState {
   /// Notice for the user (thanks, already voted, failure).
   final String? aviso;
 
-  const DetalleCargado(this.detalle, {this.votando = false, this.aviso});
+  /// Voter's own tier, shown beside the thanks (S23); set only with it, and
+  /// null when the vote response carried none.
+  final TierUsuario? tierVotante;
+
+  const DetalleCargado(
+    this.detalle, {
+    this.votando = false,
+    this.aviso,
+    this.tierVotante,
+  });
 
   @override
-  List<Object?> get props => [detalle, votando, aviso];
+  List<Object?> get props => [detalle, votando, aviso, tierVotante];
 }
 
 class DetalleError extends DetalleState {

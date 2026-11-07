@@ -9,7 +9,9 @@ import 'datos_fake.dart';
 
 /// In-memory validation with the backend rules: own reports cannot be voted or
 /// reported (422), a second vote or report is a 409, every vote weighs 1 and
-/// fewer than 3 votes is `INSUFICIENTE`. A vote answers with no points (C3).
+/// fewer than 3 votes is `INSUFICIENTE`. A vote answers with the voter's tier
+/// (C7), the fixed seed of the fake account like the profile fake, and never
+/// with points shown to the user (C3).
 class ValidacionRepositoryFake implements ValidacionRepository {
   static const int idReportePropio = 103;
   static const int _minVotos = 3;
@@ -133,6 +135,7 @@ class ValidacionRepositoryFake implements ValidacionRepository {
       accion: accion,
       confiabilidad: r.confiabilidad,
       estadoValidacion: r.estado,
+      tier: usuarioFake.tier,
     );
   }
 

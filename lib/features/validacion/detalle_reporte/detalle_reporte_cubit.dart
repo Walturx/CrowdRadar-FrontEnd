@@ -8,7 +8,8 @@ import 'detalle_reporte_state.dart';
 /// HU 5.1 c2 / 5.2: one report with its reliability and my vote.
 class DetalleReporteCubit extends Cubit<DetalleState> {
   /// HU 5.1 c2: no points are announced; a vote earns them only once the
-  /// report ends in the state it voted for.
+  /// report ends in the state it voted for. The voter's tier goes beside it
+  /// (S23).
   static const String mensajeGracias = '¡Gracias por validar!';
 
   /// HU 5.1 c3.
@@ -68,6 +69,7 @@ class DetalleReporteCubit extends Cubit<DetalleState> {
             estadoValidacion: voto.estadoValidacion,
           ),
           aviso: mensajeGracias,
+          tierVotante: voto.tier,
         ),
       );
     } catch (e) {

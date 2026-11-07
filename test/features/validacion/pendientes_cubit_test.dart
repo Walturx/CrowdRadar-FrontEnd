@@ -4,6 +4,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:crowdradar/core/location/punto_referencia.dart';
 import 'package:crowdradar/core/map/centro_compartido.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
+import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/network/respuesta_api.dart';
@@ -293,6 +294,33 @@ void main() {
           ),
         ),
       );
+    });
+
+    test('S23 the recorded vote carries the voter tier (C7)', () async {
+      final c = await cargado([1, 2]);
+      when(() => repo.validar(1, TipoAccionValidacion.confirmar)).thenAnswer(
+        (_) async => const ResultadoVoto(
+          accion: TipoAccionValidacion.confirmar,
+          confiabilidad: Confiabilidad(
+            porcentaje: 80,
+            nivel: NivelConfiabilidad.alta,
+          ),
+          estadoValidacion: EstadoValidacion.enValidacion,
+          tier: TierUsuario.crowdRoyalty,
+        ),
+      );
+
+      await c.votar(_r(1), TipoAccionValidacion.confirmar);
+
+      expect(
+        (c.state as PendientesCargado).ultimoVoto,
+        VotoRegistrado(
+          reporte: _r(1),
+          accion: TipoAccionValidacion.confirmar,
+          tier: TierUsuario.crowdRoyalty,
+        ),
+      );
+      await c.close();
     });
 
     test(

@@ -1,5 +1,6 @@
 import 'package:crowdradar/core/models/enum_api.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
+import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -91,6 +92,38 @@ void main() {
       expect(v.accion, TipoAccionValidacion.confirmar);
       expect(v.estadoValidacion, EstadoValidacion.enValidacion);
       expect(v.confiabilidad.nivel, NivelConfiabilidad.alta);
+    });
+
+    ResultadoVoto conUsuario(Object? usuario) => ResultadoVoto.fromJson({
+      ...votoCreadoJson()['data'] as Map<String, dynamic>,
+      'usuario': usuario,
+    });
+
+    for (final (wire, tier) in [
+      ('CROWD_BABY', TierUsuario.crowdBaby),
+      ('CROWD_EXPLORER', TierUsuario.crowdExplorer),
+      ('CROWD_COLLABORATOR', TierUsuario.crowdCollaborator),
+      ('CROWD_ROYALTY', TierUsuario.crowdRoyalty),
+    ]) {
+      test('C7 usuario.tier $wire is the voter tier', () {
+        expect(conUsuario(usuarioVotoJson(tier: wire)).tier, tier);
+      });
+    }
+
+    test('S23 a missing usuario block means no tier, not Crowd Baby', () {
+      final v = ResultadoVoto.fromJson(
+        votoCreadoJson()['data'] as Map<String, dynamic>,
+      );
+
+      expect(v.tier, isNull);
+      expect(conUsuario(null).tier, isNull);
+    });
+
+    test('S23 an unknown or missing tier value means no tier', () {
+      expect(conUsuario(usuarioVotoJson(tier: 'CROWD_LEGEND')).tier, isNull);
+      expect(conUsuario(usuarioVotoJson(tier: 'crowd_explorer')).tier, isNull);
+      expect(conUsuario(usuarioVotoJson(tier: null)).tier, isNull);
+      expect(conUsuario({'puntos': 120}).tier, isNull);
     });
   });
 

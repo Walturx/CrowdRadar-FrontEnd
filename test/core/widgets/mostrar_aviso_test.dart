@@ -30,6 +30,28 @@ void main() {
     expect(find.text('Hola'), findsOneWidget);
   });
 
+  testWidgets('alLado sits beside the text in the snack bar', (tester) async {
+    await abrir(
+      tester,
+      (c) => mostrarAviso(c, 'Hola', alLado: const Text('al lado')),
+    );
+
+    await tester.tap(find.text('avisar'));
+    await tester.pump();
+
+    final fila = find
+        .ancestor(of: find.text('Hola'), matching: find.byType(Row))
+        .first;
+    expect(
+      find.descendant(of: find.byType(SnackBar), matching: fila),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: fila, matching: find.text('al lado')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('a new notice replaces the current one', (tester) async {
     await abrir(tester, (c) => mostrarAviso(c, 'Uno'));
     await tester.tap(find.text('avisar'));

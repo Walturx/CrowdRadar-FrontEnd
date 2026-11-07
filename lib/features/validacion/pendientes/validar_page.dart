@@ -15,6 +15,7 @@ import '../../../core/widgets/mostrar_aviso.dart';
 import '../../../theme/app_colors.dart';
 import '../data/validacion_repository.dart';
 import '../widgets/insignia_confiabilidad.dart';
+import '../widgets/tier_compacto.dart';
 import 'pendientes_cubit.dart';
 import 'pendientes_state.dart';
 
@@ -129,7 +130,8 @@ class _AvisoCentroMapa extends StatelessWidget {
   }
 }
 
-/// HU 5.1 c2: thanks and the choice just made (no points are announced).
+/// HU 5.1 c2: thanks and the choice just made (no points are announced), with
+/// the voter's own tier beside the thanks when the response carried it (S23).
 class _Gracias extends StatelessWidget {
   final VotoRegistrado voto;
 
@@ -140,6 +142,7 @@ class _Gracias extends StatelessWidget {
     final eligio = voto.accion == TipoAccionValidacion.confirmar
         ? 'Confirmaste'
         : 'Rechazaste';
+    final tier = voto.tier;
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
@@ -147,9 +150,19 @@ class _Gracias extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '¡Gracias por validar!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    '¡Gracias por validar!',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                if (tier != null) ...[
+                  const SizedBox(width: 8),
+                  TierCompacto(tier),
+                ],
+              ],
             ),
             const Text('Tu aporte mejora la confiabilidad de la información.'),
             const SizedBox(height: 8),

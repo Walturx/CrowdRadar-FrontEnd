@@ -4,6 +4,7 @@ import '../utils/lectura_json.dart';
 import 'categoria_lugar.dart';
 import 'enum_api.dart';
 import 'nivel_saturacion.dart';
+import 'tier_usuario.dart';
 
 enum TipoAccionValidacion { confirmar, rechazar }
 
@@ -179,18 +180,24 @@ class DetalleReporte extends Equatable {
   ];
 }
 
-/// `data` of `POST /api/reportes/:id/validaciones` (201): the vote and the
-/// report's new reliability. A vote earns points only once the report ends in
-/// the state it voted for, so the response carries none.
+/// `data` of `POST /api/reportes/:id/validaciones` (201): the vote, the
+/// report's new reliability and the voter's tier after the vote (C7). The
+/// app never shows the voter's points, so only the tier is kept.
 class ResultadoVoto extends Equatable {
   final TipoAccionValidacion? accion;
   final Confiabilidad confiabilidad;
   final EstadoValidacion estadoValidacion;
 
+  /// Voter's tier from `usuario.tier` (S23). Null when the backend sends no
+  /// `usuario` (older backend) or an unknown value: the thanks then shows no
+  /// tier instead of a made-up Crowd Baby.
+  final TierUsuario? tier;
+
   const ResultadoVoto({
     required this.accion,
     required this.confiabilidad,
     required this.estadoValidacion,
+    this.tier,
   });
 
   factory ResultadoVoto.fromJson(Map<String, dynamic> j) => ResultadoVoto(
@@ -202,10 +209,11 @@ class ResultadoVoto extends Equatable {
     estadoValidacion:
         enumDesdeApi(EstadoValidacion.values, j['estadoValidacion']) ??
         EstadoValidacion.sinValidaciones,
+    tier: enumDesdeApi(TierUsuario.values, aMapa(j['usuario'])['tier']),
   );
 
   @override
-  List<Object?> get props => [accion, confiabilidad, estadoValidacion];
+  List<Object?> get props => [accion, confiabilidad, estadoValidacion, tier];
 }
 
 /// One item of `GET /api/reportes/mios/validacion`.
