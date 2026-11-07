@@ -8,13 +8,12 @@ import '../../../core/location/punto_referencia.dart';
 import '../../../core/models/validacion.dart';
 import '../../../core/utils/distancia.dart';
 import '../../../core/widgets/cargando.dart';
-import '../../../core/widgets/chip_saturacion.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
 import '../../../core/widgets/mostrar_aviso.dart';
 import '../../../theme/app_colors.dart';
 import '../data/validacion_repository.dart';
-import '../widgets/insignia_confiabilidad.dart';
+import '../widgets/tarjeta_reporte.dart';
 import '../widgets/tier_compacto.dart';
 import 'pendientes_cubit.dart';
 import 'pendientes_state.dart';
@@ -100,7 +99,7 @@ class _Contenido extends StatelessWidget {
             ),
           )
         else
-          _TarjetaReporte(siguiente, restantes: estado.reportes.length - 1),
+          _TarjetaPendiente(siguiente, restantes: estado.reportes.length - 1),
       ],
     );
   }
@@ -174,71 +173,64 @@ class _Gracias extends StatelessWidget {
   }
 }
 
-class _TarjetaReporte extends StatelessWidget {
+/// The next report to vote on, in the shared report card (S24).
+class _TarjetaPendiente extends StatelessWidget {
   final ReportePendiente reporte;
   final int restantes;
 
-  const _TarjetaReporte(this.reporte, {required this.restantes});
+  const _TarjetaPendiente(this.reporte, {required this.restantes});
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<PendientesCubit>();
     final distancia = reporte.distanciaMetros;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return TarjetaReporte(
+      children: [
+        EncabezadoReporte(
+          antetitulo: 'Ayuda a la comunidad',
+          lugar: reporte.lugar.nombre,
+          subtitulo: distancia == null
+              ? null
+              : formatoDistancia(distancia.toDouble()),
+        ),
+        const SizedBox(height: 12),
+        SeccionSaturacion(nivel: reporte.nivel),
+        const SizedBox(height: 12),
+        SeccionConfiabilidad(confiabilidad: reporte.confiabilidad),
+        TextButton(
+          onPressed: () => context.push(Rutas.reporteValidar(reporte.id)),
+          child: const Text('Ver detalle de confiabilidad →'),
+        ),
+        Row(
           children: [
-            const Text('Ayuda a la comunidad'),
-            const SizedBox(height: 8),
-            Text(
-              reporte.lugar.nombre,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            if (distancia != null) Text(formatoDistancia(distancia.toDouble())),
-            const SizedBox(height: 12),
-            const Text('Saturación reportada'),
-            ChipSaturacion(nivel: reporte.nivel),
-            const SizedBox(height: 12),
-            const Text('Confiabilidad del reporte'),
-            InsigniaConfiabilidad(confiabilidad: reporte.confiabilidad),
-            TextButton(
-              onPressed: () => context.push(Rutas.reporteValidar(reporte.id)),
-              child: const Text('Ver detalle de confiabilidad →'),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () =>
-                        cubit.votar(reporte, TipoAccionValidacion.rechazar),
-                    child: const Text('Rechazar'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () =>
-                        cubit.votar(reporte, TipoAccionValidacion.confirmar),
-                    child: const Text('Confirmar'),
-                  ),
-                ),
-              ],
-            ),
-            if (restantes > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(
-                  restantes == 1
-                      ? '1 reporte más por validar'
-                      : '$restantes reportes más por validar',
-                  style: const TextStyle(color: AppColors.textMuted),
-                ),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () =>
+                    cubit.votar(reporte, TipoAccionValidacion.rechazar),
+                child: const Text('Rechazar'),
               ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () =>
+                    cubit.votar(reporte, TipoAccionValidacion.confirmar),
+                child: const Text('Confirmar'),
+              ),
+            ),
           ],
         ),
-      ),
+        if (restantes > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              restantes == 1
+                  ? '1 reporte más por validar'
+                  : '$restantes reportes más por validar',
+              style: const TextStyle(color: AppColors.textMuted),
+            ),
+          ),
+      ],
     );
   }
 }

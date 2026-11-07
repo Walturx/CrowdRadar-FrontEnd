@@ -2,6 +2,8 @@ import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/features/validacion/data/validacion_repository.dart';
 import 'package:crowdradar/features/validacion/detalle_reporte/detalle_reporte_page.dart';
+import 'package:crowdradar/features/validacion/widgets/chip_estado_validacion.dart';
+import 'package:crowdradar/features/validacion/widgets/tarjeta_reporte.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -62,15 +64,102 @@ void main() {
 
     expect(find.text('Detalle del reporte'), findsOneWidget);
     expect(find.text('Parque Kennedy'), findsOneWidget);
-    expect(find.text('CONFIABILIDAD DEL REPORTE'), findsOneWidget);
+    expect(find.text('Confiabilidad del reporte'), findsOneWidget);
     expect(find.text('86%'), findsOneWidget);
     expect(find.text('Confiabilidad Alta'), findsOneWidget);
-    expect(find.text('18 confirman'), findsOneWidget);
-    expect(find.text('3 rechazan'), findsOneWidget);
+    expect(find.text('18 confirman · 3 rechazan'), findsOneWidget);
     expect(
       find.text('Basado en confirmaciones de la comunidad'),
       findsOneWidget,
     );
+  });
+
+  group('S24 the detail reads as the Validar card', () {
+    /// [f] inside the report card.
+    Finder enTarjeta(Finder f) =>
+        find.descendant(of: find.byType(TarjetaReporte), matching: f);
+
+    testWidgets('the report sits in the shared card with the same pieces', (
+      tester,
+    ) async {
+      await abrir(tester, 101);
+
+      expect(find.byType(TarjetaReporte), findsOneWidget);
+      expect(enTarjeta(find.byType(Card)), findsOneWidget);
+      expect(enTarjeta(find.byType(EncabezadoReporte)), findsOneWidget);
+      expect(enTarjeta(find.text('Parque Kennedy')), findsOneWidget);
+      expect(
+        find.descendant(
+          of: enTarjeta(find.byType(SeccionSaturacion)),
+          matching: find.text('Saturación reportada'),
+        ),
+        findsOneWidget,
+      );
+      expect(enTarjeta(find.text('Saturado')), findsOneWidget);
+      expect(
+        find.descendant(
+          of: enTarjeta(find.byType(SeccionConfiabilidad)),
+          matching: find.text('Confiabilidad del reporte'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('CONFIABILIDAD DEL REPORTE'), findsNothing);
+    });
+
+    testWidgets('the validation chip sits beside the place name in the card', (
+      tester,
+    ) async {
+      await abrir(tester, 101);
+
+      final encabezado = enTarjeta(find.byType(EncabezadoReporte));
+      expect(
+        find.descendant(
+          of: encabezado,
+          matching: find.byType(ChipEstadoValidacion),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: encabezado, matching: find.text('Validado')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the helper and the vote breakdown sit in the reliability '
+        'section, one compact line', (tester) async {
+      await abrir(tester, 101);
+
+      final seccion = enTarjeta(find.byType(SeccionConfiabilidad));
+      expect(
+        find.descendant(
+          of: seccion,
+          matching: find.text('Basado en confirmaciones de la comunidad'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: seccion,
+          matching: find.text('18 confirman · 3 rechazan'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('18 confirman'), findsNothing);
+      expect(find.text('3 rechazan'), findsNothing);
+    });
+
+    testWidgets('the vote buttons and the report link stay inside the card', (
+      tester,
+    ) async {
+      await abrir(tester, 101);
+
+      expect(enTarjeta(find.text('Rechazar')), findsOneWidget);
+      expect(enTarjeta(find.text('Confirmar')), findsOneWidget);
+      expect(
+        enTarjeta(find.text('Denunciar reporte fraudulento')),
+        findsOneWidget,
+      );
+    });
   });
 
   testWidgets('BAJA warns to take the report with caution', (tester) async {
@@ -115,7 +204,7 @@ void main() {
     );
     expect(find.text('Tu voto: Rechazaste este reporte'), findsOneWidget);
     expect(find.text('Confirmar'), findsNothing);
-    expect(find.text('4 rechazan'), findsOneWidget);
+    expect(find.text('18 confirman · 4 rechazan'), findsOneWidget);
   });
 
   testWidgets('S23 the thanks alert shows the voter tier beside it (C7)', (

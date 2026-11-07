@@ -4,14 +4,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/models/validacion.dart';
 import '../../../core/widgets/cargando.dart';
-import '../../../core/widgets/chip_saturacion.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/mostrar_aviso.dart';
 import '../../../theme/app_colors.dart';
 import '../data/validacion_repository.dart';
 import '../denunciar/denunciar_sheet.dart';
 import '../widgets/chip_estado_validacion.dart';
-import '../widgets/insignia_confiabilidad.dart';
+import '../widgets/tarjeta_reporte.dart';
 import '../widgets/tier_compacto.dart';
 import 'detalle_reporte_cubit.dart';
 import 'detalle_reporte_state.dart';
@@ -22,6 +21,13 @@ class DetalleReportePage extends StatelessWidget {
   /// HU 5.2 c3.
   static const String textoInsuficiente =
       'Aún no hay información suficiente para determinar la confiabilidad.';
+
+  static const String textoBasadoEnComunidad =
+      'Basado en confirmaciones de la comunidad';
+
+  /// S24: the vote breakdown in one compact line, "2 confirman · 1 rechazan".
+  static String desglose(Confiabilidad c) =>
+      '${c.confirmaciones} confirman · ${c.rechazos} rechazan';
 
   final int reporteId;
 
@@ -76,83 +82,89 @@ class _Contenido extends StatelessWidget {
     return ListaPerezosa.secciones(
       padding: const EdgeInsets.all(16),
       secciones: [
-        Text(
-          d.lugar.nombre,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-        ),
-        Row(
+        // S24: the same card and pieces as the Validar card.
+        TarjetaReporte(
           children: [
-            ChipSaturacion(nivel: d.nivel),
-            const SizedBox(width: 8),
-            ChipEstadoValidacion(estado: d.estadoValidacion),
-          ],
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'CONFIABILIDAD DEL REPORTE',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        InsigniaConfiabilidad(confiabilidad: c),
-        if (c.nivel == NivelConfiabilidad.insuficiente)
-          const Text(DetalleReportePage.textoInsuficiente)
-        else
-          const Text('Basado en confirmaciones de la comunidad'),
-        Text('${c.confirmaciones} confirman'),
-        Text('${c.rechazos} rechazan'),
-        if (c.nivel == NivelConfiabilidad.baja && c.advertencia != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              c.advertencia!,
-              style: const TextStyle(color: AppColors.danger),
+            EncabezadoReporte(
+              lugar: d.lugar.nombre,
+              estado: ChipEstadoValidacion(estado: d.estadoValidacion),
             ),
-          ),
-        const SizedBox(height: 16),
-        if (voto != null)
-          Text(
-            voto == TipoAccionValidacion.confirmar
-                ? 'Tu voto: Confirmaste este reporte'
-                : 'Tu voto: Rechazaste este reporte',
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          )
-        else if (!d.esPropio)
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: estado.votando
-                      ? null
-                      : () => cubit.validar(TipoAccionValidacion.rechazar),
-                  child: const Text('Rechazar'),
+            const SizedBox(height: 12),
+            SeccionSaturacion(nivel: d.nivel),
+            const SizedBox(height: 12),
+            SeccionConfiabilidad(
+              confiabilidad: c,
+              detalle: [
+                Text(
+                  c.nivel == NivelConfiabilidad.insuficiente
+                      ? DetalleReportePage.textoInsuficiente
+                      : DetalleReportePage.textoBasadoEnComunidad,
+                  style: const TextStyle(color: AppColors.textMuted),
                 ),
+                Text(DetalleReportePage.desglose(c)),
+                if (c.nivel == NivelConfiabilidad.baja && c.advertencia != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      c.advertencia!,
+                      style: const TextStyle(color: AppColors.danger),
+                    ),
+                  ),
+              ],
+            ),
+            if (voto != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                voto == TipoAccionValidacion.confirmar
+                    ? 'Tu voto: Confirmaste este reporte'
+                    : 'Tu voto: Rechazaste este reporte',
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: estado.votando
-                      ? null
-                      : () => cubit.validar(TipoAccionValidacion.confirmar),
-                  child: const Text('Confirmar'),
-                ),
+            ] else if (!d.esPropio) ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: estado.votando
+                          ? null
+                          : () => cubit.validar(TipoAccionValidacion.rechazar),
+                      child: const Text('Rechazar'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: estado.votando
+                          ? null
+                          : () => cubit.validar(TipoAccionValidacion.confirmar),
+                      child: const Text('Confirmar'),
+                    ),
+                  ),
+                ],
               ),
             ],
-          ),
-        const SizedBox(height: 16),
-        if (d.esPropio)
-          const SizedBox.shrink()
-        else if (d.yaDenunciado)
-          const Text('Ya denunciaste este reporte')
-        else
-          TextButton(
-            onPressed: () async {
-              final enviada = await mostrarDenunciarSheet(
-                context,
-                reporteId: reporteId,
-              );
-              if (enviada == true) cubit.cargar();
-            },
-            child: const Text('Denunciar reporte fraudulento'),
-          ),
+            if (!d.esPropio) ...[
+              const SizedBox(height: 12),
+              if (d.yaDenunciado)
+                const Text(
+                  'Ya denunciaste este reporte',
+                  style: TextStyle(color: AppColors.textMuted),
+                )
+              else
+                TextButton(
+                  onPressed: () async {
+                    final enviada = await mostrarDenunciarSheet(
+                      context,
+                      reporteId: reporteId,
+                    );
+                    if (enviada == true) cubit.cargar();
+                  },
+                  child: const Text('Denunciar reporte fraudulento'),
+                ),
+            ],
+          ],
+        ),
       ],
     );
   }
