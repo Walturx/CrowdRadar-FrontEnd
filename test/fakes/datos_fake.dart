@@ -1,7 +1,7 @@
-import '../../core/models/tier_usuario.dart';
-import '../../core/models/usuario.dart';
-import '../../core/network/api_exception.dart';
-import '../../core/network/respuesta_api.dart';
+import 'package:crowdradar/core/models/tier_usuario.dart';
+import 'package:crowdradar/core/models/usuario.dart';
+import 'package:crowdradar/core/network/api_exception.dart';
+import 'package:crowdradar/core/network/respuesta_api.dart';
 
 /// Credentials accepted by the fakes.
 const String emailFake = 'ana@test.com';

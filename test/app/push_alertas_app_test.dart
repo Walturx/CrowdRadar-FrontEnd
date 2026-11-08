@@ -3,7 +3,6 @@ import 'dart:async';
 
 import 'package:crowdradar/app/app.dart';
 import 'package:crowdradar/app/dependencias.dart';
-import 'package:crowdradar/app/fakes/alerta_repository_fake.dart';
 import 'package:crowdradar/core/config/entorno.dart';
 import 'package:crowdradar/core/map/mapa_adapter.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
@@ -15,6 +14,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../fakes/alerta_repository_fake.dart';
+import '../fakes/fabrica_repositorios_fake.dart';
 import '../fakes/jwt_falso.dart';
 
 class _MapaVacio implements MapaAdapter {
@@ -102,8 +103,9 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     if (conSesion) await sesion.iniciar('token', usuarioPrueba);
     deps = Dependencias.crear(
-      const Entorno(usarFakes: true),
+      const Entorno(),
       sesion,
+      repositorios: const FabricaRepositoriosFake(),
       mapaAdapter: _MapaVacio(),
       receptorPush: receptor,
       alertaRepository: alertasPropias,

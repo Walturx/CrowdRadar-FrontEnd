@@ -1,5 +1,3 @@
-import 'package:crowdradar/app/fakes/favorito_repository_fake.dart';
-import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
 import 'package:crowdradar/core/models/categoria_lugar.dart';
 import 'package:crowdradar/core/models/lugar_detalle.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
@@ -12,7 +10,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../fakes/enrutador_falso.dart';
+import '../../fakes/favorito_repository_fake.dart';
 import '../../fakes/lugar_repo_falso.dart';
+import '../../fakes/reporte_repository_fake.dart';
 
 void main() {
   testWidgets('Ver historial opens the place history (HU 6.1 c1)', (

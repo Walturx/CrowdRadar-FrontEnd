@@ -1,6 +1,6 @@
-import '../../core/network/api_client.dart';
-import '../../core/session/session_service.dart';
-import '../fabrica_repositorios.dart';
+import 'package:crowdradar/core/network/api_client.dart';
+import 'package:crowdradar/core/session/session_service.dart';
+import 'package:crowdradar/app/fabrica_repositorios.dart';
 import 'alerta_repository_fake.dart';
 import 'analitica_repository_fake.dart';
 import 'auth_repository_fake.dart';

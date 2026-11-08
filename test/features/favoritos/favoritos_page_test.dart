@@ -1,5 +1,3 @@
-import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
-import 'package:crowdradar/app/fakes/favorito_repository_fake.dart';
 import 'package:crowdradar/core/models/favorito.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/network/respuesta_api.dart';
@@ -10,7 +8,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../fakes/comportamiento_fake.dart';
 import '../../fakes/enrutador_falso.dart';
+import '../../fakes/favorito_repository_fake.dart';
 
 void main() {
   Future<void> abrir(WidgetTester tester, FavoritoRepository repo) async {

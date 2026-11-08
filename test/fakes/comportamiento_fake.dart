@@ -1,4 +1,4 @@
-import '../../core/network/api_exception.dart';
+import 'package:crowdradar/core/network/api_exception.dart';
 
 /// Test-double knob shared by every fake repository: simulated [latencia] and
 /// an optional [fallo] thrown on every call. The default is instant success.

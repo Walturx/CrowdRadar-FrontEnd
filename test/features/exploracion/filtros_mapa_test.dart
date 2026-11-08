@@ -1,5 +1,3 @@
-import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
-import 'package:crowdradar/app/fakes/exploracion_repository_fake.dart';
 import 'package:crowdradar/core/models/categoria_lugar.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
@@ -9,6 +7,9 @@ import 'package:crowdradar/features/exploracion/explorar/filtros_mapa.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../fakes/comportamiento_fake.dart';
+import '../../fakes/exploracion_repository_fake.dart';
 
 typedef _Cambio = ({CategoriaLugar? categoria, NivelSaturacion? nivel});
 

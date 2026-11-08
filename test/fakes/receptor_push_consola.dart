@@ -1,13 +1,12 @@
 import 'dart:async';
 
+import 'package:crowdradar/core/push/receptor_push.dart';
 import 'package:flutter/foundation.dart';
 
-import 'receptor_push.dart';
-
-/// Null Object pattern, development flavor (used with `USAR_FAKES`): a
-/// [ReceptorPush] that hands out a fixed fake token and lets code simulate a
-/// notification tap with [simularApertura]. Real delivery (FCM) is not part of
-/// this build; the in-app alert list is the guaranteed channel.
+/// Test double for [ReceptorPush]: hands out a fixed fake token and lets a
+/// test simulate a notification tap with [simularApertura]. Real delivery
+/// (FCM) is not part of this build; the in-app alert list is the guaranteed
+/// channel.
 class ReceptorPushConsola implements ReceptorPush {
   static const String tokenDesarrollo = 'consola-dev-token';
 

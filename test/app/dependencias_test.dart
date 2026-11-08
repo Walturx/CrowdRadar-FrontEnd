@@ -1,54 +1,54 @@
-// S6.1: USAR_FAKES=true makes every repository resolve to its *RepositoryFake.
+// CRO-60: the composition root builds its repositories through a
+// FabricaRepositorios; the app ships the HTTP one and tests inject the fakes.
 import 'package:crowdradar/app/dependencias.dart';
 import 'package:crowdradar/app/fabrica_repositorios.dart';
-import 'package:crowdradar/app/fakes/analitica_repository_fake.dart';
-import 'package:crowdradar/app/fakes/auth_repository_fake.dart';
-import 'package:crowdradar/app/fakes/alerta_repository_fake.dart';
-import 'package:crowdradar/app/fakes/exploracion_repository_fake.dart';
-import 'package:crowdradar/app/fakes/fabrica_repositorios_fake.dart';
-import 'package:crowdradar/app/fakes/favorito_repository_fake.dart';
-import 'package:crowdradar/app/fakes/lugar_repository_fake.dart';
-import 'package:crowdradar/app/fakes/moderacion_repository_fake.dart';
-import 'package:crowdradar/app/fakes/perfil_repository_fake.dart';
-import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
-import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
 import 'package:crowdradar/core/config/entorno.dart';
 import 'package:crowdradar/core/location/geolocator_ubicacion_service.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
 import 'package:crowdradar/core/network/api_client.dart';
+import 'package:crowdradar/core/push/receptor_push_nulo.dart';
 import 'package:crowdradar/core/session/session_service.dart';
+import 'package:crowdradar/features/alertas/data/alerta_repository_http.dart';
+import 'package:crowdradar/features/analitica/data/analitica_repository_http.dart';
 import 'package:crowdradar/features/auth/data/auth_repository_http.dart';
+import 'package:crowdradar/features/exploracion/data/exploracion_repository_http.dart';
+import 'package:crowdradar/features/favoritos/data/favorito_repository_http.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository_http.dart';
+import 'package:crowdradar/features/moderacion/data/moderacion_repository_http.dart';
+import 'package:crowdradar/features/perfil/data/perfil_repository_http.dart';
+import 'package:crowdradar/features/reportes/data/reporte_repository_http.dart';
+import 'package:crowdradar/features/validacion/data/validacion_repository_http.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../fakes/alerta_repository_fake.dart';
+import '../fakes/analitica_repository_fake.dart';
+import '../fakes/auth_repository_fake.dart';
+import '../fakes/exploracion_repository_fake.dart';
+import '../fakes/fabrica_repositorios_fake.dart';
+import '../fakes/favorito_repository_fake.dart';
+import '../fakes/lugar_repository_fake.dart';
+import '../fakes/moderacion_repository_fake.dart';
+import '../fakes/perfil_repository_fake.dart';
+import '../fakes/reporte_repository_fake.dart';
+import '../fakes/validacion_repository_fake.dart';
 import '../helpers/ubicacion_fake.dart';
 
 void main() {
   tearDown(() => SessionService.instance.reiniciar());
 
-  test('S6.1 usarFakes=true injects every *RepositoryFake', () {
-    final d = Dependencias.crear(
-      const Entorno(usarFakes: true),
-      SessionService.instance,
-    );
-
-    expect(d.authRepository, isA<AuthRepositoryFake>());
-    expect(d.perfilRepository, isA<PerfilRepositoryFake>());
-    expect(d.lugarRepository, isA<LugarRepositoryFake>());
-    expect(d.reporteRepository, isA<ReporteRepositoryFake>());
-    expect(d.analiticaRepository, isA<AnaliticaRepositoryFake>());
-    expect(d.validacionRepository, isA<ValidacionRepositoryFake>());
-    expect(d.favoritoRepository, isA<FavoritoRepositoryFake>());
-    expect(d.alertaRepository, isA<AlertaRepositoryFake>());
-    expect(d.exploracionRepository, isA<ExploracionRepositoryFake>());
-    expect(d.moderacionRepository, isA<ModeracionRepositoryFake>());
-  });
-
-  test('S6.1 usarFakes=false keeps the http implementations', () {
+  test('CRO-60 the app builds the HTTP repositories by default', () {
     final d = Dependencias.crear(const Entorno(), SessionService.instance);
 
     expect(d.authRepository, isA<AuthRepositoryHttp>());
+    expect(d.perfilRepository, isA<PerfilRepositoryHttp>());
     expect(d.lugarRepository, isA<LugarRepositoryHttp>());
+    expect(d.reporteRepository, isA<ReporteRepositoryHttp>());
+    expect(d.analiticaRepository, isA<AnaliticaRepositoryHttp>());
+    expect(d.validacionRepository, isA<ValidacionRepositoryHttp>());
+    expect(d.favoritoRepository, isA<FavoritoRepositoryHttp>());
+    expect(d.alertaRepository, isA<AlertaRepositoryHttp>());
+    expect(d.exploracionRepository, isA<ExploracionRepositoryHttp>());
+    expect(d.moderacionRepository, isA<ModeracionRepositoryHttp>());
   });
 
   test('CRO-60 the injected factory builds every repository', () {
@@ -82,6 +82,21 @@ void main() {
     expect(espia.sesion, same(SessionService.instance));
   });
 
+  test('CRO-60 the push receiver is the no-op one by default', () {
+    final conHttp = Dependencias.crear(
+      const Entorno(),
+      SessionService.instance,
+    );
+    final conFakes = Dependencias.crear(
+      const Entorno(),
+      SessionService.instance,
+      repositorios: const FabricaRepositoriosFake(),
+    );
+
+    expect(conHttp.receptorPush, isA<ReceptorPushNulo>());
+    expect(conFakes.receptorPush, isA<ReceptorPushNulo>());
+  });
+
   test('CRO-65 the device location comes from geolocator by default', () {
     final d = Dependencias.crear(const Entorno(), SessionService.instance);
 
@@ -91,7 +106,7 @@ void main() {
   test('CRO-65 the location service can be overridden (tests)', () {
     final propio = UbicacionServiceFake();
     final d = Dependencias.crear(
-      const Entorno(usarFakes: true),
+      const Entorno(),
       SessionService.instance,
       ubicacionService: propio,
     );
@@ -104,7 +119,7 @@ void main() {
     () async {
       final ubicacion = UbicacionServiceFake();
       final d = Dependencias.crear(
-        const Entorno(usarFakes: true),
+        const Entorno(),
         SessionService.instance,
         ubicacionService: ubicacion,
       );
@@ -118,45 +133,6 @@ void main() {
       );
       ubicacion.punto = miraflores;
       expect((await d.puntoReferencia.actualizar()).punto, miraflores);
-    },
-  );
-
-  test('R1-101 fakes in a release build are refused', () {
-    expect(
-      () => Dependencias.crear(
-        const Entorno(usarFakes: true),
-        SessionService.instance,
-        esRelease: true,
-      ),
-      throwsA(
-        isA<StateError>().having(
-          (e) => e.message,
-          'message',
-          contains('USAR_FAKES'),
-        ),
-      ),
-    );
-  });
-
-  test(
-    'R1-101 release without fakes and non-release with fakes still work',
-    () {
-      expect(
-        Dependencias.crear(
-          const Entorno(),
-          SessionService.instance,
-          esRelease: true,
-        ).authRepository,
-        isA<AuthRepositoryHttp>(),
-      );
-      expect(
-        Dependencias.crear(
-          const Entorno(usarFakes: true),
-          SessionService.instance,
-          esRelease: false,
-        ).authRepository,
-        isA<AuthRepositoryFake>(),
-      );
     },
   );
 }

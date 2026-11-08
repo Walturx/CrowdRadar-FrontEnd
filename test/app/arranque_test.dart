@@ -6,6 +6,7 @@ import 'package:crowdradar/core/session/session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../fakes/fabrica_repositorios_fake.dart';
 import '../fakes/registro_falso.dart';
 
 void main() {
@@ -23,8 +24,9 @@ void main() {
           intentos++;
           if (intentos == 1) throw StateError('keystore');
           return Dependencias.crear(
-            const Entorno(usarFakes: true),
+            const Entorno(),
             SessionService.instance..reiniciar(),
+            repositorios: const FabricaRepositoriosFake(),
           );
         },
       ),
@@ -46,8 +48,9 @@ void main() {
       ArranqueApp(
         registro: RegistroFalso(),
         iniciar: () async => Dependencias.crear(
-          const Entorno(usarFakes: true),
+          const Entorno(),
           SessionService.instance..reiniciar(),
+          repositorios: const FabricaRepositoriosFake(),
         ),
       ),
     );
