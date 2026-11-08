@@ -1,4 +1,3 @@
-import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/core/network/respuesta_api.dart';
 import 'package:crowdradar/features/validacion/data/validacion_repository.dart';
@@ -9,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../fakes/validacion_repository_fake.dart';
 import 'json_validacion.dart';
 
 class _MockRepo extends Mock implements ValidacionRepository {}

@@ -47,4 +47,24 @@ void main() {
           'lib/core/network/ (features and app talk through ApiClient).',
     );
   });
+
+  test('the app ships no fakes and no USAR_FAKES flag (CRO-60)', () {
+    final fakeIdentifier = RegExp(r'USAR_FAKES|\w+Fake\b');
+    final infractores = _fuentes()
+        .where(
+          (f) =>
+              _ruta(f).endsWith('_fake.dart') ||
+              fakeIdentifier.hasMatch(f.readAsStringSync()),
+        )
+        .map(_ruta)
+        .toList();
+
+    expect(
+      infractores,
+      isEmpty,
+      reason:
+          'Fakes and their in-memory data live in test/fakes/; tests inject '
+          'them through Dependencias.crear(repositorios:).',
+    );
+  });
 }

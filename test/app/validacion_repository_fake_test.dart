@@ -1,11 +1,12 @@
-import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
-import 'package:crowdradar/app/fakes/datos_fake.dart';
-import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
 import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../fakes/comportamiento_fake.dart';
+import '../fakes/datos_fake.dart';
+import '../fakes/validacion_repository_fake.dart';
 
 Matcher _falla(int status, String code) => throwsA(
   isA<ApiException>()

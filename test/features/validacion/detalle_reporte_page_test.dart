@@ -1,4 +1,3 @@
-import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/features/validacion/data/validacion_repository.dart';
 import 'package:crowdradar/features/validacion/detalle_reporte/detalle_reporte_page.dart';
@@ -8,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../fakes/validacion_repository_fake.dart';
 import 'json_validacion.dart';
 
 /// The fake as an older backend: the vote response has no `usuario` (C7).

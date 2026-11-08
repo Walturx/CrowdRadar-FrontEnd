@@ -1,9 +1,10 @@
-import 'package:crowdradar/app/fakes/datos_fake.dart';
-import 'package:crowdradar/app/fakes/perfil_repository_fake.dart';
 import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/core/session/usuario_sesion.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'datos_fake.dart';
+import 'perfil_repository_fake.dart';
 
 /// C1 thresholds (CRO-72), only to check the fake seeds are consistent; the
 /// app itself never derives a tier from points.

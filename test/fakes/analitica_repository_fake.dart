@@ -1,8 +1,8 @@
-import '../../core/models/analitica.dart';
-import '../../core/models/nivel_saturacion.dart';
-import '../../core/utils/formato_fecha.dart';
-import '../../features/analitica/analitica_parametros.dart';
-import '../../features/analitica/data/analitica_repository.dart';
+import 'package:crowdradar/core/models/analitica.dart';
+import 'package:crowdradar/core/models/nivel_saturacion.dart';
+import 'package:crowdradar/core/utils/formato_fecha.dart';
+import 'package:crowdradar/features/analitica/analitica_parametros.dart';
+import 'package:crowdradar/features/analitica/data/analitica_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 import 'datos_lugares_fake.dart';
