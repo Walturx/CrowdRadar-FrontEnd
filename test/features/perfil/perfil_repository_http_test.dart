@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/features/perfil/data/perfil_repository_http.dart';
@@ -18,7 +19,8 @@ const _usuarioJson = {
   'distrito': 'Miraflores',
   'rol': 'USUARIO',
   'status': 'ACTIVO',
-  'puntosKarma': 30,
+  'puntos': 160,
+  'tier': 'CROWD_COLLABORATOR',
 };
 
 /// `data` exactly as the backend sends it for GET/PUT /api/users/profile.
@@ -99,7 +101,8 @@ void main() {
         expect(user.email, 'ana@test.com');
         expect(user.telefono, '987654321');
         expect(user.distrito, 'Miraflores');
-        expect(user.puntosKarma, 30);
+        expect(user.puntos, 160);
+        expect(user.tier, TierUsuario.crowdCollaborator);
       },
     );
 
@@ -137,6 +140,8 @@ void main() {
         expect(user.nombre, 'Beatriz');
         expect(user.telefono, '987654321');
         expect(user.distrito, 'Miraflores');
+        expect(user.puntos, 160);
+        expect(user.tier, TierUsuario.crowdCollaborator);
         expect(sesion.usuario?.nombre, 'Beatriz');
         expect(sesion.usuario?.email, 'ana@test.com');
       },

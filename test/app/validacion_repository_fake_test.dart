@@ -1,6 +1,7 @@
 import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
-import 'package:crowdradar/app/fakes/karma_fake.dart';
+import 'package:crowdradar/app/fakes/datos_fake.dart';
 import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
+import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/session/session_service.dart';
@@ -14,13 +15,11 @@ Matcher _falla(int status, String code) => throwsA(
 
 void main() {
   late SessionService sesion;
-  late KarmaFake karma;
   late ValidacionRepositoryFake repo;
 
   setUp(() {
     sesion = SessionService.instance..reiniciar();
-    karma = KarmaFake(100);
-    repo = ValidacionRepositoryFake(karma: karma);
+    repo = ValidacionRepositoryFake();
   });
   tearDown(() => sesion.reiniciar());
 
@@ -39,30 +38,67 @@ void main() {
     expect(despues.length, antes.length - 1);
   });
 
-  test('validar grants +2 karma and updates counts and my vote', () async {
+  test('C3 validar updates counts and my vote', () async {
     final id = (await ids()).first;
     final antes = await repo.obtenerReporte(id);
 
     final voto = await repo.validar(id, TipoAccionValidacion.rechazar);
 
-    expect(voto.puntosGanados, 2);
-    expect(voto.totalKarma, 102);
-    expect(karma.total, 102);
+    expect(voto.accion, TipoAccionValidacion.rechazar);
+    expect(
+      voto.estadoValidacion,
+      (await repo.obtenerReporte(id)).estadoValidacion,
+    );
     expect(voto.confiabilidad.rechazos, antes.confiabilidad.rechazos + 1);
     final despues = await repo.obtenerReporte(id);
     expect(despues.miValidacion, TipoAccionValidacion.rechazar);
     expect(despues.confiabilidad, voto.confiabilidad);
   });
 
-  test('a repeated vote is 409 and grants nothing', () async {
+  test(
+    'C7 a vote answers with the fake account tier (Crowd Explorer)',
+    () async {
+      final id = (await ids()).first;
+
+      final voto = await repo.validar(id, TipoAccionValidacion.confirmar);
+
+      expect(voto.tier, usuarioFake.tier);
+      expect(voto.tier, TierUsuario.crowdExplorer);
+    },
+  );
+
+  test(
+    'S25 pending reports carry plausible author tiers, more than one',
+    () async {
+      final pendientes = (await repo.pendientes(lat: 0, lng: 0)).items;
+
+      expect(pendientes.map((r) => r.tierAutor), everyElement(isNotNull));
+      expect(pendientes.map((r) => r.tierAutor).toSet().length, greaterThan(1));
+    },
+  );
+
+  test('S25 the detail carries the same author tier as the list', () async {
+    for (final r in (await repo.pendientes(lat: 0, lng: 0)).items) {
+      expect((await repo.obtenerReporte(r.id)).tierAutor, r.tierAutor);
+    }
+    expect(
+      (await repo.obtenerReporte(
+        ValidacionRepositoryFake.idReportePropio,
+      )).tierAutor,
+      usuarioFake.tier,
+    );
+  });
+
+  test('a repeated vote is 409 and counts nothing', () async {
     final id = (await ids()).first;
     await repo.validar(id, TipoAccionValidacion.confirmar);
+    final antes = (await repo.obtenerReporte(id)).confiabilidad;
 
     await expectLater(
       repo.validar(id, TipoAccionValidacion.confirmar),
       _falla(409, 'VALIDACION_DUPLICADA'),
     );
-    expect(karma.total, 102);
+    expect((await repo.obtenerReporte(id)).confiabilidad, antes);
   });
 
   test(

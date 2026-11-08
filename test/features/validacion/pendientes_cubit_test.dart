@@ -4,6 +4,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:crowdradar/core/location/punto_referencia.dart';
 import 'package:crowdradar/core/map/centro_compartido.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
+import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/network/respuesta_api.dart';
@@ -31,8 +32,6 @@ Pagina<ReportePendiente> _pagina(List<int> ids) => Pagina(
 
 const _voto = ResultadoVoto(
   accion: TipoAccionValidacion.confirmar,
-  puntosGanados: 2,
-  totalKarma: 112,
   confiabilidad: Confiabilidad(porcentaje: 80, nivel: NivelConfiabilidad.alta),
   estadoValidacion: EstadoValidacion.enValidacion,
 );
@@ -273,36 +272,56 @@ void main() {
       expect([for (final r in s.reportes) r.id], [1, 2]);
       expect(s.aviso, 'Demasiadas acciones seguidas, prueba en 2 minutos');
     });
-    test(
-      'removes the report at once, then records the vote and karma',
-      () async {
-        final c = await cargado([1, 2]);
-        final espera = Completer<ResultadoVoto>();
-        when(
-          () => repo.validar(1, TipoAccionValidacion.confirmar),
-        ).thenAnswer((_) => espera.future);
+    test('removes the report at once, then records the vote', () async {
+      final c = await cargado([1, 2]);
+      final espera = Completer<ResultadoVoto>();
+      when(
+        () => repo.validar(1, TipoAccionValidacion.confirmar),
+      ).thenAnswer((_) => espera.future);
 
-        final f = c.votar(_r(1), TipoAccionValidacion.confirmar);
+      final f = c.votar(_r(1), TipoAccionValidacion.confirmar);
 
-        expect(
-          c.state,
-          PendientesCargado(reportes: [_r(2)], votando: const {1}),
-        );
-        espera.complete(_voto);
-        await f;
-        expect(
-          c.state,
-          PendientesCargado(
-            reportes: [_r(2)],
-            ultimoVoto: VotoRegistrado(
-              reporte: _r(1),
-              accion: TipoAccionValidacion.confirmar,
-              puntosGanados: 2,
-            ),
+      expect(c.state, PendientesCargado(reportes: [_r(2)], votando: const {1}));
+      espera.complete(_voto);
+      await f;
+      expect(
+        c.state,
+        PendientesCargado(
+          reportes: [_r(2)],
+          ultimoVoto: VotoRegistrado(
+            reporte: _r(1),
+            accion: TipoAccionValidacion.confirmar,
           ),
-        );
-      },
-    );
+        ),
+      );
+    });
+
+    test('S23 the recorded vote carries the voter tier (C7)', () async {
+      final c = await cargado([1, 2]);
+      when(() => repo.validar(1, TipoAccionValidacion.confirmar)).thenAnswer(
+        (_) async => const ResultadoVoto(
+          accion: TipoAccionValidacion.confirmar,
+          confiabilidad: Confiabilidad(
+            porcentaje: 80,
+            nivel: NivelConfiabilidad.alta,
+          ),
+          estadoValidacion: EstadoValidacion.enValidacion,
+          tier: TierUsuario.crowdRoyalty,
+        ),
+      );
+
+      await c.votar(_r(1), TipoAccionValidacion.confirmar);
+
+      expect(
+        (c.state as PendientesCargado).ultimoVoto,
+        VotoRegistrado(
+          reporte: _r(1),
+          accion: TipoAccionValidacion.confirmar,
+          tier: TierUsuario.crowdRoyalty,
+        ),
+      );
+      await c.close();
+    });
 
     test(
       'a failure puts the report back where it was, with the message',

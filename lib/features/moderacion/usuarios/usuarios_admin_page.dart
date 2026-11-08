@@ -69,7 +69,6 @@ class _Filtros extends StatelessWidget {
   static const _ordenes = <OrdenUsuarios, String>{
     OrdenUsuarios.recientes: 'Más recientes',
     OrdenUsuarios.nombre: 'Nombre',
-    OrdenUsuarios.karma: 'Karma',
   };
 
   final UsuariosAdminState estado;

@@ -120,12 +120,8 @@ class _Lista extends StatelessWidget {
   }
 }
 
+/// One report; a VALIDADO one shows the points it gives (+10), any other none.
 class _Fila extends StatelessWidget {
-  static const Map<String, String> _motivos = {
-    'TOPE_DIARIO': 'Tope diario alcanzado',
-    'REPORTE_ELIMINADO': 'Reporte eliminado',
-  };
-
   final ReporteSaturacion reporte;
   final EstadoValidacion? validacion;
 
@@ -133,8 +129,7 @@ class _Fila extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final puntos = reporte.puntosOtorgados;
-    final motivo = reporte.motivoSinPuntos;
+    final puntos = reporte.puntos;
     final fecha = reporte.fechaHora;
     return ListTile(
       title: Text(reporte.lugarNombre ?? 'Lugar ${reporte.lugarId}'),
@@ -145,19 +140,14 @@ class _Fila extends StatelessWidget {
           ChipSaturacion(nivel: reporte.nivel),
           if (validacion != null) ChipEstadoValidacion(estado: validacion!),
           if (fecha != null) Text(haceCuanto(fecha)),
-          if (puntos == 0 && motivo != null)
-            Text(
-              _motivos[motivo] ?? motivo,
-              style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-            ),
         ],
       ),
-      trailing: puntos == null
-          ? null
-          : Text(
+      trailing: puntos > 0
+          ? Text(
               '+$puntos',
               style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
+            )
+          : null,
     );
   }
 }

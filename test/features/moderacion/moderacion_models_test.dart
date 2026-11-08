@@ -1,6 +1,7 @@
 import 'package:crowdradar/core/models/categoria_lugar.dart';
 import 'package:crowdradar/core/models/moderacion.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
+import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -65,6 +66,13 @@ void main() {
     expect(r.denunciasResueltas, 4);
   });
 
+  test('C5 OrdenUsuarios offers only RECIENTES and NOMBRE', () {
+    expect(OrdenUsuarios.values.map((o) => o.valorApi), [
+      'RECIENTES',
+      'NOMBRE',
+    ]);
+  });
+
   test('DecisionModeracion wire values are MANTENER and ELIMINAR', () {
     expect(DecisionModeracion.mantener.valorApi, 'MANTENER');
     expect(DecisionModeracion.eliminar.valorApi, 'ELIMINAR');
@@ -79,7 +87,19 @@ void main() {
       expect(u.status, EstadoCuenta.activo);
       expect(u.estaSuspendido, isFalse);
       expect(u.sancionVigente, isNull);
-      expect(u.puntosKarma, 40);
+      expect(u.puntos, 60);
+      expect(u.tier, TierUsuario.crowdExplorer);
+    });
+
+    test('a row without puntos or tier is 0 points and Crowd Baby', () {
+      final u = UsuarioAdmin.fromJson(
+        {...usuarioJson()}
+          ..remove('puntos')
+          ..remove('tier'),
+      );
+
+      expect(u.puntos, 0);
+      expect(u.tier, TierUsuario.crowdBaby);
     });
 
     test('a suspended user carries the vigente sancion', () {
@@ -106,6 +126,8 @@ void main() {
       expect(d.reportesPublicados, 32);
       expect(d.reportesDenunciados, 5);
       expect(d.email, 'lucia.paredes@correo.pe');
+      expect(d.puntos, 60);
+      expect(d.tier, TierUsuario.crowdExplorer);
     });
   });
 

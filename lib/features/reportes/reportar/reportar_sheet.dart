@@ -230,23 +230,7 @@ class _Exito extends StatelessWidget {
           'Tu reporte fue enviado correctamente y ya ayuda a otros ciudadanos.',
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 12),
-        Text(
-          '+${estado.puntosGanados} karma',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: AppColors.primary,
-          ),
-        ),
-        if (estado.motivoSinPuntos != null)
-          Text(
-            estado.motivoSinPuntos!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textMuted),
-          ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         BotonPrincipal(
           texto: 'Listo',
           onPressed: () => Navigator.of(context).pop(true),

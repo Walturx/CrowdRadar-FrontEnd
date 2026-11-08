@@ -85,6 +85,41 @@ void main() {
     expect(tester.widget<ElevatedButton>(boton).enabled, isTrue);
   });
 
+  group('S21 logo', () {
+    Finder logo(String ruta) => find.byWidgetPredicate(
+      (w) =>
+          w is Image &&
+          w.image is AssetImage &&
+          (w.image as AssetImage).assetName == ruta,
+    );
+
+    testWidgets('shows the new logo with the wordmark, not the old one', (
+      tester,
+    ) async {
+      await abrir(tester);
+
+      expect(logo('assets/images/crowdradar-logo.png'), findsOneWidget);
+      expect(
+        logo('assets/images/crowdradar-logo-transparent.png'),
+        findsNothing,
+      );
+      // The wordmark already names the app: no duplicated title.
+      expect(find.text('CrowdRadar'), findsNothing);
+    });
+
+    testWidgets('fits a narrow phone without overflowing', (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 640);
+      addTearDown(tester.view.reset);
+      await abrir(tester);
+
+      expect(tester.takeException(), isNull);
+      final caja = tester.getRect(logo('assets/images/crowdradar-logo.png'));
+      expect(caja.left, greaterThanOrEqualTo(0));
+      expect(caja.right, lessThanOrEqualTo(320));
+    });
+  });
+
   testWidgets('a successful login navigates to the map', (tester) async {
     when(
       () => repo.iniciarSesion('ana@test.com', 'Secreta1'),

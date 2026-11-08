@@ -1,22 +1,26 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../core/location/punto_referencia.dart';
+import '../../../core/models/tier_usuario.dart';
 import '../../../core/models/validacion.dart';
 
-/// The vote the user just cast, shown with the thanks and the karma earned.
+/// The vote the user just cast, shown with the thanks and the choice made.
 class VotoRegistrado extends Equatable {
   final ReportePendiente reporte;
   final TipoAccionValidacion accion;
-  final int puntosGanados;
+
+  /// Voter's own tier from the vote response, shown beside the thanks (S23);
+  /// null when the response carried none.
+  final TierUsuario? tier;
 
   const VotoRegistrado({
     required this.reporte,
     required this.accion,
-    required this.puntosGanados,
+    this.tier,
   });
 
   @override
-  List<Object?> get props => [reporte, accion, puntosGanados];
+  List<Object?> get props => [reporte, accion, tier];
 }
 
 sealed class PendientesState extends Equatable {

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/features/validacion/data/validacion_repository.dart';
@@ -23,8 +24,6 @@ DetalleReporte _detalle({
 
 const _voto = ResultadoVoto(
   accion: TipoAccionValidacion.rechazar,
-  puntosGanados: 2,
-  totalKarma: 112,
   confiabilidad: Confiabilidad(
     porcentaje: 38.46,
     nivel: NivelConfiabilidad.baja,
@@ -101,20 +100,48 @@ void main() {
   });
 
   group('validar', () {
-    test('records my vote, the new reliability and the karma notice', () async {
+    test(
+      'S15 records my vote, the new reliability and the plain thanks',
+      () async {
+        final c = await cargado();
+        when(
+          () => repo.validar(31, TipoAccionValidacion.rechazar),
+        ).thenAnswer((_) async => _voto);
+
+        await c.validar(TipoAccionValidacion.rechazar);
+
+        final s = estado(c);
+        expect(s.detalle.miValidacion, TipoAccionValidacion.rechazar);
+        expect(s.detalle.confiabilidad, _voto.confiabilidad);
+        expect(s.detalle.estadoValidacion, EstadoValidacion.rechazado);
+        expect(s.aviso, '¡Gracias por validar!');
+        expect(s.tierVotante, isNull);
+        expect(s.votando, isFalse);
+      },
+    );
+
+    test('S23 the thanks carries the voter tier until it is shown', () async {
       final c = await cargado();
-      when(
-        () => repo.validar(31, TipoAccionValidacion.rechazar),
-      ).thenAnswer((_) async => _voto);
+      when(() => repo.validar(31, TipoAccionValidacion.rechazar)).thenAnswer(
+        (_) async => const ResultadoVoto(
+          accion: TipoAccionValidacion.rechazar,
+          confiabilidad: Confiabilidad(
+            porcentaje: 38.46,
+            nivel: NivelConfiabilidad.baja,
+          ),
+          estadoValidacion: EstadoValidacion.rechazado,
+          tier: TierUsuario.crowdCollaborator,
+        ),
+      );
 
       await c.validar(TipoAccionValidacion.rechazar);
 
-      final s = estado(c);
-      expect(s.detalle.miValidacion, TipoAccionValidacion.rechazar);
-      expect(s.detalle.confiabilidad, _voto.confiabilidad);
-      expect(s.detalle.estadoValidacion, EstadoValidacion.rechazado);
-      expect(s.aviso, '¡Gracias por validar! +2 karma');
-      expect(s.votando, isFalse);
+      expect(estado(c).aviso, DetalleReporteCubit.mensajeGracias);
+      expect(estado(c).tierVotante, TierUsuario.crowdCollaborator);
+      c.descartarAviso();
+      expect(estado(c).aviso, isNull);
+      expect(estado(c).tierVotante, isNull);
+      expect(estado(c).detalle.miValidacion, TipoAccionValidacion.rechazar);
     });
 
     test('is in flight once: a second tap is ignored', () async {

@@ -80,7 +80,8 @@ Map<String, dynamic> usuarioJson({
   'email': 'lucia.paredes@correo.pe',
   'rol': 'USUARIO',
   'status': status,
-  'puntosKarma': 40,
+  'puntos': 60,
+  'tier': 'CROWD_EXPLORER',
   'sancionVigente': sancion,
 };
 

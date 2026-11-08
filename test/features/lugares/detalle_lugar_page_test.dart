@@ -181,7 +181,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repo.detallesPedidos, [1, 1]);
-      expect(find.text('Reporte enviado, +10 puntos'), findsOneWidget);
+      // S14: the snackbar thanks without announcing points.
+      expect(find.text('Reporte enviado'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.textContaining(RegExp(r'\+|puntos|karma')),
+        ),
+        findsNothing,
+      );
     });
 
     testWidgets('a report that fails after the sheet was dismissed stays '
