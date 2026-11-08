@@ -1,10 +1,10 @@
-import '../../core/map/tipos_mapa.dart';
-import '../../core/models/categoria_lugar.dart';
-import '../../core/models/lugar_detalle.dart';
-import '../../core/models/lugar_resumen.dart';
-import '../../core/models/nivel_saturacion.dart';
-import '../../core/network/respuesta_api.dart';
-import '../../features/lugares/data/lugar_repository.dart';
+import 'package:crowdradar/core/map/tipos_mapa.dart';
+import 'package:crowdradar/core/models/categoria_lugar.dart';
+import 'package:crowdradar/core/models/lugar_detalle.dart';
+import 'package:crowdradar/core/models/lugar_resumen.dart';
+import 'package:crowdradar/core/models/nivel_saturacion.dart';
+import 'package:crowdradar/core/network/respuesta_api.dart';
+import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 import 'datos_lugares_fake.dart';

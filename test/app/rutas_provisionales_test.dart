@@ -8,6 +8,7 @@ import 'package:crowdradar/core/session/session_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../fakes/fabrica_repositorios_fake.dart';
 import '../fakes/jwt_falso.dart';
 
 /// Keeps app-level tests off the network (no OSM tiles).
@@ -29,8 +30,9 @@ Future<void> _abrir(WidgetTester tester, String ruta) async {
   await tester.pumpWidget(
     CrowdRadarApp(
       dependencias: Dependencias.crear(
-        const Entorno(usarFakes: true),
+        const Entorno(),
         sesion,
+        repositorios: const FabricaRepositoriosFake(),
         mapaAdapter: _MapaVacio(),
       ),
       ubicacionInicial: ruta,
@@ -64,8 +66,9 @@ void main() {
     await tester.pumpWidget(
       CrowdRadarApp(
         dependencias: Dependencias.crear(
-          const Entorno(usarFakes: true),
+          const Entorno(),
           SessionService.instance,
+          repositorios: const FabricaRepositoriosFake(),
           mapaAdapter: _MapaVacio(),
         ),
         ubicacionInicial: '/recuperar',

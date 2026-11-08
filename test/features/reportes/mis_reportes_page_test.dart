@@ -1,5 +1,3 @@
-import 'package:crowdradar/app/fakes/datos_lugares_fake.dart';
-import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/network/respuesta_api.dart';
@@ -15,6 +13,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../fakes/datos_lugares_fake.dart';
+import '../../fakes/reporte_repository_fake.dart';
 import '../validacion/json_validacion.dart';
 
 class _MockValidacion extends Mock implements ValidacionRepository {}

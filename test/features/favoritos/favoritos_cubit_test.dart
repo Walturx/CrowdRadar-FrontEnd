@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
-import 'package:crowdradar/app/fakes/favorito_repository_fake.dart';
 import 'package:crowdradar/core/models/categoria_lugar.dart';
 import 'package:crowdradar/core/models/favorito.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
@@ -12,6 +10,8 @@ import 'package:crowdradar/features/favoritos/lista/favoritos_cubit.dart';
 import 'package:crowdradar/features/favoritos/lista/favoritos_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../fakes/comportamiento_fake.dart';
+import '../../fakes/favorito_repository_fake.dart';
 import '../../helpers/errores_comunes.dart';
 
 class _MockRepo extends Mock implements FavoritoRepository {}

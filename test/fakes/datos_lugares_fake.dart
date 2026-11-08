@@ -1,6 +1,6 @@
-import '../../core/models/categoria_lugar.dart';
-import '../../core/models/lugar_resumen.dart';
-import '../../core/models/nivel_saturacion.dart';
+import 'package:crowdradar/core/models/categoria_lugar.dart';
+import 'package:crowdradar/core/models/lugar_resumen.dart';
+import 'package:crowdradar/core/models/nivel_saturacion.dart';
 
 /// Seed place of the in-memory fake; the 45 entries mirror the backend seed
 /// (Lima, 6 categories). Saturation freshness and report counts are derived

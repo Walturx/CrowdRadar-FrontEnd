@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 import '../core/config/entorno.dart';
 import '../core/location/geolocator_ubicacion_service.dart';
 import '../core/location/punto_referencia.dart';
@@ -11,7 +9,6 @@ import '../core/network/api_client.dart';
 import '../core/network/cliente_http_factory.dart';
 import '../core/network/interceptores/interceptores_sesion.dart';
 import '../core/push/receptor_push.dart';
-import '../core/push/receptor_push_consola.dart';
 import '../core/push/receptor_push_nulo.dart';
 import '../core/session/session_service.dart';
 import '../features/alertas/data/alerta_repository.dart';
@@ -25,11 +22,10 @@ import '../features/perfil/data/perfil_repository.dart';
 import '../features/reportes/data/reporte_repository.dart';
 import '../features/validacion/data/validacion_repository.dart';
 import 'fabrica_repositorios.dart';
-import 'fakes/fabrica_repositorios_fake.dart';
 
 /// Composition root (manual dependency injection): builds the object graph once.
 ///
-/// `USAR_FAKES=true` swaps every repository for its in-memory `*RepositoryFake`.
+/// The repositories come from a [FabricaRepositorios] (HTTP by default).
 /// A stream that finishes its `<x>_repository_http.dart` changes nothing here.
 class Dependencias {
   final Entorno entorno;
@@ -79,11 +75,9 @@ class Dependencias {
 
   /// [mapaAdapter], [ubicacionService], [receptorPush], [alertaRepository]
   /// and the [repositorios] factory can be overridden (tests). The device
-  /// location is real even with fakes: fakes stand in for the backend, not
-  /// for the phone. By default the receiver is the development console one
-  /// with fakes and the no-op one otherwise (real push delivery is not part
-  /// of this build).
-  /// [esRelease] defaults to `kReleaseMode`; fakes are refused in release.
+  /// location is real even with fake repositories: they stand in for the
+  /// backend, not for the phone. The push receiver defaults to the no-op one
+  /// (real push delivery is not part of this build).
   factory Dependencias.crear(
     Entorno entorno,
     SessionService sesion, {
@@ -91,26 +85,14 @@ class Dependencias {
     UbicacionService? ubicacionService,
     ReceptorPush? receptorPush,
     AlertaRepository? alertaRepository,
-    FabricaRepositorios? repositorios,
-    bool esRelease = kReleaseMode,
+    FabricaRepositorios repositorios = const FabricaRepositoriosHttp(),
   }) {
-    if (esRelease && entorno.usarFakes) {
-      throw StateError(
-        'USAR_FAKES must not be enabled in a release build: fake repositories '
-        'and seed credentials are for development only.',
-      );
-    }
     final api = ApiClient(
       const ClienteHttpFactory().crear(),
       entorno,
       interceptores: interceptoresDeSesion(sesion),
     );
-    final fabrica =
-        repositorios ??
-        (entorno.usarFakes
-            ? const FabricaRepositoriosFake()
-            : const FabricaRepositoriosHttp());
-    final repos = fabrica.crear(api, sesion);
+    final repos = repositorios.crear(api, sesion);
     final ubicacion = ubicacionService ?? GeolocatorUbicacionService();
     final centroMapa = CentroMapaCompartido();
     return Dependencias._(
@@ -121,9 +103,7 @@ class Dependencias {
       ubicacionService: ubicacion,
       centroMapa: centroMapa,
       puntoReferencia: PuntoReferencia(ubicacion, centroMapa),
-      receptorPush:
-          receptorPush ??
-          (entorno.usarFakes ? ReceptorPushConsola() : ReceptorPushNulo()),
+      receptorPush: receptorPush ?? ReceptorPushNulo(),
       authRepository: repos.auth,
       perfilRepository: repos.perfil,
       lugarRepository: repos.lugar,
