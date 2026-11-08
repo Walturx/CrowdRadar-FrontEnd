@@ -7,6 +7,7 @@ import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/network/respuesta_api.dart';
 import 'package:crowdradar/features/validacion/data/validacion_repository.dart';
 import 'package:crowdradar/features/validacion/pendientes/validar_page.dart';
+import 'package:crowdradar/features/validacion/widgets/tarjeta_reporte.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,6 +17,24 @@ import '../../helpers/ubicacion_fake.dart';
 import 'json_validacion.dart';
 
 class _MockRepo extends Mock implements ValidacionRepository {}
+
+/// The row that holds the "¡Gracias por validar!" title.
+Finder _filaGracias() => find
+    .ancestor(
+      of: find.text('¡Gracias por validar!'),
+      matching: find.byType(Row),
+    )
+    .first;
+
+/// Any tier badge image, or the one at [ruta].
+Finder _insigniaTier([String? ruta]) => find.byWidgetPredicate(
+  (w) =>
+      w is Image &&
+      w.image is AssetImage &&
+      (ruta == null
+          ? (w.image as AssetImage).assetName.startsWith('assets/images/tier_')
+          : (w.image as AssetImage).assetName == ruta),
+);
 
 void main() {
   Future<void> abrir(
@@ -58,7 +77,116 @@ void main() {
     expect(find.text('Rechazar'), findsOneWidget);
   });
 
-  testWidgets('confirming thanks the user with +2 karma and advances', (
+  testWidgets('S24 the card is built from the shared report pieces', (
+    tester,
+  ) async {
+    await abrir(tester, ValidacionRepositoryFake());
+
+    final tarjeta = find.byType(TarjetaReporte);
+    expect(tarjeta, findsOneWidget);
+    Finder enTarjeta(Finder f) => find.descendant(of: tarjeta, matching: f);
+    expect(enTarjeta(find.byType(EncabezadoReporte)), findsOneWidget);
+    expect(enTarjeta(find.text('Ayuda a la comunidad')), findsOneWidget);
+    expect(enTarjeta(find.text('400 m')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: enTarjeta(find.byType(SeccionSaturacion)),
+        matching: find.text('Saturación reportada'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: enTarjeta(find.byType(SeccionConfiabilidad)),
+        matching: find.text('Confiabilidad del reporte'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      enTarjeta(find.text('Ver detalle de confiabilidad →')),
+      findsOneWidget,
+    );
+  });
+
+  group('S25 the author tier on the card', () {
+    /// [f] inside the "Reportado por" row.
+    Finder enFila(Finder f) =>
+        find.descendant(of: find.byType(FilaAutor), matching: f);
+
+    testWidgets('"Reportado por" shows the author tier badge and name right '
+        'under the header', (tester) async {
+      await abrir(tester, ValidacionRepositoryFake());
+
+      expect(
+        find.descendant(
+          of: find.byType(EncabezadoReporte),
+          matching: find.byType(FilaAutor),
+        ),
+        findsOneWidget,
+      );
+      expect(enFila(find.text('Reportado por')), findsOneWidget);
+      expect(enFila(find.text('Crowd Collaborator')), findsOneWidget);
+      expect(
+        enFila(_insigniaTier('assets/images/tier_crowd_collaborator.png')),
+        findsOneWidget,
+      );
+      final fila = tester.getTopLeft(find.text('Reportado por')).dy;
+      expect(fila, greaterThan(tester.getTopLeft(find.text('400 m')).dy));
+      expect(
+        fila,
+        lessThan(tester.getTopLeft(find.text('Saturación reportada')).dy),
+      );
+    });
+
+    testWidgets('the next report shows its own author tier', (tester) async {
+      await abrir(tester, ValidacionRepositoryFake());
+
+      await tester.tap(find.text('Rechazar'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Mercado de Surquillo'), findsOneWidget);
+      expect(enFila(find.text('Crowd Baby')), findsOneWidget);
+      expect(
+        enFila(_insigniaTier('assets/images/tier_crowd_baby.png')),
+        findsOneWidget,
+      );
+    });
+
+    for (final (caso, autor) in [
+      ('no autor (older backend)', null),
+      ('an unknown tier', autorJson(tier: 'CROWD_LEGEND')),
+    ]) {
+      testWidgets('with $caso the row is hidden, never Crowd Baby', (
+        tester,
+      ) async {
+        final repo = _MockRepo();
+        when(
+          () => repo.pendientes(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer(
+          (_) async => Pagina(
+            items: [ReportePendiente.fromJson(pendienteJson(autor: autor))],
+            page: 1,
+            size: 20,
+            total: 1,
+            totalPaginas: 1,
+          ),
+        );
+        await abrir(tester, repo);
+
+        expect(find.text('Parque Kennedy'), findsOneWidget);
+        expect(find.byType(FilaAutor), findsNothing);
+        expect(find.text('Reportado por'), findsNothing);
+        expect(find.textContaining('Crowd '), findsNothing);
+        expect(_insigniaTier(), findsNothing);
+      });
+    }
+  });
+
+  testWidgets('S15 confirming thanks the user without points and advances', (
     tester,
   ) async {
     await abrir(tester, ValidacionRepositoryFake());
@@ -68,13 +196,17 @@ void main() {
     await tester.pump();
 
     expect(find.text('¡Gracias por validar!'), findsOneWidget);
-    expect(find.text('+2 karma'), findsOneWidget);
+    expect(
+      find.textContaining(RegExp(r'\+\d|puntos|karma', caseSensitive: false)),
+      findsNothing,
+    );
     expect(find.textContaining('Confirmaste'), findsOneWidget);
     expect(find.text('Mercado de Surquillo'), findsOneWidget);
     expect(find.text('Parque Kennedy'), findsNothing);
   });
 
-  testWidgets('a zero-karma vote explains the daily cap', (tester) async {
+  testWidgets('S15 S23 a vote with no tier shows the thanks alone, without a '
+      'daily cap or points', (tester) async {
     registerFallbackValue(TipoAccionValidacion.confirmar);
     final repo = _MockRepo();
     when(
@@ -94,8 +226,6 @@ void main() {
     when(() => repo.validar(any(), any())).thenAnswer(
       (_) async => const ResultadoVoto(
         accion: TipoAccionValidacion.confirmar,
-        puntosGanados: 0,
-        totalKarma: 120,
         confiabilidad: Confiabilidad(
           porcentaje: 80,
           nivel: NivelConfiabilidad.alta,
@@ -109,11 +239,43 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    expect(find.text('¡Gracias por validar!'), findsOneWidget);
+    expect(find.textContaining('Voto registrado'), findsNothing);
+    expect(find.textContaining('máximo'), findsNothing);
     expect(
-      find.text('Voto registrado (alcanzaste el máximo de karma por hoy)'),
+      find.textContaining(RegExp(r'\+\d|puntos|karma', caseSensitive: false)),
+      findsNothing,
+    );
+    // S23: a response without `usuario` (older backend) shows no tier.
+    expect(find.textContaining('Crowd '), findsNothing);
+    expect(_insigniaTier(), findsNothing);
+  });
+
+  testWidgets('S23 the thanks shows the voter tier beside it (C7)', (
+    tester,
+  ) async {
+    await abrir(tester, ValidacionRepositoryFake());
+
+    await tester.tap(find.text('Rechazar'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('¡Gracias por validar!'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: _filaGracias(),
+        matching: find.text('Crowd Explorer'),
+      ),
       findsOneWidget,
     );
-    expect(find.text('+0 karma'), findsNothing);
+    expect(
+      find.descendant(
+        of: _filaGracias(),
+        matching: _insigniaTier('assets/images/tier_crowd_explorer.png'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Rechazaste'), findsOneWidget);
   });
 
   testWidgets('after the last report the empty state appears', (tester) async {

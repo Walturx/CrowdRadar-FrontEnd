@@ -1,6 +1,7 @@
 import '../../core/models/categoria_lugar.dart';
 import '../../core/models/moderacion.dart';
 import '../../core/models/nivel_saturacion.dart';
+import '../../core/models/tier_usuario.dart';
 import '../../core/models/validacion.dart';
 import '../../core/network/respuesta_api.dart';
 import '../../core/session/session_service.dart';
@@ -54,14 +55,14 @@ class ModeracionRepositoryFake implements ModeracionRepository {
         apellido: 'CrowdRadar',
         email: emailAdminFake,
         rol: 'ADMIN',
-        puntosKarma: 0,
       ),
       const UsuarioAdmin(
         id: 11,
         nombre: 'Carlos',
         apellido: 'Méndez',
         email: 'carlos.mendez@correo.pe',
-        puntosKarma: 40,
+        puntos: 60,
+        tier: TierUsuario.crowdExplorer,
       ),
       _suspendido(12, 'Lucía', 'Paredes', 5),
       _suspendido(13, 'Jorge', 'Torres', 2),
@@ -70,7 +71,8 @@ class ModeracionRepositoryFake implements ModeracionRepository {
         nombre: 'Ana',
         apellido: 'Ruiz',
         email: 'ana.ruiz@correo.pe',
-        puntosKarma: 120,
+        puntos: 320,
+        tier: TierUsuario.crowdRoyalty,
       ),
     ])
       u.id: u,
@@ -114,7 +116,8 @@ class ModeracionRepositoryFake implements ModeracionRepository {
     email: '${nombre.toLowerCase()}.${apellido.toLowerCase()}@correo.pe'
         .replaceAll('í', 'i'),
     status: EstadoCuenta.suspendido,
-    puntosKarma: 5,
+    puntos: 160,
+    tier: TierUsuario.crowdCollaborator,
     sancionVigente: SancionVigente(
       id: id,
       usuarioId: id,
@@ -205,8 +208,6 @@ class ModeracionRepositoryFake implements ModeracionRepository {
     switch (orden) {
       case OrdenUsuarios.nombre:
         filtrados.sort((a, b) => a.nombre.compareTo(b.nombre));
-      case OrdenUsuarios.karma:
-        filtrados.sort((a, b) => b.puntosKarma.compareTo(a.puntosKarma));
       case OrdenUsuarios.recientes || null:
         filtrados.sort((a, b) => b.id.compareTo(a.id));
     }
@@ -224,7 +225,8 @@ class ModeracionRepositoryFake implements ModeracionRepository {
       email: u.email,
       rol: u.rol,
       status: u.status,
-      puntosKarma: u.puntosKarma,
+      puntos: u.puntos,
+      tier: u.tier,
       sancionVigente: u.sancionVigente,
       reportesPublicados: 32,
       reportesDenunciados: 5,
@@ -307,7 +309,8 @@ class ModeracionRepositoryFake implements ModeracionRepository {
       email: u.email,
       rol: u.rol,
       status: status,
-      puntosKarma: u.puntosKarma,
+      puntos: u.puntos,
+      tier: u.tier,
       sancionVigente: sancion,
     );
   }

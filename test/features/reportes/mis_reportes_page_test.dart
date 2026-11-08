@@ -41,7 +41,7 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('lists place, level, relative date and points of each report', (
+  testWidgets('lists place, level and relative date of each report', (
     tester,
   ) async {
     final repo = ReporteRepositoryFake();
@@ -59,7 +59,8 @@ void main() {
     expect(find.text('Saturado'), findsOneWidget);
     expect(find.text('Moderado'), findsOneWidget);
     expect(find.text('ahora'), findsNWidgets(2));
-    expect(find.text('+10'), findsNWidgets(2));
+    // Fresh reports are not VALIDADO yet, so they carry no points (C4).
+    expect(find.textContaining('+'), findsNothing);
   });
 
   testWidgets('each row shows its validation chip, matched by report id', (
@@ -90,15 +91,45 @@ void main() {
     expect(find.text('Validado'), findsOneWidget);
   });
 
-  testWidgets('a report without karma shows +0 and the reason', (tester) async {
-    final repo = ReporteRepositoryFake();
-    for (var lugar = 1; lugar <= 6; lugar++) {
-      await repo.reportar(lugar, NivelSaturacion.moderado);
-    }
-    await abrir(tester, repo);
+  group('S16 points per report', () {
+    Finder filaDe(String lugar) =>
+        find.ancestor(of: find.text(lugar), matching: find.byType(ListTile));
 
-    expect(find.text('+0'), findsOneWidget);
-    expect(find.text('Tope diario alcanzado'), findsOneWidget);
+    testWidgets('a VALIDADO report shows +10', (tester) async {
+      await abrir(tester, _ConItems([_reporte(1, 'Larcomar', puntos: 10)]));
+
+      expect(
+        find.descendant(of: filaDe('Larcomar'), matching: find.text('+10')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a report in another state shows no points', (tester) async {
+      await abrir(
+        tester,
+        _ConItems([
+          _reporte(2, 'Larcomar', puntos: 10),
+          _reporte(1, 'Jockey Plaza', puntos: 0),
+        ]),
+      );
+
+      expect(
+        find.descendant(
+          of: filaDe('Jockey Plaza'),
+          matching: find.textContaining('+'),
+        ),
+        findsNothing,
+      );
+      expect(find.text('+0'), findsNothing);
+      expect(find.text('+10'), findsOneWidget);
+    });
+
+    testWidgets('the retired daily-cap reason is never shown', (tester) async {
+      await abrir(tester, _ConItems([_reporte(1, 'Larcomar', puntos: 0)]));
+
+      expect(find.text('Tope diario alcanzado'), findsNothing);
+      expect(find.text('Reporte eliminado'), findsNothing);
+    });
   });
 
   testWidgets('no reports shows the HU 4.3 empty state', (tester) async {
@@ -179,6 +210,36 @@ void main() {
 }
 
 /// Fails the first call, then answers with an empty history.
+ReporteSaturacion _reporte(int id, String lugar, {required int puntos}) =>
+    ReporteSaturacion(
+      id: id,
+      lugarId: id,
+      lugarNombre: lugar,
+      nivel: NivelSaturacion.moderado,
+      fechaHora: DateTime.now(),
+      estado: 'ACTIVO',
+      puntos: puntos,
+    );
+
+/// Serves [items] as the single page of "Mis reportes".
+class _ConItems extends ReporteRepositoryFake {
+  final List<ReporteSaturacion> items;
+
+  _ConItems(this.items);
+
+  @override
+  Future<Pagina<ReporteSaturacion>> listarMios({
+    int page = 1,
+    int size = 20,
+  }) async => Pagina(
+    items: page == 1 ? items : const [],
+    page: page,
+    size: size,
+    total: items.length,
+    totalPaginas: 1,
+  );
+}
+
 class _Intermitente extends ReporteRepositoryFake {
   int _llamadas = 0;
 

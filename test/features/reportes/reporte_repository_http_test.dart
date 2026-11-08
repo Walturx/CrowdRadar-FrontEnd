@@ -7,7 +7,8 @@ import 'package:http/http.dart' as http;
 
 import '../../fakes/http_falso.dart';
 
-Map<String, dynamic> _creado({int puntos = 10, String? motivo}) => {
+/// C2: `201 { message, data: { reporte, saturacionLugar } }`, no karma block.
+Map<String, dynamic> _creado() => {
   'message': 'Reporte registrado',
   'data': {
     'reporte': {
@@ -16,7 +17,6 @@ Map<String, dynamic> _creado({int puntos = 10, String? motivo}) => {
       'nivel': 'MODERADO',
       'fechaHora': '2026-10-05T12:00:00.000Z',
     },
-    'karma': {'puntosGanados': puntos, 'total': 130, 'motivoSinPuntos': motivo},
     'saturacionLugar': {
       'nivel': 'MODERADO',
       'actualizadoEn': '2026-10-05T12:00:00.000Z',
@@ -24,14 +24,14 @@ Map<String, dynamic> _creado({int puntos = 10, String? motivo}) => {
   },
 };
 
-Map<String, dynamic> _item(int id, {String? motivo}) => {
+/// C4 item: `puntos` is 10 when the report is VALIDADO, else 0.
+Map<String, dynamic> _item(int id, {required int puntos}) => {
   'id': id,
   'lugar': {'id': 7, 'nombre': 'Parque Kennedy'},
   'nivel': 'SATURADO',
   'fechaHora': '2026-10-05T12:00:00.000Z',
   'estado': 'ACTIVO',
-  'puntosOtorgados': motivo == null ? 10 : 0,
-  'motivoSinPuntos': motivo,
+  'puntos': puntos,
 };
 
 void main() {
@@ -58,30 +58,18 @@ void main() {
   tearDown(() => sesion.reiniciar());
 
   group('reportar', () {
-    test(
-      'POSTs lugarId and the wire nivel, maps the 201 karma outcome',
-      () async {
-        final r = repo(201, _creado());
+    test('C2 POSTs lugarId and the wire nivel, maps the 201 report', () async {
+      final r = repo(201, _creado());
 
-        final res = await r.reportar(7, NivelSaturacion.moderado);
+      final res = await r.reportar(7, NivelSaturacion.moderado);
 
-        expect(visto!.method, 'POST');
-        expect(visto!.url.path, '/api/reportes');
-        expect(visto!.body, '{"lugarId":7,"nivel":"MODERADO"}');
-        expect(res.puntosGanados, 10);
-        expect(res.totalKarma, 130);
-        expect(res.reporte.nivel, NivelSaturacion.moderado);
-        expect(res.motivoSinPuntos, isNull);
-      },
-    );
-
-    test('daily cap: 201 with zero points carries the reason', () async {
-      final r = repo(201, _creado(puntos: 0, motivo: 'TOPE_DIARIO'));
-
-      final res = await r.reportar(7, NivelSaturacion.saturado);
-
-      expect(res.puntosGanados, 0);
-      expect(res.motivoSinPuntos, 'TOPE_DIARIO');
+      expect(visto!.method, 'POST');
+      expect(visto!.url.path, '/api/reportes');
+      expect(visto!.body, '{"lugarId":7,"nivel":"MODERADO"}');
+      expect(res.reporte.id, 5);
+      expect(res.reporte.lugarId, 7);
+      expect(res.reporte.nivel, NivelSaturacion.moderado);
+      expect(res.reporte.puntos, 0);
     });
 
     test(
@@ -132,7 +120,7 @@ void main() {
         final r = repo(200, {
           'message': 'ok',
           'data': {
-            'items': [_item(2), _item(1, motivo: 'TOPE_DIARIO')],
+            'items': [_item(2, puntos: 10), _item(1, puntos: 0)],
             'page': 2,
             'size': 2,
             'total': 5,
@@ -146,10 +134,9 @@ void main() {
         expect(visto!.url.queryParameters, {'page': '2', 'size': '2'});
         expect(p.items.first.lugarNombre, 'Parque Kennedy');
         expect(p.items.first.lugarId, 7);
-        expect(p.items.first.puntosOtorgados, 10);
+        expect(p.items.first.puntos, 10);
         expect(p.items.first.estado, 'ACTIVO');
-        expect(p.items.last.puntosOtorgados, 0);
-        expect(p.items.last.motivoSinPuntos, 'TOPE_DIARIO');
+        expect(p.items.last.puntos, 0);
         expect(p.hayMas, isTrue);
       },
     );

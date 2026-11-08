@@ -15,24 +15,35 @@ void main() {
 
       expect(r.lugarId, 3);
       expect(r.lugarNombre, isNull);
-      expect(r.puntosOtorgados, isNull);
+      expect(r.puntos, 0);
     });
 
-    test('list item reads lugar{id,nombre}, points, reason and estado', () {
+    test('C4 list item reads lugar{id,nombre}, puntos and estado', () {
       final r = ReporteSaturacion.fromJson({
         'id': 2,
         'lugar': {'id': 9, 'nombre': 'Larcomar'},
         'nivel': 'TRANQUILO',
+        'fechaHora': '2026-10-05T12:00:00.000Z',
         'estado': 'ACTIVO',
-        'puntosOtorgados': 0,
-        'motivoSinPuntos': 'TOPE_DIARIO',
+        'puntos': 10,
       });
 
       expect(r.lugarId, 9);
       expect(r.lugarNombre, 'Larcomar');
-      expect(r.puntosOtorgados, 0);
-      expect(r.motivoSinPuntos, 'TOPE_DIARIO');
+      expect(r.puntos, 10);
       expect(r.estado, 'ACTIVO');
+    });
+
+    test('C4 the retired puntosOtorgados field is ignored', () {
+      final r = ReporteSaturacion.fromJson({
+        'id': 3,
+        'lugar': {'id': 9, 'nombre': 'Larcomar'},
+        'nivel': 'TRANQUILO',
+        'puntosOtorgados': 10,
+        'motivoSinPuntos': 'TOPE_DIARIO',
+      });
+
+      expect(r.puntos, 0);
     });
   });
 

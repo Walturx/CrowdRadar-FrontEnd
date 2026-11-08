@@ -1,9 +1,27 @@
 import 'package:crowdradar/core/models/enum_api.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
+import 'package:crowdradar/core/models/tier_usuario.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'json_validacion.dart';
+
+/// The four C1 wire values and the tier each one means.
+const _tiers = [
+  ('CROWD_BABY', TierUsuario.crowdBaby),
+  ('CROWD_EXPLORER', TierUsuario.crowdExplorer),
+  ('CROWD_COLLABORATOR', TierUsuario.crowdCollaborator),
+  ('CROWD_ROYALTY', TierUsuario.crowdRoyalty),
+];
+
+/// `autor` blocks that carry no known tier (S25: the row is hidden).
+final _autoresSinTier = <Object?>[
+  autorJson(tier: 'CROWD_LEGEND'),
+  autorJson(tier: 'crowd_explorer'),
+  autorJson(tier: null),
+  <String, dynamic>{},
+  'CROWD_EXPLORER',
+];
 
 void main() {
   group('Confiabilidad', () {
@@ -59,6 +77,37 @@ void main() {
       expect(r.confiabilidad.nivel, NivelConfiabilidad.alta);
       expect(r.fechaHora, DateTime.utc(2026, 10, 5, 12));
     });
+
+    for (final (wire, tier) in _tiers) {
+      test('C8 autor.tier $wire is the author tier', () {
+        final r = ReportePendiente.fromJson(
+          pendienteJson(autor: autorJson(tier: wire)),
+        );
+
+        expect(r.tierAutor, tier);
+      });
+    }
+
+    test('S25 a missing autor block means no author tier, not Crowd Baby', () {
+      expect(ReportePendiente.fromJson(pendienteJson()).tierAutor, isNull);
+      expect(
+        ReportePendiente.fromJson({
+          ...pendienteJson(),
+          'autor': null,
+        }).tierAutor,
+        isNull,
+      );
+    });
+
+    test('S25 an unknown or missing tier value means no author tier', () {
+      for (final autor in _autoresSinTier) {
+        expect(
+          ReportePendiente.fromJson(pendienteJson(autor: autor)).tierAutor,
+          isNull,
+          reason: '$autor',
+        );
+      }
+    });
   });
 
   group('DetalleReporte', () {
@@ -80,19 +129,86 @@ void main() {
       expect(d.miValidacion, isNull);
       expect(d.esPropio, isTrue);
     });
+
+    for (final (wire, tier) in _tiers) {
+      test('C8 autor.tier $wire is the author tier', () {
+        final d = DetalleReporte.fromJson(
+          detalleJson(autor: autorJson(tier: wire)),
+        );
+
+        expect(d.tierAutor, tier);
+      });
+    }
+
+    test('S25 a missing autor block means no author tier, not Crowd Baby', () {
+      expect(DetalleReporte.fromJson(detalleJson()).tierAutor, isNull);
+      expect(
+        DetalleReporte.fromJson({...detalleJson(), 'autor': null}).tierAutor,
+        isNull,
+      );
+    });
+
+    test('S25 an unknown or missing tier value means no author tier', () {
+      for (final autor in _autoresSinTier) {
+        expect(
+          DetalleReporte.fromJson(detalleJson(autor: autor)).tierAutor,
+          isNull,
+          reason: '$autor',
+        );
+      }
+    });
+
+    test('copyWith after a vote keeps the author tier', () {
+      final d = DetalleReporte.fromJson(detalleJson(autor: autorJson()));
+
+      final votado = d.copyWith(miValidacion: TipoAccionValidacion.confirmar);
+
+      expect(votado.tierAutor, TierUsuario.crowdCollaborator);
+      expect(votado.miValidacion, TipoAccionValidacion.confirmar);
+    });
   });
 
   group('ResultadoVoto', () {
-    test('maps the 201 data block', () {
+    test('C3 maps the 201 data block without karma', () {
       final v = ResultadoVoto.fromJson(
         votoCreadoJson()['data'] as Map<String, dynamic>,
       );
 
-      expect(v.puntosGanados, 2);
-      expect(v.totalKarma, 112);
       expect(v.accion, TipoAccionValidacion.confirmar);
       expect(v.estadoValidacion, EstadoValidacion.enValidacion);
       expect(v.confiabilidad.nivel, NivelConfiabilidad.alta);
+    });
+
+    ResultadoVoto conUsuario(Object? usuario) => ResultadoVoto.fromJson({
+      ...votoCreadoJson()['data'] as Map<String, dynamic>,
+      'usuario': usuario,
+    });
+
+    for (final (wire, tier) in [
+      ('CROWD_BABY', TierUsuario.crowdBaby),
+      ('CROWD_EXPLORER', TierUsuario.crowdExplorer),
+      ('CROWD_COLLABORATOR', TierUsuario.crowdCollaborator),
+      ('CROWD_ROYALTY', TierUsuario.crowdRoyalty),
+    ]) {
+      test('C7 usuario.tier $wire is the voter tier', () {
+        expect(conUsuario(usuarioVotoJson(tier: wire)).tier, tier);
+      });
+    }
+
+    test('S23 a missing usuario block means no tier, not Crowd Baby', () {
+      final v = ResultadoVoto.fromJson(
+        votoCreadoJson()['data'] as Map<String, dynamic>,
+      );
+
+      expect(v.tier, isNull);
+      expect(conUsuario(null).tier, isNull);
+    });
+
+    test('S23 an unknown or missing tier value means no tier', () {
+      expect(conUsuario(usuarioVotoJson(tier: 'CROWD_LEGEND')).tier, isNull);
+      expect(conUsuario(usuarioVotoJson(tier: 'crowd_explorer')).tier, isNull);
+      expect(conUsuario(usuarioVotoJson(tier: null)).tier, isNull);
+      expect(conUsuario({'puntos': 120}).tier, isNull);
     });
   });
 

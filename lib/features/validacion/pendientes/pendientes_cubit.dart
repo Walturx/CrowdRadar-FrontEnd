@@ -96,7 +96,7 @@ class PendientesCubit extends Cubit<PendientesState> {
         ultimoVoto: VotoRegistrado(
           reporte: reporte,
           accion: accion,
-          puntosGanados: voto.puntosGanados,
+          tier: voto.tier,
         ),
       );
     } on ApiException catch (e) {

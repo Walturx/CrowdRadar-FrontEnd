@@ -125,7 +125,7 @@ Every places request sends `limite`: `MapaCubit.limiteLugares = 200` (map) and
 live camera centre (null before the first camera event; the detail then hides
 the distance).
 
-## Reports, karma and analytics (M4)
+## Reports, tiers and analytics (M4)
 
 `features/reportes/` has `data/` (`ReporteRepository` + HTTP; the fake lives in
 `app/fakes/reporte_repository_fake.dart`), `reportar/` and `mis_reportes/`.
@@ -136,11 +136,20 @@ the distance).
   `isClosed`; a failure is `ReportarFallido` with `bloqueante` (403/404: the
   form only offers "Cerrar") or `reintentable` (offline/5xx: "Reintentar").
   The 422 `REPORTE_EN_ESPERA` shows the server message (minutes left).
+  Success only thanks the user: sending a report earns no points (they come
+  once it is VALIDADO), so neither the sheet nor the detail's "Reporte
+  enviado" snackbar announces any.
 - **Mis reportes** (`Rutas.perfilReportes`): paginated, newest first.
   `MisReportesCubit.cargar` over a loaded list keeps it visible; "Cargar más"
-  de-duplicates by `id` and stops on an empty page.
-- **Karma**: `Usuario.puntosKarma`, shown by the profile's karma card.
-  `KarmaFake` is the counter shared by the report and profile fakes.
+  de-duplicates by `id` and stops on an empty page. A row shows `+puntos`
+  only when the backend sent `puntos > 0` (10 for a VALIDADO report).
+- **Tier** (CRO-74): `Usuario.puntos` and `Usuario.tier` come from the backend
+  (`tier`: `CROWD_BABY` | `CROWD_EXPLORER` | `CROWD_COLLABORATOR` |
+  `CROWD_ROYALTY`; unknown or missing reads as Crowd Baby). The profile shows
+  `TarjetaTier` (`features/perfil/widgets/`): the badge of
+  `TierUsuario.insignia` next to its name. The app never derives the tier from
+  the points and does not show the points (pending a team decision). The fakes
+  seed both in `datos_fake.dart`.
 - **Refresh without blanking**: `PerfilCubit.refrescar` (profile tab
   re-activation) and `DetalleLugarCubit.refrescar` (after a report) keep the
   data on screen and only add a soft error (`errorActualizacion`, snackbar).
@@ -163,8 +172,8 @@ state. `widgets/` has `GraficoBarras` (plain bars, no chart dependency),
 ## Validation (M5)
 
 `features/validacion/`: `data/` (`ValidacionRepository` + HTTP; fake in
-`app/fakes/validacion_repository_fake.dart`, which shares `KarmaFake` and the
-session checks), and one folder per screen. The models in
+`app/fakes/validacion_repository_fake.dart`, with the session checks), and one
+folder per screen. The models in
 `core/models/validacion.dart` mirror the backend DTOs (`lugar{}` and
 `confiabilidad{}` are nested; counts live inside `confiabilidad`).
 
@@ -172,7 +181,8 @@ session checks), and one folder per screen. The models in
   centre (`CentroMapaCompartido`, written by `MapPage`, Lima by default). A vote
   is optimistic: the report leaves the list at once and comes back if the call
   fails; 404 / 409 / 422 keep it removed (409 reads "Ya participaste...").
-  Success shows the thanks and "+2 karma" with the choice just made.
+  Success shows "¡Gracias por validar!" with the choice just made, no points:
+  a vote earns them only once the report ends in the state it voted for.
 - **Detail** (`/validar/reportes/:id`, `DetalleReporteCubit`): reliability badge
   (`InsigniaConfiabilidad`), raw counts, the BAJA warning, the INSUFICIENTE text,
   my vote and the vote / report actions (hidden on my own reports).

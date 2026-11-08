@@ -155,6 +155,89 @@ void main() {
     expect(find.text('Usuario 25'), findsOneWidget);
     expect(find.text('Cargar más'), findsNothing);
   });
+
+  group('sort (S17 / C5)', () {
+    Future<void> abrirMenu(WidgetTester tester) async {
+      await tester.tap(find.byTooltip('Ordenar'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('S17 offers Más recientes and Nombre, not Karma', (
+      tester,
+    ) async {
+      await abrir(tester, ModeracionRepositoryFake());
+
+      await abrirMenu(tester);
+
+      expect(find.text('Más recientes'), findsOneWidget);
+      expect(find.text('Nombre'), findsOneWidget);
+      expect(
+        find.textContaining(RegExp('karma', caseSensitive: false)),
+        findsNothing,
+      );
+      expect(find.byType(PopupMenuItem<OrdenUsuarios>), findsNWidgets(2));
+    });
+
+    testWidgets('choosing Nombre re-queries sorted by name', (tester) async {
+      final repo = _OrdenesVistas();
+      await abrir(tester, repo);
+
+      await abrirMenu(tester);
+      await tester.tap(find.text('Nombre'));
+      await tester.pumpAndSettle();
+
+      expect(repo.ordenes.last, OrdenUsuarios.nombre);
+      final arriba = tester.getTopLeft(find.text('Admin CrowdRadar')).dy;
+      expect(arriba, lessThan(tester.getTopLeft(find.text('Ana Ruiz')).dy));
+      expect(
+        tester.getTopLeft(find.text('Ana Ruiz')).dy,
+        lessThan(tester.getTopLeft(find.text('Carlos Méndez')).dy),
+      );
+    });
+
+    testWidgets('choosing Más recientes re-queries newest first', (
+      tester,
+    ) async {
+      final repo = _OrdenesVistas();
+      await abrir(tester, repo);
+
+      await abrirMenu(tester);
+      await tester.tap(find.text('Nombre'));
+      await tester.pumpAndSettle();
+      await abrirMenu(tester);
+      await tester.tap(find.text('Más recientes'));
+      await tester.pumpAndSettle();
+
+      expect(repo.ordenes.last, OrdenUsuarios.recientes);
+      expect(
+        tester.getTopLeft(find.text('Ana Ruiz')).dy,
+        lessThan(tester.getTopLeft(find.text('Admin CrowdRadar')).dy),
+      );
+    });
+  });
+}
+
+/// The fake directory, remembering the `orden` of every query.
+class _OrdenesVistas extends ModeracionRepositoryFake {
+  final List<OrdenUsuarios?> ordenes = [];
+
+  @override
+  Future<Pagina<UsuarioAdmin>> usuarios({
+    String? q,
+    EstadoCuenta? status,
+    OrdenUsuarios? orden,
+    int page = 1,
+    int size = 20,
+  }) {
+    ordenes.add(orden);
+    return super.usuarios(
+      q: q,
+      status: status,
+      orden: orden,
+      page: page,
+      size: size,
+    );
+  }
 }
 
 /// Serves [total] generated users in pages, counting the calls.

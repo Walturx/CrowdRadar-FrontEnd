@@ -8,13 +8,13 @@ import '../../../core/location/punto_referencia.dart';
 import '../../../core/models/validacion.dart';
 import '../../../core/utils/distancia.dart';
 import '../../../core/widgets/cargando.dart';
-import '../../../core/widgets/chip_saturacion.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
 import '../../../core/widgets/mostrar_aviso.dart';
 import '../../../theme/app_colors.dart';
 import '../data/validacion_repository.dart';
-import '../widgets/insignia_confiabilidad.dart';
+import '../widgets/tarjeta_reporte.dart';
+import '../widgets/tier_compacto.dart';
 import 'pendientes_cubit.dart';
 import 'pendientes_state.dart';
 
@@ -99,7 +99,7 @@ class _Contenido extends StatelessWidget {
             ),
           )
         else
-          _TarjetaReporte(siguiente, restantes: estado.reportes.length - 1),
+          _TarjetaPendiente(siguiente, restantes: estado.reportes.length - 1),
       ],
     );
   }
@@ -129,7 +129,8 @@ class _AvisoCentroMapa extends StatelessWidget {
   }
 }
 
-/// HU 5.1 c2: thanks, karma earned and the choice just made.
+/// HU 5.1 c2: thanks and the choice just made (no points are announced), with
+/// the voter's own tier beside the thanks when the response carried it (S23).
 class _Gracias extends StatelessWidget {
   final VotoRegistrado voto;
 
@@ -140,6 +141,7 @@ class _Gracias extends StatelessWidget {
     final eligio = voto.accion == TipoAccionValidacion.confirmar
         ? 'Confirmaste'
         : 'Rechazaste';
+    final tier = voto.tier;
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
@@ -147,24 +149,22 @@ class _Gracias extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '¡Gracias por validar!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    '¡Gracias por validar!',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                if (tier != null) ...[
+                  const SizedBox(width: 8),
+                  TierCompacto(tier),
+                ],
+              ],
             ),
             const Text('Tu aporte mejora la confiabilidad de la información.'),
             const SizedBox(height: 8),
-            if (voto.puntosGanados > 0)
-              Text(
-                '+${voto.puntosGanados} karma',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.success,
-                ),
-              )
-            else
-              const Text(
-                'Voto registrado (alcanzaste el máximo de karma por hoy)',
-              ),
             Text('$eligio el reporte de ${voto.reporte.lugar.nombre}'),
           ],
         ),
@@ -173,71 +173,65 @@ class _Gracias extends StatelessWidget {
   }
 }
 
-class _TarjetaReporte extends StatelessWidget {
+/// The next report to vote on, in the shared report card (S24).
+class _TarjetaPendiente extends StatelessWidget {
   final ReportePendiente reporte;
   final int restantes;
 
-  const _TarjetaReporte(this.reporte, {required this.restantes});
+  const _TarjetaPendiente(this.reporte, {required this.restantes});
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<PendientesCubit>();
     final distancia = reporte.distanciaMetros;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return TarjetaReporte(
+      children: [
+        EncabezadoReporte(
+          antetitulo: 'Ayuda a la comunidad',
+          lugar: reporte.lugar.nombre,
+          subtitulo: distancia == null
+              ? null
+              : formatoDistancia(distancia.toDouble()),
+          tierAutor: reporte.tierAutor,
+        ),
+        const SizedBox(height: 12),
+        SeccionSaturacion(nivel: reporte.nivel),
+        const SizedBox(height: 12),
+        SeccionConfiabilidad(confiabilidad: reporte.confiabilidad),
+        TextButton(
+          onPressed: () => context.push(Rutas.reporteValidar(reporte.id)),
+          child: const Text('Ver detalle de confiabilidad →'),
+        ),
+        Row(
           children: [
-            const Text('Ayuda a la comunidad'),
-            const SizedBox(height: 8),
-            Text(
-              reporte.lugar.nombre,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            if (distancia != null) Text(formatoDistancia(distancia.toDouble())),
-            const SizedBox(height: 12),
-            const Text('Saturación reportada'),
-            ChipSaturacion(nivel: reporte.nivel),
-            const SizedBox(height: 12),
-            const Text('Confiabilidad del reporte'),
-            InsigniaConfiabilidad(confiabilidad: reporte.confiabilidad),
-            TextButton(
-              onPressed: () => context.push(Rutas.reporteValidar(reporte.id)),
-              child: const Text('Ver detalle de confiabilidad →'),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () =>
-                        cubit.votar(reporte, TipoAccionValidacion.rechazar),
-                    child: const Text('Rechazar'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () =>
-                        cubit.votar(reporte, TipoAccionValidacion.confirmar),
-                    child: const Text('Confirmar'),
-                  ),
-                ),
-              ],
-            ),
-            if (restantes > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(
-                  restantes == 1
-                      ? '1 reporte más por validar'
-                      : '$restantes reportes más por validar',
-                  style: const TextStyle(color: AppColors.textMuted),
-                ),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () =>
+                    cubit.votar(reporte, TipoAccionValidacion.rechazar),
+                child: const Text('Rechazar'),
               ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () =>
+                    cubit.votar(reporte, TipoAccionValidacion.confirmar),
+                child: const Text('Confirmar'),
+              ),
+            ),
           ],
         ),
-      ),
+        if (restantes > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              restantes == 1
+                  ? '1 reporte más por validar'
+                  : '$restantes reportes más por validar',
+              style: const TextStyle(color: AppColors.textMuted),
+            ),
+          ),
+      ],
     );
   }
 }

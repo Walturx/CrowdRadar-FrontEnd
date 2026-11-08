@@ -17,15 +17,25 @@ Map<String, dynamic> confiabilidadJson({
 const advertenciaBaja =
     'Este reporte tiene pocas confirmaciones. Tómalo con precaución.';
 
-Map<String, dynamic> pendienteJson({int id = 31, Map<String, dynamic>? conf}) =>
-    {
-      'id': id,
-      'lugar': {'id': 7, 'nombre': 'Parque Kennedy', 'categoria': 'PARQUE'},
-      'nivel': 'SATURADO',
-      'fechaHora': '2026-10-05T12:00:00.000Z',
-      'distanciaMetros': 420,
-      'confiabilidad': conf ?? confiabilidadJson(),
-    };
+/// C8: the report author, tier only (no id, name or email).
+Map<String, dynamic> autorJson({Object? tier = 'CROWD_COLLABORATOR'}) => {
+  'tier': tier,
+};
+
+/// With [autor] it is the C8 item; without it, the one of an older backend.
+Map<String, dynamic> pendienteJson({
+  int id = 31,
+  Map<String, dynamic>? conf,
+  Object? autor,
+}) => {
+  'id': id,
+  'lugar': {'id': 7, 'nombre': 'Parque Kennedy', 'categoria': 'PARQUE'},
+  'nivel': 'SATURADO',
+  'fechaHora': '2026-10-05T12:00:00.000Z',
+  'distanciaMetros': 420,
+  'confiabilidad': conf ?? confiabilidadJson(),
+  'autor': ?autor,
+};
 
 Map<String, dynamic> detalleJson({
   String? miValidacion,
@@ -33,6 +43,7 @@ Map<String, dynamic> detalleJson({
   bool esPropio = false,
   Map<String, dynamic>? conf,
   String estado = 'VALIDADO',
+  Object? autor,
 }) => {
   'id': 31,
   'lugar': {'id': 7, 'nombre': 'Parque Kennedy', 'categoria': 'PARQUE'},
@@ -43,20 +54,33 @@ Map<String, dynamic> detalleJson({
   'miValidacion': miValidacion,
   'yaDenunciado': yaDenunciado,
   'esPropio': esPropio,
+  'autor': ?autor,
 };
 
-Map<String, dynamic> votoCreadoJson({int total = 112}) => {
-  'message': '¡Gracias por validar! +2 karma',
+/// C7: the voter's points and tier after the vote is stored.
+Map<String, dynamic> usuarioVotoJson({
+  int puntos = 120,
+  Object? tier = 'CROWD_EXPLORER',
+}) => {'puntos': puntos, 'tier': tier};
+
+/// C3: `201 { message: "¡Gracias por validar!", data: { validacion,
+/// confiabilidad, estadoValidacion } }`, no karma block. With [usuario] it is
+/// the C7 response (`data.usuario`); without it, the one of an older backend.
+Map<String, dynamic> votoCreadoJson({
+  String tipoAccion = 'CONFIRMAR',
+  Map<String, dynamic>? usuario,
+}) => {
+  'message': '¡Gracias por validar!',
   'data': {
     'validacion': {
       'id': 9,
       'reporteId': 31,
-      'tipoAccion': 'CONFIRMAR',
+      'tipoAccion': tipoAccion,
       'fechaHora': '2026-10-05T12:01:00.000Z',
     },
-    'karma': {'puntosGanados': 2, 'total': total},
     'confiabilidad': confiabilidadJson(),
     'estadoValidacion': 'EN_VALIDACION',
+    'usuario': ?usuario,
   },
 };
 

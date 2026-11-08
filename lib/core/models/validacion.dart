@@ -4,6 +4,7 @@ import '../utils/lectura_json.dart';
 import 'categoria_lugar.dart';
 import 'enum_api.dart';
 import 'nivel_saturacion.dart';
+import 'tier_usuario.dart';
 
 enum TipoAccionValidacion { confirmar, rechazar }
 
@@ -15,7 +16,7 @@ enum EstadoValidacion { sinValidaciones, enValidacion, validado, rechazado }
 enum NivelConfiabilidad { alta, media, baja, insuficiente }
 
 /// The reliability block shared by every M5 response. Counts are raw votes;
-/// [porcentaje] is weighted and null while the level is `insuficiente`.
+/// [porcentaje] (every vote weighs 1) is null while the level is `insuficiente`.
 class Confiabilidad extends Equatable {
   final double? porcentaje;
   final NivelConfiabilidad nivel;
@@ -70,6 +71,12 @@ class LugarReporte extends Equatable {
 
 Confiabilidad _confiabilidad(Object? o) => Confiabilidad.fromJson(aMapa(o));
 
+/// The tier inside an optional `{ tier }` block (`usuario` of the vote, C7;
+/// `autor` of a report, C8). Null when the block is missing or the value is
+/// unknown: the screen then shows no tier instead of a made-up Crowd Baby.
+TierUsuario? _tierOpcional(Object? bloque) =>
+    enumDesdeApi(TierUsuario.values, aMapa(bloque)['tier']);
+
 /// One item of `GET /api/validaciones/pendientes`.
 class ReportePendiente extends Equatable {
   final int id;
@@ -79,6 +86,10 @@ class ReportePendiente extends Equatable {
   final int? distanciaMetros;
   final Confiabilidad confiabilidad;
 
+  /// Author's tier from `autor.tier` (S25, C8), the only thing known about
+  /// the author, so the report stays anonymous. Null hides "Reportado por".
+  final TierUsuario? tierAutor;
+
   const ReportePendiente({
     required this.id,
     required this.lugar,
@@ -86,6 +97,7 @@ class ReportePendiente extends Equatable {
     required this.confiabilidad,
     this.fechaHora,
     this.distanciaMetros,
+    this.tierAutor,
   });
 
   factory ReportePendiente.fromJson(Map<String, dynamic> j) => ReportePendiente(
@@ -97,6 +109,7 @@ class ReportePendiente extends Equatable {
         ? aInt(j['distanciaMetros'])
         : null,
     confiabilidad: _confiabilidad(j['confiabilidad']),
+    tierAutor: _tierOpcional(j['autor']),
   );
 
   @override
@@ -107,6 +120,7 @@ class ReportePendiente extends Equatable {
     fechaHora,
     distanciaMetros,
     confiabilidad,
+    tierAutor,
   ];
 }
 
@@ -122,6 +136,10 @@ class DetalleReporte extends Equatable {
   final bool yaDenunciado;
   final bool esPropio;
 
+  /// Author's tier from `autor.tier` (S25, C8), the only thing known about
+  /// the author, so the report stays anonymous. Null hides "Reportado por".
+  final TierUsuario? tierAutor;
+
   const DetalleReporte({
     required this.id,
     required this.lugar,
@@ -132,6 +150,7 @@ class DetalleReporte extends Equatable {
     this.miValidacion,
     this.yaDenunciado = false,
     this.esPropio = false,
+    this.tierAutor,
   });
 
   factory DetalleReporte.fromJson(Map<String, dynamic> j) => DetalleReporte(
@@ -146,6 +165,7 @@ class DetalleReporte extends Equatable {
     miValidacion: enumDesdeApi(TipoAccionValidacion.values, j['miValidacion']),
     yaDenunciado: aBool(j['yaDenunciado']) ?? false,
     esPropio: aBool(j['esPropio']) ?? false,
+    tierAutor: _tierOpcional(j['autor']),
   );
 
   DetalleReporte copyWith({
@@ -163,6 +183,7 @@ class DetalleReporte extends Equatable {
     miValidacion: miValidacion ?? this.miValidacion,
     yaDenunciado: yaDenunciado ?? this.yaDenunciado,
     esPropio: esPropio,
+    tierAutor: tierAutor,
   );
 
   @override
@@ -176,49 +197,44 @@ class DetalleReporte extends Equatable {
     miValidacion,
     yaDenunciado,
     esPropio,
+    tierAutor,
   ];
 }
 
-/// `data` of `POST /api/reportes/:id/validaciones` (201).
+/// `data` of `POST /api/reportes/:id/validaciones` (201): the vote, the
+/// report's new reliability and the voter's tier after the vote (C7). The
+/// app never shows the voter's points, so only the tier is kept.
 class ResultadoVoto extends Equatable {
   final TipoAccionValidacion? accion;
-  final int puntosGanados;
-  final int totalKarma;
   final Confiabilidad confiabilidad;
   final EstadoValidacion estadoValidacion;
 
+  /// Voter's tier from `usuario.tier` (S23). Null when the backend sends no
+  /// `usuario` (older backend) or an unknown value: the thanks then shows no
+  /// tier instead of a made-up Crowd Baby.
+  final TierUsuario? tier;
+
   const ResultadoVoto({
     required this.accion,
-    required this.puntosGanados,
-    required this.totalKarma,
     required this.confiabilidad,
     required this.estadoValidacion,
+    this.tier,
   });
 
-  factory ResultadoVoto.fromJson(Map<String, dynamic> j) {
-    final karma = aMapa(j['karma']);
-    return ResultadoVoto(
-      accion: enumDesdeApi(
-        TipoAccionValidacion.values,
-        aMapa(j['validacion'])['tipoAccion'],
-      ),
-      puntosGanados: aInt(karma['puntosGanados']),
-      totalKarma: aInt(karma['total']),
-      confiabilidad: _confiabilidad(j['confiabilidad']),
-      estadoValidacion:
-          enumDesdeApi(EstadoValidacion.values, j['estadoValidacion']) ??
-          EstadoValidacion.sinValidaciones,
-    );
-  }
+  factory ResultadoVoto.fromJson(Map<String, dynamic> j) => ResultadoVoto(
+    accion: enumDesdeApi(
+      TipoAccionValidacion.values,
+      aMapa(j['validacion'])['tipoAccion'],
+    ),
+    confiabilidad: _confiabilidad(j['confiabilidad']),
+    estadoValidacion:
+        enumDesdeApi(EstadoValidacion.values, j['estadoValidacion']) ??
+        EstadoValidacion.sinValidaciones,
+    tier: _tierOpcional(j['usuario']),
+  );
 
   @override
-  List<Object?> get props => [
-    accion,
-    puntosGanados,
-    totalKarma,
-    confiabilidad,
-    estadoValidacion,
-  ];
+  List<Object?> get props => [accion, confiabilidad, estadoValidacion, tier];
 }
 
 /// One item of `GET /api/reportes/mios/validacion`.
