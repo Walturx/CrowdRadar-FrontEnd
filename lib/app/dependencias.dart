@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 import '../core/config/entorno.dart';
 import '../core/location/geolocator_ubicacion_service.dart';
 import '../core/location/punto_referencia.dart';
@@ -11,44 +9,23 @@ import '../core/network/api_client.dart';
 import '../core/network/cliente_http_factory.dart';
 import '../core/network/interceptores/interceptores_sesion.dart';
 import '../core/push/receptor_push.dart';
-import '../core/push/receptor_push_consola.dart';
 import '../core/push/receptor_push_nulo.dart';
 import '../core/session/session_service.dart';
 import '../features/alertas/data/alerta_repository.dart';
-import '../features/alertas/data/alerta_repository_http.dart';
 import '../features/analitica/data/analitica_repository.dart';
-import '../features/analitica/data/analitica_repository_http.dart';
 import '../features/auth/data/auth_repository.dart';
-import '../features/auth/data/auth_repository_http.dart';
 import '../features/exploracion/data/exploracion_repository.dart';
-import '../features/exploracion/data/exploracion_repository_http.dart';
 import '../features/favoritos/data/favorito_repository.dart';
-import '../features/favoritos/data/favorito_repository_http.dart';
 import '../features/lugares/data/lugar_repository.dart';
-import '../features/lugares/data/lugar_repository_http.dart';
 import '../features/moderacion/data/moderacion_repository.dart';
-import '../features/moderacion/data/moderacion_repository_http.dart';
 import '../features/perfil/data/perfil_repository.dart';
-import '../features/perfil/data/perfil_repository_http.dart';
 import '../features/reportes/data/reporte_repository.dart';
-import '../features/reportes/data/reporte_repository_http.dart';
 import '../features/validacion/data/validacion_repository.dart';
-import '../features/validacion/data/validacion_repository_http.dart';
-import 'fakes/alerta_repository_fake.dart';
-import 'fakes/analitica_repository_fake.dart';
-import 'fakes/comportamiento_fake.dart';
-import 'fakes/auth_repository_fake.dart';
-import 'fakes/exploracion_repository_fake.dart';
-import 'fakes/favorito_repository_fake.dart';
-import 'fakes/lugar_repository_fake.dart';
-import 'fakes/moderacion_repository_fake.dart';
-import 'fakes/perfil_repository_fake.dart';
-import 'fakes/reporte_repository_fake.dart';
-import 'fakes/validacion_repository_fake.dart';
+import 'fabrica_repositorios.dart';
 
 /// Composition root (manual dependency injection): builds the object graph once.
 ///
-/// `USAR_FAKES=true` swaps every repository for its in-memory `*RepositoryFake`.
+/// The repositories come from a [FabricaRepositorios] (HTTP by default).
 /// A stream that finishes its `<x>_repository_http.dart` changes nothing here.
 class Dependencias {
   final Entorno entorno;
@@ -96,12 +73,11 @@ class Dependencias {
     required this.moderacionRepository,
   });
 
-  /// [mapaAdapter], [ubicacionService], [receptorPush] and [alertaRepository]
-  /// can be overridden (tests). The device location is real even with fakes:
-  /// fakes stand in for the backend, not for the phone. By default the
-  /// receiver is the development console one with fakes and the no-op one
-  /// otherwise (real push delivery is not part of this build).
-  /// [esRelease] defaults to `kReleaseMode`; fakes are refused in release.
+  /// [mapaAdapter], [ubicacionService], [receptorPush], [alertaRepository]
+  /// and the [repositorios] factory can be overridden (tests). The device
+  /// location is real even with fake repositories: they stand in for the
+  /// backend, not for the phone. The push receiver defaults to the no-op one
+  /// (real push delivery is not part of this build).
   factory Dependencias.crear(
     Entorno entorno,
     SessionService sesion, {
@@ -109,22 +85,14 @@ class Dependencias {
     UbicacionService? ubicacionService,
     ReceptorPush? receptorPush,
     AlertaRepository? alertaRepository,
-    bool esRelease = kReleaseMode,
+    FabricaRepositorios repositorios = const FabricaRepositoriosHttp(),
   }) {
-    if (esRelease && entorno.usarFakes) {
-      throw StateError(
-        'USAR_FAKES must not be enabled in a release build: fake repositories '
-        'and seed credentials are for development only.',
-      );
-    }
     final api = ApiClient(
       const ClienteHttpFactory().crear(),
       entorno,
       interceptores: interceptoresDeSesion(sesion),
     );
-    final repos = entorno.usarFakes
-        ? _repositoriosFake(sesion, const ComportamientoFake())
-        : _repositoriosHttp(api, sesion);
+    final repos = repositorios.crear(api, sesion);
     final ubicacion = ubicacionService ?? GeolocatorUbicacionService();
     final centroMapa = CentroMapaCompartido();
     return Dependencias._(
@@ -135,9 +103,7 @@ class Dependencias {
       ubicacionService: ubicacion,
       centroMapa: centroMapa,
       puntoReferencia: PuntoReferencia(ubicacion, centroMapa),
-      receptorPush:
-          receptorPush ??
-          (entorno.usarFakes ? ReceptorPushConsola() : ReceptorPushNulo()),
+      receptorPush: receptorPush ?? ReceptorPushNulo(),
       authRepository: repos.auth,
       perfilRepository: repos.perfil,
       lugarRepository: repos.lugar,
@@ -150,72 +116,4 @@ class Dependencias {
       moderacionRepository: repos.moderacion,
     );
   }
-
-  // Strategy-style selection of the repository implementation set: both
-  // builders return the same shape, so callers never know which one ran.
-
-  static _Repositorios _repositoriosHttp(
-    ApiClient api,
-    SessionService sesion,
-  ) => (
-    auth: AuthRepositoryHttp(api, sesion),
-    perfil: PerfilRepositoryHttp(api, sesion),
-    lugar: LugarRepositoryHttp(api),
-    reporte: ReporteRepositoryHttp(api),
-    analitica: AnaliticaRepositoryHttp(api),
-    validacion: ValidacionRepositoryHttp(api),
-    favorito: FavoritoRepositoryHttp(api),
-    alerta: AlertaRepositoryHttp(api),
-    exploracion: ExploracionRepositoryHttp(api),
-    moderacion: ModeracionRepositoryHttp(api),
-  );
-
-  static _Repositorios _repositoriosFake(
-    SessionService sesion,
-    ComportamientoFake comportamiento,
-  ) {
-    return (
-      auth: AuthRepositoryFake(sesion, comportamiento: comportamiento),
-      perfil: PerfilRepositoryFake(sesion, comportamiento: comportamiento),
-      lugar: LugarRepositoryFake(comportamiento: comportamiento),
-      reporte: ReporteRepositoryFake(
-        comportamiento: comportamiento,
-        sesion: sesion,
-      ),
-      analitica: AnaliticaRepositoryFake(comportamiento: comportamiento),
-      validacion: ValidacionRepositoryFake(
-        comportamiento: comportamiento,
-        sesion: sesion,
-      ),
-      favorito: FavoritoRepositoryFake(
-        comportamiento: comportamiento,
-        sesion: sesion,
-      ),
-      alerta: AlertaRepositoryFake(
-        comportamiento: comportamiento,
-        sesion: sesion,
-      ),
-      exploracion: ExploracionRepositoryFake(
-        comportamiento: comportamiento,
-        sesion: sesion,
-      ),
-      moderacion: ModeracionRepositoryFake(
-        comportamiento: comportamiento,
-        sesion: sesion,
-      ),
-    );
-  }
 }
-
-typedef _Repositorios = ({
-  AuthRepository auth,
-  PerfilRepository perfil,
-  LugarRepository lugar,
-  ReporteRepository reporte,
-  AnaliticaRepository analitica,
-  ValidacionRepository validacion,
-  FavoritoRepository favorito,
-  AlertaRepository alerta,
-  ExploracionRepository exploracion,
-  ModeracionRepository moderacion,
-});

@@ -1,4 +1,3 @@
-import 'package:crowdradar/app/fakes/moderacion_repository_fake.dart';
 import 'package:crowdradar/core/models/moderacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/features/moderacion/data/moderacion_repository.dart';
@@ -7,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../../fakes/moderacion_repository_fake.dart';
 
 class _MockRepo extends Mock implements ModeracionRepository {}
 

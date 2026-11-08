@@ -1,15 +1,5 @@
 // S9.2: each in-memory fake implements its frozen interface and behaves like
 // the API contract for its main success and failure paths.
-import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
-import 'package:crowdradar/app/fakes/datos_fake.dart';
-import 'package:crowdradar/app/fakes/analitica_repository_fake.dart';
-import 'package:crowdradar/app/fakes/auth_repository_fake.dart';
-import 'package:crowdradar/app/fakes/favorito_repository_fake.dart';
-import 'package:crowdradar/app/fakes/lugar_repository_fake.dart';
-import 'package:crowdradar/app/fakes/moderacion_repository_fake.dart';
-import 'package:crowdradar/app/fakes/perfil_repository_fake.dart';
-import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
-import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
 import 'package:crowdradar/core/models/moderacion.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/models/tier_usuario.dart';
@@ -24,6 +14,17 @@ import 'package:crowdradar/features/perfil/data/perfil_repository.dart';
 import 'package:crowdradar/features/reportes/data/reporte_repository.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../fakes/analitica_repository_fake.dart';
+import '../fakes/auth_repository_fake.dart';
+import '../fakes/comportamiento_fake.dart';
+import '../fakes/datos_fake.dart';
+import '../fakes/favorito_repository_fake.dart';
+import '../fakes/lugar_repository_fake.dart';
+import '../fakes/moderacion_repository_fake.dart';
+import '../fakes/perfil_repository_fake.dart';
+import '../fakes/reporte_repository_fake.dart';
+import '../fakes/validacion_repository_fake.dart';
 
 Matcher _falla(int status, String code) => throwsA(
   isA<ApiException>()

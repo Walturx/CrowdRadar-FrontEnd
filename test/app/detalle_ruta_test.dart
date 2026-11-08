@@ -6,6 +6,7 @@ import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/features/lugares/buscar/buscar_lugar_page.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../fakes/fabrica_repositorios_fake.dart';
 import '../fakes/jwt_falso.dart';
 
 Future<void> _abrir(WidgetTester tester, String ruta) async {
@@ -13,7 +14,11 @@ Future<void> _abrir(WidgetTester tester, String ruta) async {
   await sesion.iniciar('token', usuarioPrueba);
   await tester.pumpWidget(
     CrowdRadarApp(
-      dependencias: Dependencias.crear(const Entorno(usarFakes: true), sesion),
+      dependencias: Dependencias.crear(
+        const Entorno(),
+        sesion,
+        repositorios: const FabricaRepositoriosFake(),
+      ),
       ubicacionInicial: ruta,
     ),
   );

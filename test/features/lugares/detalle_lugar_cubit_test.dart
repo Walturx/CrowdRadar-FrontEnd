@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
-import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
-import 'package:crowdradar/app/fakes/favorito_repository_fake.dart';
 import 'package:crowdradar/core/models/categoria_lugar.dart';
 import 'package:crowdradar/core/models/lugar_detalle.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
@@ -13,6 +11,8 @@ import 'package:crowdradar/features/favoritos/data/favorito_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../fakes/comportamiento_fake.dart';
+import '../../fakes/favorito_repository_fake.dart';
 import '../../fakes/lugar_repo_falso.dart';
 import '../../helpers/errores_comunes.dart';
 

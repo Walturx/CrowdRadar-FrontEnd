@@ -1,6 +1,6 @@
 /// Adapter pattern: port for push notifications. Real delivery (FCM) is not
-/// part of this build: [ReceptorPushNulo] (default) and [ReceptorPushConsola]
-/// (development, with fakes) implement it.
+/// part of this build: the app uses [ReceptorPushNulo]; tests use their own
+/// receivers.
 abstract class ReceptorPush {
   Future<void> inicializar();
 

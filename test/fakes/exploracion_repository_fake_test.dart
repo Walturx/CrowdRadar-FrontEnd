@@ -1,9 +1,10 @@
-import 'package:crowdradar/app/fakes/exploracion_repository_fake.dart';
 import 'package:crowdradar/core/models/categoria_lugar.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/features/exploracion/data/filtro_exploracion.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'exploracion_repository_fake.dart';
 
 void main() {
   final repo = ExploracionRepositoryFake();

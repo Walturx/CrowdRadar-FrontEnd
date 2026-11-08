@@ -1,4 +1,3 @@
-import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/models/reporte_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
@@ -8,6 +7,8 @@ import 'package:crowdradar/features/reportes/reportar/reportar_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../fakes/reporte_repository_fake.dart';
 
 class _RepoQueFalla implements ReporteRepository {
   final ApiException error;
