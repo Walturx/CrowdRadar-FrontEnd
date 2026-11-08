@@ -269,6 +269,12 @@ Domain vocabulary is Spanish (`Lugar`, `Reporte`, `SesionCubit`,
 names (`status`, `message`, `code`, `errors`) as the shared contract; renaming
 would ripple through every stream.
 
+Five screens keep the English names they had when the report's class diagrams
+were drawn: `LoginPage`, `RegisterPage`, `MapPage`, `ProfilePage` and
+`EditProfilePage` (`login_page.dart`, `register_page.dart`, `map_page.dart`,
+`profile_page.dart`, `edit_profile_page.dart`). They stay as they are so the
+code matches those diagrams; new code follows the rule above.
+
 ## Pattern map
 
 | Pattern | Where |
