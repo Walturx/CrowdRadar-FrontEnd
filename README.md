@@ -25,6 +25,38 @@ flutter run --dart-define=API_URL=http://10.0.2.2:3000        # real backend
 The app always talks to the backend at `API_URL`: there is no in-memory mode.
 Cleartext HTTP is allowed in the Android **debug** manifest only.
 
+## Push notifications (Firebase)
+
+HU 8.3 alerts reach the phone through Firebase Cloud Messaging (FCM), Firebase
+project `crowdradar-84ff1` (Spark plan, free).
+
+**Setup.** `flutterfire configure --project=crowdradar-84ff1
+--platforms=android,ios` generated `lib/firebase_options.dart`,
+`android/app/google-services.json`, `firebase.json` and the
+`com.google.gms.google-services` Gradle plugin. `google-services.json` and
+`firebase_options.dart` hold public client identifiers (API key, app id,
+project id), not secrets, so they are committed; run the command again only
+when apps are added to the project. The server key (service account) lives
+in the backend only, never in this repo.
+
+**How it works.** `ReceptorPushFcm` (`core/push/`) starts Firebase after the
+first frame, asks the notification permission (Android 13+) and returns the
+FCM token, which `RegistroDispositivo` sends to the backend on sign in and
+deletes on sign out (a restored session registers it again on each launch).
+
+- App in background or closed: Android shows the notification; tapping it
+  opens the place in its `data.lugarId` (a missing or non-numeric id is
+  ignored). Without a session the place opens after the sign in.
+- App in foreground: no system notification; the in-app inbox (Favoritos tab
+  badge and `AlertasPage`) shows the alert.
+- Firebase never starts in tests: they use `ReceptorPushNulo` or fakes, and
+  `ReceptorPushFcm` takes its Firebase calls through `MensajeriaPush`.
+
+**iOS limitation.** iOS is registered in Firebase but has no APNs key: push
+notifications on iOS require an APNs key from a paid Apple Developer account;
+without it iOS receives no push. The app still runs there (no token, so no
+device is registered) and the in-app inbox keeps working.
+
 ## Tests
 
 ```bash
@@ -232,10 +264,11 @@ Push: `RegistroDispositivo` (in `app/`) registers the token of the
 `ReceptorPush` after sign in and removes it in `SesionCubit`'s `antesDeCerrar`
 hook, before the session is cleared; both are best effort. `CrowdRadarApp`
 turns `ReceptorPush.lugarAbierto` taps (also a cold start) into
-`router.push(Rutas.lugar(id))` while signed in. Real delivery (FCM) is not
-part of this build: the app uses `ReceptorPushNulo`, and tests use
-`ReceptorPushConsola` (fake token, `simularApertura`) from `test/fakes/`; the
-in-app alert list is the guaranteed channel.
+`router.push(Rutas.lugar(id))` while signed in. The app uses
+`ReceptorPushFcm` (see [Push notifications (Firebase)](#push-notifications-firebase));
+`Dependencias.crear` defaults to `ReceptorPushNulo`, and tests use it or
+`ReceptorPushConsola` (fake token, `simularApertura`) from `test/fakes/`, so no
+test touches Firebase. The in-app alert list is the guaranteed channel.
 
 ## Account security (M1)
 
@@ -282,7 +315,7 @@ code matches those diagrams; new code follows the rule above.
 | Composition root (manual DI) | `app/dependencias.dart` (`Dependencias`) |
 | Strategy / chain of responsibility | `InterceptorApi` and its implementations in `core/network/interceptores/` |
 | Observer | `SesionCubit` listens to the `SessionService.eventos` stream |
-| Adapter | `MapaAdapter` (`FlutterMapAdapter`), `ReceptorPush` (`ReceptorPushNulo`; `ReceptorPushConsola` in tests) |
+| Adapter | `MapaAdapter` (`FlutterMapAdapter`), `ReceptorPush` (`ReceptorPushFcm` in the app; `ReceptorPushNulo` / `ReceptorPushConsola` in tests) |
 | Repository + fakes | `<X>Repository` ports, `<x>_repository_http.dart`, `test/fakes/<x>_repository_fake.dart` (`<X>RepositoryFake`) |
 | Factory Method | `ClienteHttpFactory` builds the `http.Client` inside `core/network` |
 | Null Object (stub) | `RepositorioNoImplementado` mixin: a repository port satisfied by a 501 stub until its stream implements it |

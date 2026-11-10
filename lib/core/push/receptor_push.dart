@@ -1,6 +1,6 @@
-/// Adapter pattern: port for push notifications. Real delivery (FCM) is not
-/// part of this build: the app uses [ReceptorPushNulo]; tests use their own
-/// receivers.
+/// Adapter pattern: port for push notifications. The app uses
+/// `ReceptorPushFcm` (Firebase Cloud Messaging); tests use
+/// `ReceptorPushNulo` or their own receivers, never Firebase.
 abstract class ReceptorPush {
   Future<void> inicializar();
 
