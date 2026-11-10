@@ -1,4 +1,5 @@
 // M3 wiring: device registration on login/logout and push taps opening the place.
+// Demo S2: a push received in the foreground shows a notice and reloads the inbox.
 import 'dart:async';
 
 import 'package:crowdradar/app/app.dart';
@@ -6,6 +7,7 @@ import 'package:crowdradar/app/dependencias.dart';
 import 'package:crowdradar/core/config/entorno.dart';
 import 'package:crowdradar/core/map/mapa_adapter.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
+import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/push/receptor_push.dart';
 import 'package:crowdradar/core/session/motivo_cierre.dart';
 import 'package:crowdradar/features/alertas/data/alerta_repository.dart';
@@ -67,6 +69,8 @@ class _ReceptorEmisor extends _ReceptorFalso {
 /// app listened (cold start) is still delivered.
 class _ReceptorFalso implements ReceptorPush {
   final StreamController<int> toques = StreamController<int>();
+  final StreamController<MensajePrimerPlano> mensajes =
+      StreamController<MensajePrimerPlano>.broadcast();
   int inicializaciones = 0;
   SchedulerPhase? faseAlInicializar;
   String? token = 'tok-dev';
@@ -82,6 +86,9 @@ class _ReceptorFalso implements ReceptorPush {
 
   @override
   Stream<int> get lugarAbierto => toques.stream;
+
+  @override
+  Stream<MensajePrimerPlano> get mensajesEnPrimerPlano => mensajes.stream;
 }
 
 void main() {
@@ -124,6 +131,7 @@ void main() {
 
   tearDown(() {
     receptor.toques.close();
+    receptor.mensajes.close();
     sesion.reiniciar();
   });
 
@@ -298,6 +306,79 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Av. Larco 345, Miraflores'), findsNothing);
+      expect(find.byKey(const Key('boton-iniciar-sesion')), findsOneWidget);
+    });
+  });
+
+  group('foreground push (demo S2)', () {
+    const alerta = MensajePrimerPlano(
+      titulo: 'Alerta de saturación',
+      cuerpo: 'Parque Kennedy ahora está Saturado.',
+      lugarId: 1,
+    );
+
+    Finder insignia() => find.byKey(const Key('insignia-favoritos'));
+
+    String? cuentaInsignia(WidgetTester tester) => tester
+        .widget<Text>(
+          find.descendant(of: insignia(), matching: find.byType(Text)),
+        )
+        .data;
+
+    Future<void> recibir(WidgetTester tester, MensajePrimerPlano m) async {
+      receptor.mensajes.add(m);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('shows its title and body; Ver opens the place', (
+      tester,
+    ) async {
+      await abrir(tester);
+
+      await recibir(tester, alerta);
+
+      expect(find.text('Alerta de saturación'), findsOneWidget);
+      expect(find.text('Parque Kennedy ahora está Saturado.'), findsOneWidget);
+      await tester.tap(find.widgetWithText(SnackBarAction, 'Ver'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Av. Larco 345, Miraflores'), findsOneWidget);
+    });
+
+    testWidgets('reloads the inbox at once: the badge counts the new alert', (
+      tester,
+    ) async {
+      await abrir(tester);
+      expect(cuentaInsignia(tester), '1');
+      // The backend stored the alert before sending the push.
+      alertas().emitir(2, NivelSaturacion.tranquilo, NivelSaturacion.saturado);
+
+      await recibir(tester, alerta);
+
+      expect(cuentaInsignia(tester), '2');
+    });
+
+    testWidgets('without a lugarId the notice has no Ver action', (
+      tester,
+    ) async {
+      await abrir(tester);
+
+      await recibir(
+        tester,
+        const MensajePrimerPlano(titulo: 'Aviso', cuerpo: 'Sin lugar'),
+      );
+
+      expect(find.text('Aviso'), findsOneWidget);
+      expect(find.text('Sin lugar'), findsOneWidget);
+      expect(find.byType(SnackBarAction), findsNothing);
+    });
+
+    testWidgets('without a session nothing is shown', (tester) async {
+      await abrir(tester, ruta: '/login', conSesion: false);
+
+      await recibir(tester, alerta);
+
+      expect(find.text('Alerta de saturación'), findsNothing);
       expect(find.byKey(const Key('boton-iniciar-sesion')), findsOneWidget);
     });
   });

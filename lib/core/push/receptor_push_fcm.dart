@@ -9,15 +9,17 @@ import 'receptor_push.dart';
 /// Adapter pattern: [ReceptorPush] backed by Firebase Cloud Messaging.
 ///
 /// Android shows a notification sent while the app is in background or
-/// terminated; tapping it opens the place in its `data.lugarId`. Foreground
-/// messages are not shown (the in-app inbox covers them). iOS has no APNs key,
-/// so it gets no token and no push, but never crashes.
+/// terminated; tapping it opens the place in its `data.lugarId`. A message
+/// received in the foreground gets no system notification: it is handed to
+/// the app through [mensajesEnPrimerPlano]. iOS has no APNs key, so it gets no
+/// token and no push, but never crashes.
 ///
 /// Building it touches nothing; only [inicializar] and [obtenerToken] start
 /// Firebase, so a token is never requested before Firebase is ready.
 class ReceptorPushFcm implements ReceptorPush {
   final MensajeriaPush _mensajeria;
   final _lugares = StreamController<int>.broadcast();
+  final _mensajes = StreamController<MensajePrimerPlano>.broadcast();
 
   /// Firebase start in flight or done; cleared on failure so it is retried.
   Future<void>? _firebase;
@@ -29,8 +31,12 @@ class ReceptorPushFcm implements ReceptorPush {
   @override
   Stream<int> get lugarAbierto => _lugares.stream;
 
-  /// Starts Firebase, listens to taps (background and launch) and asks the
-  /// notification permission (Android 13+). Runs once.
+  @override
+  Stream<MensajePrimerPlano> get mensajesEnPrimerPlano => _mensajes.stream;
+
+  /// Starts Firebase, listens to taps (background and launch) and to
+  /// foreground messages, and asks the notification permission (Android 13+).
+  /// Runs once.
   @override
   Future<void> inicializar() => _inicializacion ??= _inicializar();
 
@@ -42,6 +48,7 @@ class ReceptorPushFcm implements ReceptorPush {
       rethrow;
     }
     _mensajeria.toques.listen(_alTocar);
+    _mensajeria.mensajesEnPrimerPlano.listen(_alRecibir);
     // The tap that launched the app is handled before the permission dialog,
     // so the place opens without waiting for the user's answer.
     final inicial = await _mensajeria.mensajeInicial();
@@ -72,9 +79,22 @@ class ReceptorPushFcm implements ReceptorPush {
   }
 
   void _alTocar(Map<String, dynamic> data) {
-    final lugarId = int.tryParse('${data['lugarId'] ?? ''}');
+    final lugarId = _lugarDe(data);
     if (lugarId != null) _lugares.add(lugarId);
   }
+
+  /// Every foreground message is handed over, even without a valid place: the
+  /// notice still shows its texts, just with nothing to open.
+  void _alRecibir(MensajeFcm m) => _mensajes.add(
+    MensajePrimerPlano(
+      titulo: m.titulo,
+      cuerpo: m.cuerpo,
+      lugarId: _lugarDe(m.data),
+    ),
+  );
+
+  static int? _lugarDe(Map<String, dynamic> data) =>
+      int.tryParse('${data['lugarId'] ?? ''}');
 }
 
 /// The Firebase Messaging operations [ReceptorPushFcm] needs: the seam that
@@ -92,7 +112,18 @@ abstract class MensajeriaPush {
 
   /// `data` of the notification that launched the app, if any.
   Future<Map<String, dynamic>?> mensajeInicial();
+
+  /// Each message received while the app is in the foreground.
+  Stream<MensajeFcm> get mensajesEnPrimerPlano;
 }
+
+/// The parts of an FCM message the app reads: the notification texts and the
+/// `data` payload.
+typedef MensajeFcm = ({
+  String? titulo,
+  String? cuerpo,
+  Map<String, dynamic> data,
+});
 
 /// [MensajeriaPush] on the real Firebase SDK. Reads `FirebaseMessaging`
 /// lazily: it fails until Firebase is started.
@@ -125,4 +156,14 @@ class MensajeriaFirebase implements MensajeriaPush {
   @override
   Future<Map<String, dynamic>?> mensajeInicial() async =>
       (await _fcm.getInitialMessage())?.data;
+
+  @override
+  Stream<MensajeFcm> get mensajesEnPrimerPlano =>
+      FirebaseMessaging.onMessage.map(
+        (m) => (
+          titulo: m.notification?.title,
+          cuerpo: m.notification?.body,
+          data: m.data,
+        ),
+      );
 }
