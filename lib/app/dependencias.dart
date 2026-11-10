@@ -76,8 +76,8 @@ class Dependencias {
   /// [mapaAdapter], [ubicacionService], [receptorPush], [alertaRepository]
   /// and the [repositorios] factory can be overridden (tests). The device
   /// location is real even with fake repositories: they stand in for the
-  /// backend, not for the phone. The push receiver defaults to the no-op one
-  /// (real push delivery is not part of this build).
+  /// backend, not for the phone. The push receiver defaults to the no-op one,
+  /// so tests never reach Firebase; `main.dart` passes `ReceptorPushFcm`.
   factory Dependencias.crear(
     Entorno entorno,
     SessionService sesion, {
