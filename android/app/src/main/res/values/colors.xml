@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Adaptive launcher icon background (flutter_launcher_icons.yaml). -->
+    <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- App primary color (AppColors.primary), used to tint FCM notifications. -->
+    <color name="notification_color">#1A3C8F</color>
+</resources>
