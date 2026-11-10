@@ -1,6 +1,7 @@
 // HU 8.3: the FCM receiver hands its token to the device registration (S1) and
 // turns a notification tap into the place to open (S2). Driven through the
-// MensajeriaPush seam, so no Firebase platform channel is touched.
+// MensajeriaPush seam, so no Firebase platform channel is touched. Demo S2:
+// a message received with the app in the foreground is handed to the app.
 import 'dart:async';
 
 import 'package:crowdradar/core/push/receptor_push.dart';
@@ -82,15 +83,77 @@ void main() {
     expect(lugares, [5]);
   });
 
+  Future<List<MensajePrimerPlano>> mensajesTrasInicializar() async {
+    final mensajes = <MensajePrimerPlano>[];
+    final sub = receptor.mensajesEnPrimerPlano.listen(mensajes.add);
+    addTearDown(sub.cancel);
+    await receptor.inicializar();
+    return mensajes;
+  }
+
+  test(
+    'demo S2 a foreground message carries its title, body and lugarId',
+    () async {
+      final mensajes = await mensajesTrasInicializar();
+
+      mensajeria.recibir(
+        titulo: 'Alerta de saturación',
+        cuerpo: 'Parque Kennedy ahora está Saturado.',
+        data: {'lugarId': '42', 'nivel': 'SATURADO'},
+      );
+      await pumpEventQueue();
+
+      expect(mensajes, hasLength(1));
+      expect(mensajes.single.titulo, 'Alerta de saturación');
+      expect(mensajes.single.cuerpo, 'Parque Kennedy ahora está Saturado.');
+      expect(mensajes.single.lugarId, 42);
+    },
+  );
+
+  test('demo S2 a foreground message without a numeric lugarId still arrives, '
+      'with no place to open', () async {
+    final mensajes = await mensajesTrasInicializar();
+
+    mensajeria
+      ..recibir(titulo: 'Sin lugar', data: {})
+      ..recibir(cuerpo: 'Id roto', data: {'lugarId': 'abc'});
+    await pumpEventQueue();
+
+    expect(mensajes.map((m) => m.lugarId), [null, null]);
+    expect(mensajes.map((m) => m.titulo), ['Sin lugar', null]);
+    expect(mensajes.map((m) => m.cuerpo), [null, 'Id roto']);
+  });
+
+  test('demo S2 a foreground message is not a tap: no place opens', () async {
+    final lugares = await lugaresTrasInicializar();
+
+    mensajeria.recibir(titulo: 'Alerta', data: {'lugarId': '42'});
+    await pumpEventQueue();
+
+    expect(lugares, isEmpty);
+  });
+
+  test(
+    'demo S2 inicializar twice listens to foreground messages once',
+    () async {
+      await receptor.inicializar();
+      await receptor.inicializar();
+
+      expect(mensajeria.oyentesMensajes, 1);
+    },
+  );
+
   test('inicializar rethrows a Firebase start failure and retries', () async {
     mensajeria.errorIniciar = StateError('sin google-services');
 
     await expectLater(receptor.inicializar(), throwsStateError);
     expect(mensajeria.oyentesToques, 0);
+    expect(mensajeria.oyentesMensajes, 0);
 
     mensajeria.errorIniciar = null;
     await receptor.inicializar();
     expect(mensajeria.oyentesToques, 1);
+    expect(mensajeria.oyentesMensajes, 1);
   });
 
   test('S1 obtenerToken returns the FCM token', () async {
@@ -132,12 +195,14 @@ void main() {
   });
 }
 
-/// Records which messaging operations ran and lets a test drive taps, the
-/// launch message and the token.
+/// Records which messaging operations ran and lets a test drive taps,
+/// foreground messages, the launch message and the token.
 class _MensajeriaFalsa implements MensajeriaPush {
   final llamadas = <String>[];
   final _toques = StreamController<Map<String, dynamic>>.broadcast();
+  final _mensajes = StreamController<MensajeFcm>.broadcast();
   int oyentesToques = 0;
+  int oyentesMensajes = 0;
 
   Map<String, dynamic>? mensajeInicialData;
   String? token;
@@ -147,7 +212,17 @@ class _MensajeriaFalsa implements MensajeriaPush {
 
   void tocar(Map<String, dynamic> data) => _toques.add(data);
 
-  Future<void> cerrar() => _toques.close();
+  /// A message received while the app is in the foreground.
+  void recibir({
+    String? titulo,
+    String? cuerpo,
+    Map<String, dynamic> data = const {},
+  }) => _mensajes.add((titulo: titulo, cuerpo: cuerpo, data: data));
+
+  Future<void> cerrar() async {
+    await _toques.close();
+    await _mensajes.close();
+  }
 
   @override
   Future<void> iniciarFirebase() async {
@@ -173,6 +248,13 @@ class _MensajeriaFalsa implements MensajeriaPush {
     oyentesToques++;
     llamadas.add('toques');
     return _toques.stream;
+  }
+
+  @override
+  Stream<MensajeFcm> get mensajesEnPrimerPlano {
+    oyentesMensajes++;
+    llamadas.add('mensajesEnPrimerPlano');
+    return _mensajes.stream;
   }
 
   @override

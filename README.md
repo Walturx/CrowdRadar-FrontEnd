@@ -47,8 +47,12 @@ deletes on sign out (a restored session registers it again on each launch).
 - App in background or closed: Android shows the notification; tapping it
   opens the place in its `data.lugarId` (a missing or non-numeric id is
   ignored). Without a session the place opens after the sign in.
-- App in foreground: no system notification; the in-app inbox (Favoritos tab
-  badge and `AlertasPage`) shows the alert.
+- App in foreground: no system notification; the app shows its own notice
+  (snack bar with the notification title and body) whose "Ver" action opens
+  the place in `data.lugarId` (no action when the id is missing or
+  non-numeric), and reloads the in-app inbox at once, so the Favoritos tab
+  badge and `AlertasPage` count the new alert. Without a session the notice
+  is not shown.
 - Firebase never starts in tests: they use `ReceptorPushNulo` or fakes, and
   `ReceptorPushFcm` takes its Firebase calls through `MensajeriaPush`.
 
