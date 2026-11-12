@@ -3,27 +3,131 @@
 Mobile client for CrowdRadar: live crowd saturation of places, reports,
 validation, favorites and an admin moderation area.
 
-## Requirements
+## Installation (from zero)
 
-- Flutter stable with Dart `^3.11.5` (`pubspec.yaml`); `pubspec.lock` needs
-  Flutter `>=3.38.4`. Measured and tested with Flutter 3.41.9 / Dart 3.11.5
-  (`docs/metricas-baseline.md`).
-- Android emulator or device. For the real backend, run
-  `docker compose up` in the backend repo (API on `:3000`).
+The app targets **Android**. Steps are written for Windows; macOS/Linux differ
+only in paths and in how `PATH` is edited.
 
-## Run
+| Tool | Version | Why |
+|---|---|---|
+| Git | any recent | clone the repositories |
+| Flutter SDK | stable **3.41.x** (Dart 3.11.5) | `pubspec.yaml` needs Dart `^3.11.5`; `pubspec.lock` needs Flutter `>=3.38.4` |
+| Android Studio | latest stable | Android SDK, emulator, bundled JDK (the build targets Java 17) |
+| Docker Desktop | latest | runs the backend the app needs (step 7) |
+
+### 1. Install Git
+
+Download it from <https://git-scm.com/downloads> and keep the defaults.
+Check: `git --version`.
+
+### 2. Install Flutter
+
+1. Download the **stable** Flutter SDK zip for your OS from
+   <https://docs.flutter.dev/install/archive> (3.41.x).
+2. Extract it to a path **without spaces and without admin rights**, e.g.
+   `C:\src\flutter` (not `C:\Program Files`).
+3. Add `C:\src\flutter\bin` to the user `PATH`: Start → "Edit environment
+   variables for your account" → `Path` → New.
+4. Open a **new** terminal and check:
+
+   ```bash
+   flutter --version    # Flutter 3.41.x • channel stable • Dart 3.11.5
+   ```
+
+If you already have Flutter, `flutter channel stable && flutter upgrade`.
+
+### 3. Install Android Studio and the Android SDK
+
+1. Install Android Studio from <https://developer.android.com/studio>.
+2. First launch: run the setup wizard with the **Standard** install (SDK,
+   emulator and platform tools).
+3. In *Settings → Languages & Frameworks → Android SDK → SDK Tools*, also tick
+   **Android SDK Command-line Tools** and apply.
+4. Accept the licenses:
+
+   ```bash
+   flutter doctor --android-licenses     # answer "y" to every prompt
+   ```
+
+The Gradle build uses Android Studio's bundled JDK; no separate Java install
+is needed.
+
+### 4. Create an emulator (or plug in a phone)
+
+- **Emulator**: Android Studio → *Device Manager* → *Create device* → a Pixel
+  phone → a recent system image (API 34+, x86_64) → Finish → ▶ start it.
+  On Windows, enable *Windows Hypervisor Platform* (Windows features) if the
+  emulator says acceleration is missing.
+- **Physical phone**: enable *Developer options* → *USB debugging*, connect it
+  and accept the prompt on the phone.
+
+### 5. Check the setup
 
 ```bash
-flutter pub get
-flutter run --dart-define=API_URL=http://10.0.2.2:3000        # real backend
+flutter doctor
+flutter devices      # the emulator/phone must be listed
 ```
+
+`Flutter` and `Android toolchain` must be ✓. Warnings about Chrome, Visual
+Studio or Xcode can be ignored (the app runs on Android).
+
+### 6. Get the code
+
+```bash
+git clone https://github.com/Walturx/CrowdRadar-FrontEnd.git
+cd CrowdRadar-FrontEnd
+flutter pub get
+```
+
+### 7. Start the backend and run the app
+
+The app always needs the backend: there is no offline or fake-data mode. The
+first build downloads Gradle 8.14 and can take several minutes.
+
+1. Install Docker Desktop (<https://www.docker.com/products/docker-desktop/>)
+   and start it.
+2. Clone and start the backend (full details in its README):
+
+   ```bash
+   git clone https://github.com/Walturx/CrowdRadar-Backend.git
+   cd CrowdRadar-Backend
+   cp .env.example .env          # replace the CAMBIAR_* placeholders and set DB_PASSWORD
+   docker compose up --build -d
+   docker compose run --rm migrate npm run db:seed    # admin user + Lima places
+   ```
+
+   `http://localhost:3000/api/salud` must answer 200.
+3. Run the app from `CrowdRadar-FrontEnd`:
+
+   ```bash
+   # emulator: 10.0.2.2 is the host machine (this is the default API_URL)
+   flutter run --dart-define=API_URL=http://10.0.2.2:3000
+
+   # physical phone over USB: forward the port, then use localhost
+   adb reverse tcp:3000 tcp:3000
+   flutter run --dart-define=API_URL=http://localhost:3000
+   ```
+
+   Sign in with the `ADMIN_EMAIL` / `ADMIN_PASSWORD` from the backend `.env`,
+   or create an account from the app.
 
 | Define | Default | Meaning |
 |---|---|---|
 | `API_URL` | `http://10.0.2.2:3000` | Backend base URL (Android emulator host). |
 
-The app always talks to the backend at `API_URL`: there is no in-memory mode.
-Cleartext HTTP is allowed in the Android **debug** manifest only.
+Cleartext HTTP is allowed in the Android **debug** manifest only, so these
+URLs work with `flutter run`, not with a release build.
+
+### Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| `flutter` is not recognized | `PATH` not updated: open a new terminal, check step 2.3. |
+| `Android license status unknown` | `flutter doctor --android-licenses`. |
+| `cmdline-tools component is missing` | Install *Android SDK Command-line Tools* (step 3.3). |
+| `No supported devices connected` | Start the emulator or accept USB debugging, then `flutter devices`. |
+| Build fails after a Flutter upgrade | `flutter clean && flutter pub get`. |
+| Login shows "no connection" with the real backend | Backend not up (`docker compose ps`), wrong `API_URL`, or missing `adb reverse` on a phone. |
 
 ## Push notifications (Firebase)
 
