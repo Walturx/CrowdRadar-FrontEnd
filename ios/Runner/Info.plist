@@ -9,7 +9,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>CrowdRadar usa tu ubicación para mostrarte los reportes cercanos y las distancias a cada lugar.</string>
 	<key>CFBundleDisplayName</key>
-	<string>Crowdradar</string>
+	<string>CrowdRadar</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
