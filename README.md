@@ -47,7 +47,10 @@ deletes on sign out (a restored session registers it again on each launch).
 - App in background or closed: Android shows the notification; tapping it
   opens the place in its `data.lugarId` (a missing or non-numeric id is
   ignored). Without a session the place opens after the sign in.
-- App in foreground: no system notification; the app shows its own notice
+- App in foreground: Android posts nothing by itself, so the app posts the
+  message to the notification tray (`flutter_local_notifications`, channel
+  `alertas_favoritos`; tapping it opens the place in `data.lugarId`, like a
+  background notification) and also shows its own notice
   (snack bar with the notification title and body) whose "Ver" action opens
   the place in `data.lugarId` (no action when the id is missing or
   non-numeric), and reloads the in-app inbox at once, so the Favoritos tab
