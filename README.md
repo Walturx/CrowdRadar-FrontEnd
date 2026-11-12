@@ -47,8 +47,15 @@ deletes on sign out (a restored session registers it again on each launch).
 - App in background or closed: Android shows the notification; tapping it
   opens the place in its `data.lugarId` (a missing or non-numeric id is
   ignored). Without a session the place opens after the sign in.
-- App in foreground: no system notification; the in-app inbox (Favoritos tab
-  badge and `AlertasPage`) shows the alert.
+- App in foreground: Android posts nothing by itself, so the app posts the
+  message to the notification tray (`flutter_local_notifications`, channel
+  `alertas_favoritos`; tapping it opens the place in `data.lugarId`, like a
+  background notification) and also shows its own notice
+  (snack bar with the notification title and body) whose "Ver" action opens
+  the place in `data.lugarId` (no action when the id is missing or
+  non-numeric), and reloads the in-app inbox at once, so the Favoritos tab
+  badge and `AlertasPage` count the new alert. Without a session the notice
+  is not shown.
 - Firebase never starts in tests: they use `ReceptorPushNulo` or fakes, and
   `ReceptorPushFcm` takes its Firebase calls through `MensajeriaPush`.
 
@@ -56,6 +63,16 @@ deletes on sign out (a restored session registers it again on each launch).
 notifications on iOS require an APNs key from a paid Apple Developer account;
 without it iOS receives no push. The app still runs there (no token, so no
 device is registered) and the in-app inbox keeps working.
+
+## App icons
+
+The launcher and notification icons are generated from
+`assets/images/crowdradar-logo.png`: run `python assets/icon/generate_icon_sources.py`
+(needs Pillow), then `dart run flutter_launcher_icons`. Afterwards revert
+`ios/Runner.xcodeproj/project.pbxproj`
+(`git checkout -- ios/Runner.xcodeproj/project.pbxproj`): the tool corrupts its
+`ASSETCATALOG_*` settings. The Android notification icon is the monochrome
+`@drawable/ic_notification`, declared in `AndroidManifest.xml` as the FCM default.
 
 ## Tests
 

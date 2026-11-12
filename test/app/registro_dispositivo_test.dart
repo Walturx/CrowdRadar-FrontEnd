@@ -22,6 +22,10 @@ class _Receptor implements ReceptorPush {
 
   @override
   Stream<int> get lugarAbierto => const Stream<int>.empty();
+
+  @override
+  Stream<MensajePrimerPlano> get mensajesEnPrimerPlano =>
+      const Stream<MensajePrimerPlano>.empty();
 }
 
 /// Records the device calls and can be told to fail them.
