@@ -10,6 +10,7 @@ import 'package:crowdradar/core/session/session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../fakes/fabrica_repositorios_fake.dart';
 import '../fakes/jwt_falso.dart';
 
 class _MapaVacio implements MapaAdapter {
@@ -34,8 +35,9 @@ Future<void> _abrir(WidgetTester tester, String ruta) async {
   await tester.pumpWidget(
     CrowdRadarApp(
       dependencias: Dependencias.crear(
-        const Entorno(usarFakes: true),
+        const Entorno(),
         sesion,
+        repositorios: const FabricaRepositoriosFake(),
         mapaAdapter: _MapaVacio(),
       ),
       ubicacionInicial: ruta,

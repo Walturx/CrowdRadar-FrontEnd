@@ -17,4 +17,12 @@ void main() {
     expect(await receptor.lugarAbierto.isEmpty, isTrue);
     expect(await receptor.lugarAbierto.isEmpty, isTrue);
   });
+
+  test(
+    'mensajesEnPrimerPlano never emits and is usable more than once',
+    () async {
+      expect(await receptor.mensajesEnPrimerPlano.isEmpty, isTrue);
+      expect(await receptor.mensajesEnPrimerPlano.isEmpty, isTrue);
+    },
+  );
 }

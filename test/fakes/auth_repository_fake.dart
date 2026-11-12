@@ -1,7 +1,7 @@
-import '../../core/models/usuario.dart';
-import '../../core/session/session_service.dart';
-import '../../core/session/usuario_sesion.dart';
-import '../../features/auth/data/auth_repository.dart';
+import 'package:crowdradar/core/models/usuario.dart';
+import 'package:crowdradar/core/session/session_service.dart';
+import 'package:crowdradar/core/session/usuario_sesion.dart';
+import 'package:crowdradar/features/auth/data/auth_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 

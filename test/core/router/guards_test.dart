@@ -10,6 +10,7 @@ import 'package:crowdradar/core/storage/memoria_token_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../fakes/fabrica_repositorios_fake.dart';
 import '../../fakes/jwt_falso.dart';
 
 const _usuario = SesionAutenticada(usuario: usuarioPrueba, esAdmin: false);
@@ -96,7 +97,11 @@ void main() {
     tearDown(() => sesion.reiniciar());
 
     Widget app(String inicial) => CrowdRadarApp(
-      dependencias: Dependencias.crear(const Entorno(usarFakes: true), sesion),
+      dependencias: Dependencias.crear(
+        const Entorno(),
+        sesion,
+        repositorios: const FabricaRepositoriosFake(),
+      ),
       ubicacionInicial: inicial,
     );
 

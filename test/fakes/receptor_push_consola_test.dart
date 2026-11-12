@@ -1,6 +1,7 @@
 import 'package:crowdradar/core/push/receptor_push.dart';
-import 'package:crowdradar/core/push/receptor_push_consola.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'receptor_push_consola.dart';
 
 void main() {
   test('inicializar completes and the dev token is stable', () async {

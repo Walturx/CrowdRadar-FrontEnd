@@ -1,4 +1,3 @@
-import 'package:crowdradar/app/fakes/analitica_repository_fake.dart';
 import 'package:crowdradar/core/models/analitica.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/features/analitica/comparar/comparar_page.dart';
@@ -9,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../fakes/analitica_repository_fake.dart';
 import '../../fakes/enrutador_falso.dart';
 
 const _conDatos = 1;

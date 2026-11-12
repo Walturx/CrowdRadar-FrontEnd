@@ -1,9 +1,10 @@
-import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/session/session_service.dart';
 import 'package:crowdradar/core/session/usuario_sesion.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'reporte_repository_fake.dart';
 
 Matcher _falla(int status, String code) => throwsA(
   isA<ApiException>()

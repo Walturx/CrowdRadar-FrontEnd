@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:crowdradar/app/fakes/exploracion_repository_fake.dart';
 import 'package:crowdradar/app/rutas.dart';
 import 'package:crowdradar/core/location/punto_referencia.dart';
 import 'package:crowdradar/core/map/centro_compartido.dart';
@@ -23,6 +22,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../fakes/exploracion_repository_fake.dart';
 import '../../fakes/lugar_repo_falso.dart';
 import '../../helpers/ubicacion_fake.dart';
 

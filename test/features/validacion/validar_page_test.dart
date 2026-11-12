@@ -1,5 +1,3 @@
-import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
-import 'package:crowdradar/app/fakes/validacion_repository_fake.dart';
 import 'package:crowdradar/core/location/punto_referencia.dart';
 import 'package:crowdradar/core/map/centro_compartido.dart';
 import 'package:crowdradar/core/models/validacion.dart';
@@ -13,6 +11,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../fakes/comportamiento_fake.dart';
+import '../../fakes/validacion_repository_fake.dart';
 import '../../helpers/ubicacion_fake.dart';
 import 'json_validacion.dart';
 

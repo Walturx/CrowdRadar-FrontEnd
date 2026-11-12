@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/logging/registro_errores.dart';
 import '../core/map/mapa_adapter.dart';
+import '../core/push/receptor_push.dart';
 import '../core/session/motivo_cierre.dart';
 import '../core/session/sesion_cubit.dart';
 import '../core/session/sesion_state.dart';
@@ -55,10 +56,12 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
   );
 
   /// Shows the session-ended notice above the router, so it survives the
-  /// redirect to the login.
+  /// redirect to the login, and the notice of a push received in the
+  /// foreground.
   final _mensajero = GlobalKey<ScaffoldMessengerState>();
   StreamSubscription<EventoSesion>? _eventosSesion;
   StreamSubscription<int>? _toques;
+  StreamSubscription<MensajePrimerPlano>? _mensajesPrimerPlano;
 
   /// A place tapped in a notification before the session was ready (single
   /// slot: the last tap wins). Delivered on sign in, dropped on sign out.
@@ -73,6 +76,9 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
     // Listen before initializing: a tap that launched the app is emitted by
     // `inicializar` itself.
     _toques = deps.receptorPush.lugarAbierto.listen(_abrirLugar);
+    _mensajesPrimerPlano = deps.receptorPush.mensajesEnPrimerPlano.listen(
+      _avisarMensaje,
+    );
     _eventosSesion = deps.sesion.eventos.listen(_alCambiarSesion);
     // Not needed for the first frame: push setup and the device registration
     // of a restored session (later sign ins register on the event;
@@ -136,10 +142,51 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
       ..scheduleFrame();
   }
 
+  /// A push received in the foreground (no system notification): shows its
+  /// texts with a "Ver" action that opens its place, when it has one. The
+  /// alert inbox reloads on its own (`MainLayout`). Ignored without a session.
+  void _avisarMensaje(MensajePrimerPlano mensaje) {
+    if (_sesion.state is! SesionAutenticada) return;
+    final titulo = mensaje.titulo;
+    final cuerpo = mensaje.cuerpo;
+    final lugarId = mensaje.lugarId;
+    _mensajero.currentState
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (titulo != null)
+                Text(
+                  titulo,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              if (cuerpo != null) Text(cuerpo),
+              if (titulo == null && cuerpo == null)
+                const Text('Tienes una nueva alerta'),
+            ],
+          ),
+          // It hides on its own even with the action: a notice that stays
+          // until dismissed would cover the screen the user is on.
+          persist: false,
+          duration: const Duration(seconds: 6),
+          action: lugarId == null
+              ? null
+              : SnackBarAction(
+                  label: 'Ver',
+                  onPressed: () => _abrirLugar(lugarId),
+                ),
+        ),
+      );
+  }
+
   @override
   void dispose() {
     _eventosSesion?.cancel();
     _toques?.cancel();
+    _mensajesPrimerPlano?.cancel();
     _router.dispose();
     _sesion.close();
     super.dispose();
@@ -177,6 +224,7 @@ class _CrowdRadarAppState extends State<CrowdRadarApp> {
         RepositoryProvider<ModeracionRepository>.value(
           value: deps.moderacionRepository,
         ),
+        RepositoryProvider<ReceptorPush>.value(value: deps.receptorPush),
       ],
       child: MultiBlocProvider(
         providers: [BlocProvider<SesionCubit>.value(value: _sesion)],

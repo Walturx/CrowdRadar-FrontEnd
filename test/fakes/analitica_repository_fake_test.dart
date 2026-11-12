@@ -1,9 +1,10 @@
-import 'package:crowdradar/app/fakes/analitica_repository_fake.dart';
-import 'package:crowdradar/app/fakes/historial_sintetico.dart';
 import 'package:crowdradar/core/models/analitica.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/features/analitica/analitica_parametros.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'analitica_repository_fake.dart';
+import 'historial_sintetico.dart';
 
 Matcher _rangoInvalido() => throwsA(
   isA<ApiException>()
