@@ -10,7 +10,7 @@ title CrowdRadar Frontend - Diagrama de despliegue
 
 node "Dispositivo Android / emulador AVD" as android {
   node "App CrowdRadar\n(Flutter, APK debug/profile/release)" as apk {
-    artifact "Entorno.desdeDartDefine()\nAPI_URL (def. http://10.0.2.2:3000)\nUSAR_FAKES (def. false; rechazado en release)" as entorno
+    artifact "Entorno.desdeDartDefine()\nAPI_URL (def. http://10.0.2.2:3000)" as entorno
     component "ApiClient\n(package:http, timeout 15 s)" as api
     component "FlutterMapAdapter\nflutter_map 8.3 TileLayer\nNetworkTileProvider" as mapa
     component "SecureTokenStorage\n(flutter_secure_storage)" as tokens
@@ -46,8 +46,6 @@ apiC ..> migrate : depends_on\nservice_completed_successfully
 apiC ..> postgres : depends_on\nservice_healthy
 
 note bottom of apk
-  Con USAR_FAKES=true no hay trafico a la API:
-  cada <X>Repository es un <X>RepositoryFake en memoria.
   HTTP en claro solo en el manifest de debug
   (android:usesCleartextTraffic="true").
 end note

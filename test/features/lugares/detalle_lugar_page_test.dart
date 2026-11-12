@@ -1,8 +1,5 @@
 import 'dart:async';
 
-import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
-import 'package:crowdradar/app/fakes/favorito_repository_fake.dart';
-import 'package:crowdradar/app/fakes/reporte_repository_fake.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
 import 'package:crowdradar/core/models/categoria_lugar.dart';
 import 'package:crowdradar/core/models/lugar_detalle.dart';
@@ -19,7 +16,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../fakes/comportamiento_fake.dart';
+import '../../fakes/favorito_repository_fake.dart';
 import '../../fakes/lugar_repo_falso.dart';
+import '../../fakes/reporte_repository_fake.dart';
 
 const _centro = PuntoGeografico(-12.1219, -77.0268);
 

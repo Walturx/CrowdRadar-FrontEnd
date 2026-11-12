@@ -1,0 +1,20 @@
+# Launcher icon configuration for `dart run flutter_launcher_icons`.
+# The sources under assets/icon/ come from assets/icon/generate_icon_sources.py,
+# which crops the pin-and-arcs symbol out of assets/images/crowdradar-logo.png.
+flutter_launcher_icons:
+  image_path: "assets/icon/icon.png"
+  android: "ic_launcher"
+  # Android 8+ (API 26) adaptive icon: white background behind the symbol,
+  # which is already padded to the 66dp safe zone.
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  # The foreground source is already padded, so skip the tool's default 16% inset.
+  adaptive_icon_foreground_inset: 0
+  min_sdk_android: 21
+  ios: true
+  # Note: the tool also rewrites every ASSETCATALOG_* line of
+  # ios/Runner.xcodeproj/project.pbxproj (upstream bug); revert that file after
+  # regenerating, the AppIcon set name is already configured there.
+  # The App Store rejects icons with an alpha channel.
+  remove_alpha_ios: true
+  background_color_ios: "#FFFFFF"

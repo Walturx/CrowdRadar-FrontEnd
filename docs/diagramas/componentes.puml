@@ -20,9 +20,9 @@ package "Arranque (lib/main.dart, lib/app/arranque.dart)" as arranque {
 }
 
 package "app (composition root)" as app {
-  component "Dependencias.crear(entorno, sesion)\n<<composition root>>\nguard: esRelease && usarFakes -> StateError" as deps
-  component "_repositoriosHttp(api, sesion)\nAuthRepositoryHttp, PerfilRepositoryHttp,\nLugarRepositoryHttp, ReporteRepositoryHttp,\nAnaliticaRepositoryHttp, ValidacionRepositoryHttp,\nFavoritoRepositoryHttp, AlertaRepositoryHttp,\nExploracionRepositoryHttp, ModeracionRepositoryHttp" as reposHttp
-  component "_repositoriosFake(sesion, ComportamientoFake)\napp/fakes/*: <X>RepositoryFake\n(datos_fake.dart: cuentas con puntos y tier)" as reposFake
+  component "Dependencias.crear(entorno, sesion,\nrepositorios = FabricaRepositoriosHttp)\n<<composition root>>" as deps
+  interface "FabricaRepositorios\n<<Abstract Factory>>\ncrear(api, sesion)" as fabrica
+  component "FabricaRepositoriosHttp\nAuthRepositoryHttp, PerfilRepositoryHttp,\nLugarRepositoryHttp, ReporteRepositoryHttp,\nAnaliticaRepositoryHttp, ValidacionRepositoryHttp,\nFavoritoRepositoryHttp, AlertaRepositoryHttp,\nExploracionRepositoryHttp, ModeracionRepositoryHttp" as reposHttp
   component "CrowdRadarApp\nMultiRepositoryProvider + SesionCubit\nRegistroDispositivo, MaterialApp.router" as crapp
   component "crearRouter(SesionCubit)\nGoRouter + redirigirPorSesion\n(app_router.dart, guards.dart, rutas.dart)" as router
 }
@@ -39,7 +39,7 @@ package "features/<feature>" as features {
 
 package "core" as core {
   package "config" {
-    component "Entorno\nAPI_URL (def. http://10.0.2.2:3000)\nUSAR_FAKES (def. false)" as entorno
+    component "Entorno\nAPI_URL (def. http://10.0.2.2:3000)" as entorno
   }
   package "network" {
     component "ApiClient <<Facade>>\nget/post/put/patch/delete\ntimeout 15 s, RespuestaApi<T>,\nApiException" as api
@@ -60,7 +60,7 @@ package "core" as core {
   }
   package "push" {
     interface "ReceptorPush" as rp
-    component "ReceptorPushNulo /\nReceptorPushConsola (fakes)" as rpImpl
+    component "ReceptorPushNulo" as rpImpl
   }
   component "models, utils (mensaje_error,\nlectura_json), widgets, logging" as comunes
 }
@@ -71,8 +71,8 @@ arr --> deps : iniciar()
 arr --> crapp : dependencias
 deps --> entorno
 deps --> api : crea
-deps --> reposHttp : usarFakes == false
-deps --> reposFake : usarFakes == true
+deps --> fabrica : repositorios
+reposHttp ..|> fabrica
 deps --> fma : mapaAdapter por defecto
 deps --> rpImpl
 crapp --> router
@@ -82,7 +82,6 @@ crapp ..> irepo : RepositoryProvider<X>Repository
 ui --> irepo : context.read / constructor
 repoHttp ..|> irepo
 reposHttp ..> repoHttp
-reposFake ..> irepo : implementa
 repoHttp --> api
 api --> factory
 api --> cadena

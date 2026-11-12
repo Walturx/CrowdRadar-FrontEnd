@@ -1,11 +1,11 @@
-import '../../core/models/categoria_lugar.dart';
-import '../../core/models/moderacion.dart';
-import '../../core/models/nivel_saturacion.dart';
-import '../../core/models/tier_usuario.dart';
-import '../../core/models/validacion.dart';
-import '../../core/network/respuesta_api.dart';
-import '../../core/session/session_service.dart';
-import '../../features/moderacion/data/moderacion_repository.dart';
+import 'package:crowdradar/core/models/categoria_lugar.dart';
+import 'package:crowdradar/core/models/moderacion.dart';
+import 'package:crowdradar/core/models/nivel_saturacion.dart';
+import 'package:crowdradar/core/models/tier_usuario.dart';
+import 'package:crowdradar/core/models/validacion.dart';
+import 'package:crowdradar/core/network/respuesta_api.dart';
+import 'package:crowdradar/core/session/session_service.dart';
+import 'package:crowdradar/features/moderacion/data/moderacion_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 

@@ -1,7 +1,7 @@
-import '../../core/models/favorito.dart';
-import '../../core/network/respuesta_api.dart';
-import '../../core/session/session_service.dart';
-import '../../features/favoritos/data/favorito_repository.dart';
+import 'package:crowdradar/core/models/favorito.dart';
+import 'package:crowdradar/core/network/respuesta_api.dart';
+import 'package:crowdradar/core/session/session_service.dart';
+import 'package:crowdradar/features/favoritos/data/favorito_repository.dart';
 import 'comportamiento_fake.dart';
 import 'datos_fake.dart';
 import 'datos_lugares_fake.dart';

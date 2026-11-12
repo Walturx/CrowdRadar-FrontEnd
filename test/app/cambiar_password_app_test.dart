@@ -1,7 +1,6 @@
 // HU 2.3: after a password change the session ends and the login explains why.
 import 'package:crowdradar/app/app.dart';
 import 'package:crowdradar/app/dependencias.dart';
-import 'package:crowdradar/app/fakes/datos_fake.dart';
 import 'package:crowdradar/core/config/entorno.dart';
 import 'package:crowdradar/core/map/mapa_adapter.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
@@ -10,6 +9,8 @@ import 'package:crowdradar/features/perfil/cambiar_password/cambiar_password_cub
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../fakes/datos_fake.dart';
+import '../fakes/fabrica_repositorios_fake.dart';
 import '../fakes/jwt_falso.dart';
 
 class _MapaVacio implements MapaAdapter {
@@ -39,8 +40,9 @@ void main() {
     await tester.pumpWidget(
       CrowdRadarApp(
         dependencias: Dependencias.crear(
-          const Entorno(usarFakes: true),
+          const Entorno(),
           sesion,
+          repositorios: const FabricaRepositoriosFake(),
           mapaAdapter: _MapaVacio(),
         ),
         ubicacionInicial: '/perfil/password',

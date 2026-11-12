@@ -1,11 +1,12 @@
-import 'package:crowdradar/app/fakes/comportamiento_fake.dart';
-import 'package:crowdradar/app/fakes/lugar_repository_fake.dart';
 import 'package:crowdradar/core/map/tipos_mapa.dart';
 import 'package:crowdradar/core/models/categoria_lugar.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'comportamiento_fake.dart';
+import 'lugar_repository_fake.dart';
 
 const _lima = LimitesMapa(
   norte: -11.85,

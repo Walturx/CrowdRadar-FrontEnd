@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "481225468396",
+    "project_id": "crowdradar-84ff1",
+    "storage_bucket": "crowdradar-84ff1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:481225468396:android:8ae095fda337fdeb6bf8c9",
+        "android_client_info": {
+          "package_name": "com.example.crowdradar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLcfHfAo_i1F8f1qiQJmKsIFA_fLcFurQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

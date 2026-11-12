@@ -34,14 +34,12 @@ void main() {
       final entorno = Entorno.desdeDartDefine();
 
       expect(entorno.apiUrl, 'http://10.0.2.2:3000');
-      expect(entorno.usarFakes, isFalse);
     });
 
     test('S2.2 explicit values override defaults', () {
-      const entorno = Entorno(apiUrl: 'http://x:1', usarFakes: true);
+      const entorno = Entorno(apiUrl: 'http://x:1');
 
       expect(entorno.apiUrl, 'http://x:1');
-      expect(entorno.usarFakes, isTrue);
     });
   });
 }

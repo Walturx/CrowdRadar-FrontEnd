@@ -1,12 +1,13 @@
 import 'dart:async';
 
-import 'package:crowdradar/app/fakes/alerta_repository_fake.dart';
 import 'package:crowdradar/app/registro_dispositivo.dart';
 import 'package:crowdradar/core/logging/registro_errores.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/push/receptor_push.dart';
 import 'package:crowdradar/features/alertas/data/alerta_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../fakes/alerta_repository_fake.dart';
 
 class _Receptor implements ReceptorPush {
   String? token;
@@ -21,6 +22,10 @@ class _Receptor implements ReceptorPush {
 
   @override
   Stream<int> get lugarAbierto => const Stream<int>.empty();
+
+  @override
+  Stream<MensajePrimerPlano> get mensajesEnPrimerPlano =>
+      const Stream<MensajePrimerPlano>.empty();
 }
 
 /// Records the device calls and can be told to fail them.

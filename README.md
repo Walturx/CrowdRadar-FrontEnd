@@ -13,7 +13,7 @@ only in paths and in how `PATH` is edited.
 | Git | any recent | clone the repositories |
 | Flutter SDK | stable **3.41.x** (Dart 3.11.5) | `pubspec.yaml` needs Dart `^3.11.5`; `pubspec.lock` needs Flutter `>=3.38.4` |
 | Android Studio | latest stable | Android SDK, emulator, bundled JDK (the build targets Java 17) |
-| Docker Desktop | latest | only for the real backend (step 7) |
+| Docker Desktop | latest | runs the backend the app needs (step 7) |
 
 ### 1. Install Git
 
@@ -71,20 +71,18 @@ flutter devices      # the emulator/phone must be listed
 `Flutter` and `Android toolchain` must be ✓. Warnings about Chrome, Visual
 Studio or Xcode can be ignored (the app runs on Android).
 
-### 6. Get the code and run it with fake data (no backend)
+### 6. Get the code
 
 ```bash
 git clone https://github.com/Walturx/CrowdRadar-FrontEnd.git
 cd CrowdRadar-FrontEnd
 flutter pub get
-flutter run --dart-define=USAR_FAKES=true
 ```
 
-The first build downloads Gradle 8.14 and can take several minutes. Sign in
-with `ana@test.com` / `Secreta1` (user) or `admin@test.com` / `Secreta1`
-(admin) — see `lib/app/fakes/datos_fake.dart`.
+### 7. Start the backend and run the app
 
-### 7. Run it against the real backend
+The app always needs the backend: there is no offline or fake-data mode. The
+first build downloads Gradle 8.14 and can take several minutes.
 
 1. Install Docker Desktop (<https://www.docker.com/products/docker-desktop/>)
    and start it.
@@ -116,7 +114,6 @@ with `ana@test.com` / `Secreta1` (user) or `admin@test.com` / `Secreta1`
 | Define | Default | Meaning |
 |---|---|---|
 | `API_URL` | `http://10.0.2.2:3000` | Backend base URL (Android emulator host). |
-| `USAR_FAKES` | `false` | Every repository resolves to its in-memory `*RepositoryFake`. Refused in release builds (`Dependencias.crear` throws). |
 
 Cleartext HTTP is allowed in the Android **debug** manifest only, so these
 URLs work with `flutter run`, not with a release build.
@@ -132,6 +129,55 @@ URLs work with `flutter run`, not with a release build.
 | Build fails after a Flutter upgrade | `flutter clean && flutter pub get`. |
 | Login shows "no connection" with the real backend | Backend not up (`docker compose ps`), wrong `API_URL`, or missing `adb reverse` on a phone. |
 
+## Push notifications (Firebase)
+
+HU 8.3 alerts reach the phone through Firebase Cloud Messaging (FCM), Firebase
+project `crowdradar-84ff1` (Spark plan, free).
+
+**Setup.** `flutterfire configure --project=crowdradar-84ff1
+--platforms=android,ios` generated `lib/firebase_options.dart`,
+`android/app/google-services.json`, `firebase.json` and the
+`com.google.gms.google-services` Gradle plugin. `google-services.json` and
+`firebase_options.dart` hold public client identifiers (API key, app id,
+project id), not secrets, so they are committed; run the command again only
+when apps are added to the project. The server key (service account) lives
+in the backend only, never in this repo.
+
+**How it works.** `ReceptorPushFcm` (`core/push/`) starts Firebase after the
+first frame, asks the notification permission (Android 13+) and returns the
+FCM token, which `RegistroDispositivo` sends to the backend on sign in and
+deletes on sign out (a restored session registers it again on each launch).
+
+- App in background or closed: Android shows the notification; tapping it
+  opens the place in its `data.lugarId` (a missing or non-numeric id is
+  ignored). Without a session the place opens after the sign in.
+- App in foreground: Android posts nothing by itself, so the app posts the
+  message to the notification tray (`flutter_local_notifications`, channel
+  `alertas_favoritos`; tapping it opens the place in `data.lugarId`, like a
+  background notification) and also shows its own notice
+  (snack bar with the notification title and body) whose "Ver" action opens
+  the place in `data.lugarId` (no action when the id is missing or
+  non-numeric), and reloads the in-app inbox at once, so the Favoritos tab
+  badge and `AlertasPage` count the new alert. Without a session the notice
+  is not shown.
+- Firebase never starts in tests: they use `ReceptorPushNulo` or fakes, and
+  `ReceptorPushFcm` takes its Firebase calls through `MensajeriaPush`.
+
+**iOS limitation.** iOS is registered in Firebase but has no APNs key: push
+notifications on iOS require an APNs key from a paid Apple Developer account;
+without it iOS receives no push. The app still runs there (no token, so no
+device is registered) and the in-app inbox keeps working.
+
+## App icons
+
+The launcher and notification icons are generated from
+`assets/images/crowdradar-logo.png`: run `python assets/icon/generate_icon_sources.py`
+(needs Pillow), then `dart run flutter_launcher_icons`. Afterwards revert
+`ios/Runner.xcodeproj/project.pbxproj`
+(`git checkout -- ios/Runner.xcodeproj/project.pbxproj`): the tool corrupts its
+`ASSETCATALOG_*` settings. The Android notification icon is the monochrome
+`@drawable/ic_notification`, declared in `AndroidManifest.xml` as the FCM default.
+
 ## Tests
 
 ```bash
@@ -140,7 +186,12 @@ flutter test
 flutter test --coverage && dart run tool/coverage_summary.dart   # coverage/lcov.info -> Markdown tables (total, lib/features, per feature)
 ```
 
-`test/core/reglas_arquitectura_test.dart` enforces the layering rules below.
+`test/core/reglas_arquitectura_test.dart` enforces the layering rules below,
+including that `lib/` ships no fakes.
+
+Tests need no backend: the in-memory fakes and their seed data live in
+`test/fakes/` and a test injects them with
+`Dependencias.crear(entorno, sesion, repositorios: const FabricaRepositoriosFake())`.
 
 Performance harness (profile mode, real backend with the bench seed from the
 backend's `scripts/bench`; the app uses the default `http://10.0.2.2:3000`):
@@ -163,7 +214,7 @@ PlantUML sources in `docs/diagramas/` with the rendered SVG next to each one
 
 | Diagram | SVG | Source |
 |---|---|---|
-| Components and layers (composition root, HTTP vs fake repositories, `ApiClient` + interceptors, `MapaAdapter`) | [componentes.svg](docs/diagramas/componentes.svg) | [componentes.puml](docs/diagramas/componentes.puml) |
+| Components and layers (composition root, `FabricaRepositorios`, `ApiClient` + interceptors, `MapaAdapter`) | [componentes.svg](docs/diagramas/componentes.svg) | [componentes.puml](docs/diagramas/componentes.puml) |
 | Navigation (go_router: main and admin `StatefulShellRoute`s, guards, every path) | [navegacion.svg](docs/diagramas/navegacion.svg) | [navegacion.puml](docs/diagramas/navegacion.puml) |
 | Sequence: create a report, validate it, see its validation status (with error branches) | [secuencia-reporte-validacion.svg](docs/diagramas/secuencia-reporte-validacion.svg) | [secuencia-reporte-validacion.puml](docs/diagramas/secuencia-reporte-validacion.puml) |
 | Deployment (device, docker compose API + Postgres, OSM tiles + disk cache) | [despliegue.svg](docs/diagramas/despliegue.svg) | [despliegue.puml](docs/diagramas/despliegue.puml) |
@@ -183,7 +234,7 @@ MSYS_NO_PATHCONV=1 docker run --rm -v "$(pwd -W)/docs/diagramas:/data" \
 ```
 lib/
   main.dart            bootstrap (restore session, build Dependencias)
-  app/                 composition root, router, guards, routes, fakes
+  app/                 composition root, repository factory, router, guards, routes
   core/                shared, feature-agnostic code
     config/ logging/ map/ models/ network/ push/ session/ storage/ utils/ widgets/
   features/<name>/     one folder per feature, owned by one stream
@@ -204,7 +255,7 @@ Route path literals live only in `app/rutas.dart`.
 
 ## Places and map (M2)
 
-`features/lugares/` has `data/` (`LugarRepository` + HTTP + fake), and one
+`features/lugares/` has `data/` (`LugarRepository` + HTTP; fake in `test/fakes/`), and one
 folder per screen: `mapa/` (map, markers, legend, tile banner), `detalle/`
 (place detail, favorite toggle) and `buscar/` (search by name, route
 `Rutas.buscarLugar`, which pops the chosen place id with `context.pop(id)`).
@@ -233,7 +284,7 @@ the distance).
 ## Reports, tiers and analytics (M4)
 
 `features/reportes/` has `data/` (`ReporteRepository` + HTTP; the fake lives in
-`app/fakes/reporte_repository_fake.dart`), `reportar/` and `mis_reportes/`.
+`test/fakes/reporte_repository_fake.dart`), `reportar/` and `mis_reportes/`.
 
 - **Reportar sheet**: `mostrarReportarSheet` (opened from the place detail)
   completes with `true` once a report was accepted, however the sheet is
@@ -253,14 +304,14 @@ the distance).
   `CROWD_ROYALTY`; unknown or missing reads as Crowd Baby). The profile shows
   `TarjetaTier` (`features/perfil/widgets/`): the badge of
   `TierUsuario.insignia` next to its name. The app never derives the tier from
-  the points and does not show the points (pending a team decision). The fakes
-  seed both in `datos_fake.dart`.
+  the points and does not show the points (pending a team decision). The test fakes
+  seed both in `test/fakes/datos_fake.dart`.
 - **Refresh without blanking**: `PerfilCubit.refrescar` (profile tab
   re-activation) and `DetalleLugarCubit.refrescar` (after a report) keep the
   data on screen and only add a soft error (`errorActualizacion`, snackbar).
 
 `features/analitica/` has `data/` (`AnaliticaRepository` + HTTP; fake in
-`app/fakes/analitica_repository_fake.dart` with `historial_sintetico.dart`),
+`test/fakes/analitica_repository_fake.dart` with `historial_sintetico.dart`),
 and screens `historial/` (`Rutas.historial(id)`, today / 7 days), `comparar/`
 (weekdays against weekends) and `mejor_horario/`. `comun/` holds the shared
 `AnaliticaCubit<T>` / `AnaliticaState<T>` base (load/retry skeleton; "no data"
@@ -277,7 +328,7 @@ state. `widgets/` has `GraficoBarras` (plain bars, no chart dependency),
 ## Validation (M5)
 
 `features/validacion/`: `data/` (`ValidacionRepository` + HTTP; fake in
-`app/fakes/validacion_repository_fake.dart`, with the session checks), and one
+`test/fakes/validacion_repository_fake.dart`, with the session checks), and one
 folder per screen. The models in
 `core/models/validacion.dart` mirror the backend DTOs (`lugar{}` and
 `confiabilidad{}` are nested; counts live inside `confiabilidad`).
@@ -303,7 +354,7 @@ folder per screen. The models in
 ## Favorites, alerts and filters (M3)
 
 `features/favoritos/`: `data/` (`FavoritoRepository` + HTTP; fake in
-`app/fakes/favorito_repository_fake.dart`) and `lista/`. `FavoritosCubit`
+`test/fakes/favorito_repository_fake.dart`) and `lista/`. `FavoritosCubit`
 removes a favorite (a 404 counts as already gone) and offers undo
 (`deshacerEliminar` adds it back, alert preference included). The master
 switch "Alertas de cambios" is derived (`todasConAlertas`) and toggling it
@@ -334,10 +385,11 @@ Push: `RegistroDispositivo` (in `app/`) registers the token of the
 `ReceptorPush` after sign in and removes it in `SesionCubit`'s `antesDeCerrar`
 hook, before the session is cleared; both are best effort. `CrowdRadarApp`
 turns `ReceptorPush.lugarAbierto` taps (also a cold start) into
-`router.push(Rutas.lugar(id))` while signed in. Real delivery (FCM) is not
-part of this build: `ReceptorPushNulo` is the default and `ReceptorPushConsola`
-(fake token, `simularApertura`) is used with `USAR_FAKES`; the in-app alert
-list is the guaranteed channel.
+`router.push(Rutas.lugar(id))` while signed in. The app uses
+`ReceptorPushFcm` (see [Push notifications (Firebase)](#push-notifications-firebase));
+`Dependencias.crear` defaults to `ReceptorPushNulo`, and tests use it or
+`ReceptorPushConsola` (fake token, `simularApertura`) from `test/fakes/`, so no
+test touches Firebase. The in-app alert list is the guaranteed channel.
 
 ## Account security (M1)
 
@@ -360,9 +412,7 @@ list is the guaranteed channel.
 - **Acerca de** (`/perfil/acerca`): name, version (`Entorno.version`, kept equal
   to `pubspec.yaml` by a test), the "© OpenStreetMap contributors" attribution
   (ODbL) and the course line.
-- **Demo without a backend**: `flutter run --dart-define=USAR_FAKES=true`;
-  recovery answers the neutral text and the password change uses the fake
-  password in `lib/app/fakes/datos_fake.dart`. With the real backend use
+- **Recovery link in development**: run the backend with
   `CORREO_PROVEEDOR=consola` to read the recovery link in the server console.
 
 ## Naming convention
@@ -373,6 +423,12 @@ Domain vocabulary is Spanish (`Lugar`, `Reporte`, `SesionCubit`,
 names (`status`, `message`, `code`, `errors`) as the shared contract; renaming
 would ripple through every stream.
 
+Five screens keep the English names they had when the report's class diagrams
+were drawn: `LoginPage`, `RegisterPage`, `MapPage`, `ProfilePage` and
+`EditProfilePage` (`login_page.dart`, `register_page.dart`, `map_page.dart`,
+`profile_page.dart`, `edit_profile_page.dart`). They stay as they are so the
+code matches those diagrams; new code follows the rule above.
+
 ## Pattern map
 
 | Pattern | Where |
@@ -380,11 +436,11 @@ would ripple through every stream.
 | Composition root (manual DI) | `app/dependencias.dart` (`Dependencias`) |
 | Strategy / chain of responsibility | `InterceptorApi` and its implementations in `core/network/interceptores/` |
 | Observer | `SesionCubit` listens to the `SessionService.eventos` stream |
-| Adapter | `MapaAdapter` (`FlutterMapAdapter`), `ReceptorPush` (`ReceptorPushNulo`, `ReceptorPushConsola`) |
-| Repository + fakes | `<X>Repository` ports, `<x>_repository_http.dart`, `app/fakes/<x>_repository_fake.dart` (`<X>RepositoryFake`) |
+| Adapter | `MapaAdapter` (`FlutterMapAdapter`), `ReceptorPush` (`ReceptorPushFcm` in the app; `ReceptorPushNulo` / `ReceptorPushConsola` in tests) |
+| Repository + fakes | `<X>Repository` ports, `<x>_repository_http.dart`, `test/fakes/<x>_repository_fake.dart` (`<X>RepositoryFake`) |
 | Factory Method | `ClienteHttpFactory` builds the `http.Client` inside `core/network` |
 | Null Object (stub) | `RepositorioNoImplementado` mixin: a repository port satisfied by a 501 stub until its stream implements it |
-| Strategy-style selection | `Dependencias` picks the HTTP or the fake repository set from `USAR_FAKES` |
+| Abstract Factory | `FabricaRepositorios` builds the whole repository set: `FabricaRepositoriosHttp` in the app, `FabricaRepositoriosFake` in tests (`Dependencias.crear(repositorios:)`) |
 | Singleton | `Entorno` (config), `SessionService.instance` (read only in `main.dart`) |
 | Facade | `ApiClient` over `http` |
 | Template-method-style hook | `SesionCubit.antesDeCerrar`: an injected callback run (2 s bound, failures ignored) before a user sign out, used to unregister the push device |
