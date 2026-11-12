@@ -133,6 +133,36 @@ void main() {
     expect(lugares, isEmpty);
   });
 
+  test('a foreground message is also posted to the notification tray, '
+      'with its texts and data', () async {
+    await mensajesTrasInicializar();
+
+    mensajeria.recibir(
+      titulo: 'Parque de la Reserva',
+      cuerpo: 'Ahora está Saturado (antes: Sin información).',
+      data: {'lugarId': '6'},
+    );
+    await pumpEventQueue();
+
+    expect(mensajeria.enBandeja, hasLength(1));
+    expect(mensajeria.enBandeja.single.titulo, 'Parque de la Reserva');
+    expect(
+      mensajeria.enBandeja.single.cuerpo,
+      'Ahora está Saturado (antes: Sin información).',
+    );
+    expect(mensajeria.enBandeja.single.data, {'lugarId': '6'});
+  });
+
+  test('a tray failure still hands the message to the app', () async {
+    mensajeria.errorBandeja = StateError('sin permiso de notificaciones');
+    final mensajes = await mensajesTrasInicializar();
+
+    mensajeria.recibir(titulo: 'Alerta', data: {'lugarId': '42'});
+    await pumpEventQueue();
+
+    expect(mensajes.single.lugarId, 42);
+  });
+
   test(
     'demo S2 inicializar twice listens to foreground messages once',
     () async {
@@ -209,6 +239,8 @@ class _MensajeriaFalsa implements MensajeriaPush {
   Object? errorToken;
   Object? errorIniciar;
   Future<void>? iniciarFirebaseCon;
+  final enBandeja = <MensajeFcm>[];
+  Object? errorBandeja;
 
   void tocar(Map<String, dynamic> data) => _toques.add(data);
 
@@ -255,6 +287,13 @@ class _MensajeriaFalsa implements MensajeriaPush {
     oyentesMensajes++;
     llamadas.add('mensajesEnPrimerPlano');
     return _mensajes.stream;
+  }
+
+  @override
+  Future<void> mostrarEnBandeja(MensajeFcm mensaje) async {
+    final error = errorBandeja;
+    if (error != null) throw error;
+    enBandeja.add(mensaje);
   }
 
   @override
