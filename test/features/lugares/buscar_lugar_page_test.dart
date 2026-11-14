@@ -163,6 +163,60 @@ void main() {
     });
   });
 
+
+  group('CN-APP: valores limite de busqueda', () {
+    testWidgets(
+      'CN-APP-BUS-03: acepta exactamente 60 caracteres',
+      (tester) async {
+        repo = RepoLugarFalso(
+          alBuscar: (_) => resultado([]),
+        );
+
+        await abrir(tester);
+
+        final consulta = 'a' * 60;
+
+        await escribir(tester, consulta);
+
+        expect(
+          repo.pedidos.single.q,
+          consulta,
+        );
+
+        expect(
+          repo.pedidos.single.q!.length,
+          60,
+        );
+      },
+    );
+
+    testWidgets(
+      'CN-APP-BUS-04: limita una entrada de 61 caracteres a 60',
+      (tester) async {
+        repo = RepoLugarFalso(
+          alBuscar: (_) => resultado([]),
+        );
+
+        await abrir(tester);
+
+        final consulta = 'a' * 61;
+
+        await escribir(tester, consulta);
+
+        final campo = tester.widget<EditableText>(
+          find.byType(EditableText),
+        );
+
+        expect(campo.controller.text.length, 60);
+
+        expect(repo.pedidos, hasLength(1));
+        expect(repo.pedidos.single.q!.length, 60);
+        expect(repo.pedidos.single.q, 'a' * 60);
+      },
+    );
+  });
+
+
   group('empty and error', () {
     testWidgets('no match shows the HU 3.4 empty state for the query', (
       tester,

@@ -17,20 +17,37 @@ void main() {
   setUp(() => repo = _AuthRepoMock());
 
   /// Opens the page on top of `/inicio` so a successful `pop` is observable.
-  Future<void> abrir(WidgetTester tester) async {
+  
+  Future<void> abrir(
+    WidgetTester tester, {
+    double escalaTexto = 1.0,
+  }) async {
     final router = enrutadorDe(
       ruta: '/registro',
       pantalla: const RegisterPage(),
     );
+
     await tester.pumpWidget(
       RepositoryProvider<AuthRepository>.value(
         value: repo,
-        child: MaterialApp.router(routerConfig: router),
+        child: MaterialApp.router(
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(escalaTexto),
+              ),
+              child: child!,
+            );
+          },
+          routerConfig: router,
+        ),
       ),
     );
+
     router.push('/registro');
     await tester.pumpAndSettle();
   }
+
 
   When<Future<Usuario>> registrarLlamada() => when(
     () => repo.registrar(
@@ -267,4 +284,86 @@ void main() {
       );
     }
   });
+
+
+group('CRO-85: accesibilidad del registro', () {
+  testWidgets(
+    'ACC-APP-04: el registro soporta texto ampliado al 130%',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(412, 915);
+      addTearDown(tester.view.reset);
+
+      await abrir(tester, escalaTexto: 1.3);
+
+      expect(tester.takeException(), isNull);
+
+      expect(
+        find.byKey(const Key('campo-nombre')),
+        findsOneWidget,
+      );
+
+      expect(
+        find.byKey(const Key('campo-email')),
+        findsOneWidget,
+      );
+
+      expect(
+        find.byKey(const Key('campo-password')),
+        findsOneWidget,
+      );
+
+      final boton = find.text('Registrarme');
+
+      await tester.ensureVisible(boton);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(boton.hitTestable(), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+      'ACC-APP-05: los campos principales tienen etiquetas',
+      (tester) async {
+        await abrir(tester);
+
+        for (final nombre in [
+          'nombre',
+          'apellido',
+          'email',
+          'password',
+          'telefono',
+        ]) {
+          final campo = find.byKey(Key('campo-$nombre'));
+
+          expect(
+            campo,
+            findsOneWidget,
+            reason: 'No se encontró el campo $nombre',
+          );
+
+          final decorador = tester.widget<InputDecorator>(
+            find.descendant(
+              of: campo,
+              matching: find.byType(InputDecorator),
+            ),
+          );
+
+          final etiqueta = decorador.decoration.labelText ?? '';
+          final ayuda = decorador.decoration.hintText ?? '';
+
+          expect(
+            etiqueta.trim().isNotEmpty ||
+                ayuda.trim().isNotEmpty,
+            isTrue,
+            reason: 'El campo $nombre necesita una etiqueta',
+          );
+        }
+      },
+    );
+  });
+
+
+
 }
