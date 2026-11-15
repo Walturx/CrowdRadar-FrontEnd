@@ -267,6 +267,52 @@ void main() {
   });
 
 
+test('CB-APP-A1: seleccionarNivel ignora un Cubit cerrado', () async {
+  final c = cubit();
+  await c.close();
+
+  c.seleccionarNivel(NivelSaturacion.saturado);
+
+  expect(c.isClosed, isTrue);
+  expect(c.state, const ReportarEditando());
+});
+
+test('CB-APP-A2: seleccionarNivel se ignora durante un envio', () async {
+  final respuesta = Completer<ReporteCreado>();
+
+  when(
+    () => repo.reportar(7, NivelSaturacion.moderado),
+  ).thenAnswer((_) => respuesta.future);
+
+  final c = cubit()
+    ..seleccionarNivel(NivelSaturacion.moderado);
+
+  final envio = c.enviar();
+
+  expect(
+    c.state,
+    const ReportarEnviando(NivelSaturacion.moderado),
+  );
+
+  c.seleccionarNivel(NivelSaturacion.saturado);
+
+  expect(
+    c.state,
+    const ReportarEnviando(NivelSaturacion.moderado),
+  );
+
+  respuesta.complete(_creado());
+  await envio;
+
+  verifyNever(
+    () => repo.reportar(7, NivelSaturacion.saturado),
+  );
+
+  await c.close();
+});
+
+
+
   group('common errors', () {
     testErroresComunes(
       'a failed send keeps the level; only 5xx/offline retry',

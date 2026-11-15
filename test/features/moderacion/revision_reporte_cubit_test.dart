@@ -79,6 +79,62 @@ void main() {
         ),
       ],
     );
+
+    test('CB-APP-B1: cargar no consulta si el Cubit esta cerrado', () async {
+      final c = cubit();
+      final estadoInicial = c.state;
+
+      await c.close();
+      await c.cargar();
+
+      verifyNever(() => repo.reporteDenunciado(201));
+      expect(c.state, same(estadoInicial));
+      expect(c.isClosed, isTrue);
+    });
+
+    test('CB-APP-B2: cerrar durante una carga exitosa no emite Cargado', () async {
+      final respuesta = Completer<DetalleReporteDenunciado>();
+
+      when(
+        () => repo.reporteDenunciado(201),
+      ).thenAnswer((_) => respuesta.future);
+
+      final c = cubit();
+      final futuro = c.cargar();
+
+      expect(c.state, const RevisionReporteCargando());
+
+      await c.close();
+      respuesta.complete(_detalle);
+
+      await expectLater(futuro, completes);
+
+      expect(c.state, const RevisionReporteCargando());
+      verify(() => repo.reporteDenunciado(201)).called(1);
+    });
+
+    test('CB-APP-B3: cerrar durante una carga fallida no emite Error', () async {
+      final respuesta = Completer<DetalleReporteDenunciado>();
+
+      when(
+        () => repo.reporteDenunciado(201),
+      ).thenAnswer((_) => respuesta.future);
+
+      final c = cubit();
+      final futuro = c.cargar();
+
+      expect(c.state, const RevisionReporteCargando());
+
+      await c.close();
+      respuesta.completeError(const ApiException.sinConexion());
+
+      await expectLater(futuro, completes);
+
+      expect(c.state, const RevisionReporteCargando());
+      verify(() => repo.reporteDenunciado(201)).called(1);
+    });
+
+
   });
 
   group('resolver (HU 7.1 c3)', () {
