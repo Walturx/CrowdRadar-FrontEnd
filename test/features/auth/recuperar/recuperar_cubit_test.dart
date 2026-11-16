@@ -6,6 +6,7 @@ import 'package:crowdradar/features/auth/recuperar/recuperar_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import '../../../helpers/errores_comunes.dart';
+import 'dart:async';
 
 class _AuthRepoMock extends Mock implements AuthRepository {}
 
@@ -129,6 +130,30 @@ void main() {
     await cubit.close();
     await expectLater(envio, completes);
   });
+
+
+test(
+  'CB-APP: no emite un error si el Cubit se cierra durante la recuperación',
+  () async {
+    final respuesta = Completer<void>();
+    when(
+      () => repo.solicitarRecuperacion('ana@test.com'),
+    ).thenAnswer((_) => respuesta.future);
+    final cubit = RecuperarCubit(repo);
+    final envio = cubit.enviar('ana@test.com');
+    expect(cubit.state, isA<RecuperarEnviando>());
+    await cubit.close();
+    respuesta.completeError(
+      const ApiException.sinConexion(),
+    );
+    await expectLater(envio, completes);
+    expect(cubit.isClosed, isTrue);
+    verify(
+      () => repo.solicitarRecuperacion('ana@test.com'),
+    ).called(1);
+  },
+);
+
 
   group('common errors', () {
     testErroresComunes('ends as Fallido and accepts a retry', (caso) async {

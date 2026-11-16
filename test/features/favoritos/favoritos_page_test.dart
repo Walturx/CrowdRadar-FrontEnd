@@ -190,24 +190,40 @@ void main() {
       expect((await repo.listar()).items, hasLength(2));
     });
 
-    testWidgets('Deshacer after the page is gone does not throw (R3-803)', (
-      tester,
-    ) async {
-      final repo = await conFavoritos([1, 2]);
-      await abrir(tester, repo);
-      await tester.tap(find.byKey(const Key('eliminar-1')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Eliminar'));
-      await tester.pumpAndSettle();
+    
+    
+    testWidgets(
+      'Deshacer after the page is gone does not throw (R3-803)',
+      (tester) async {
+        final repo = await conFavoritos([1, 2]);
+        await abrir(tester, repo);
 
-      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/mapa');
-      await tester.pump();
-      await tester.pump();
-      await tester.tap(find.text('Deshacer'));
-      await tester.pumpAndSettle();
+        // Eliminar un favorito.
+        await tester.tap(find.byKey(const Key('eliminar-1')));
+        await tester.pumpAndSettle();
 
-      expect(tester.takeException(), isNull);
-    });
+        await tester.tap(find.text('Eliminar'));
+        await tester.pumpAndSettle();
+
+        // Comprobamos que aparece la acción Deshacer.
+        expect(find.text('Deshacer'), findsOneWidget);
+
+        // El usuario abandona la pantalla de favoritos.
+        GoRouter.of(
+          tester.element(find.byType(Scaffold).first),
+        ).go('/mapa');
+
+        await tester.pumpAndSettle();
+
+        // La aplicación no debe lanzar excepciones.
+        expect(tester.takeException(), isNull);
+
+        // La nueva pantalla debe mostrarse correctamente.
+        expect(find.text('RUTA /mapa'), findsOneWidget);
+      },
+    );
+
+
 
     testWidgets('removing the last one shows the empty state', (tester) async {
       await abrir(tester, await conFavoritos([1]));

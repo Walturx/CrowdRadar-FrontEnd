@@ -15,11 +15,23 @@ void main() {
   late _AuthRepoMock repo;
   setUp(() => repo = _AuthRepoMock());
 
-  Future<void> abrir(WidgetTester tester) async {
+  
+  Future<void> abrir(
+    WidgetTester tester, {
+    double escalaTexto = 1.0,
+  }) async {
     await tester.pumpWidget(
       RepositoryProvider<AuthRepository>.value(
         value: repo,
         child: MaterialApp.router(
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(escalaTexto),
+              ),
+              child: child!,
+            );
+          },
           routerConfig: enrutadorDe(
             ruta: '/login',
             inicial: '/login',
@@ -29,6 +41,7 @@ void main() {
       ),
     );
   }
+
 
   Future<void> enviar(WidgetTester tester) async {
     await tester.enterText(find.byType(TextFormField).at(0), 'ana@test.com');
@@ -136,7 +149,6 @@ void main() {
   testWidgets('the form scrolls instead of overflowing behind the keyboard', (
     tester,
   ) async {
-    // A phone-sized screen with the keyboard covering ~40 % of it.
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(412, 915);
     tester.view.viewInsets = const FakeViewPadding(bottom: 400);
@@ -182,4 +194,108 @@ void main() {
 
     expect(find.text('RUTA /recuperar'), findsOneWidget);
   });
+
+
+  group('CRO-85: usabilidad y accesibilidad', () {
+    testWidgets(
+      'ACC-APP-01: el login soporta texto ampliado al 130%',
+      (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(412, 915);
+        addTearDown(tester.view.reset);
+
+        await abrir(tester, escalaTexto: 1.3);
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+
+        expect(find.byType(TextFormField), findsNWidgets(2));
+
+        final boton = find.byKey(
+          const Key('boton-iniciar-sesion'),
+        );
+
+        await tester.ensureVisible(boton);
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        expect(boton.hitTestable(), findsOneWidget);
+      },
+    );
+
+    
+    testWidgets(
+      'ACC-APP-02: los campos de acceso tienen etiquetas',
+      (tester) async {
+        await abrir(tester);
+
+        expect(find.byType(TextFormField), findsNWidgets(2));
+
+
+        final decoradores = tester.widgetList<InputDecorator>(
+          find.descendant(
+            of: find.byType(TextFormField),
+            matching: find.byType(InputDecorator),
+          ),
+        ).toList();
+
+        expect(decoradores, hasLength(2));
+
+        for (final decorador in decoradores) {
+          final etiqueta = decorador.decoration.labelText ?? '';
+          final ayuda = decorador.decoration.hintText ?? '';
+
+          expect(
+            etiqueta.trim().isNotEmpty ||
+                ayuda.trim().isNotEmpty,
+            isTrue,
+            reason: 'El campo necesita una etiqueta descriptiva',
+          );
+        }
+      },
+    );
+
+
+    testWidgets(
+      'ACC-APP-03: el boton de login tiene un area tactil adecuada',
+      (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(412, 915);
+        addTearDown(tester.view.reset);
+
+        await abrir(tester);
+
+        final boton = find.descendant(
+          of: find.byKey(const Key('boton-iniciar-sesion')),
+          matching: find.byType(ElevatedButton),
+        );
+
+        expect(boton, findsOneWidget);
+
+        await tester.ensureVisible(boton);
+        await tester.pumpAndSettle();
+
+        final tamano = tester.getSize(boton);
+
+        expect(
+          tamano.width,
+          greaterThanOrEqualTo(48),
+          reason: 'El boton debe tener al menos 48 px de ancho',
+        );
+
+        expect(
+          tamano.height,
+          greaterThanOrEqualTo(48),
+          reason: 'El boton debe tener al menos 48 px de alto',
+        );
+
+        expect(boton.hitTestable(), findsOneWidget);
+      },
+    );
+
+
+
+  });
+
+
 }
