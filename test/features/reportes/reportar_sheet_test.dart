@@ -30,23 +30,41 @@ void main() {
   late ReporteRepository repo;
   bool? resultado;
 
-  Future<void> abrir(WidgetTester tester) async {
+  
+  Future<void> abrir(
+    WidgetTester tester, {
+    double escalaTexto = 1.0,
+    Size tamano = const Size(800, 2400),
+  }) async {
     resultado = null;
-    tester.view.physicalSize = const Size(800, 2400);
-    addTearDown(tester.view.resetPhysicalSize);
+
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = tamano;
+    addTearDown(tester.view.reset);
+
     await tester.pumpWidget(
       RepositoryProvider<ReporteRepository>.value(
         value: repo,
         child: MaterialApp(
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(escalaTexto),
+              ),
+              child: child!,
+            );
+          },
           home: Builder(
             builder: (context) => Scaffold(
               body: Center(
                 child: ElevatedButton(
-                  onPressed: () async => resultado = await mostrarReportarSheet(
-                    context,
-                    lugarId: 1,
-                    lugarNombre: 'Parque Kennedy',
-                  ),
+                  onPressed: () async {
+                    resultado = await mostrarReportarSheet(
+                      context,
+                      lugarId: 1,
+                      lugarNombre: 'Parque Kennedy',
+                    );
+                  },
                   child: const Text('abrir'),
                 ),
               ),
@@ -55,9 +73,11 @@ void main() {
         ),
       ),
     );
+
     await tester.tap(find.text('abrir'));
     await tester.pumpAndSettle();
   }
+
 
   late ReporteRepositoryFake fake;
 
@@ -246,4 +266,68 @@ void main() {
 
     expect(resultado, isNull);
   });
+
+
+group('CRO-85: accesibilidad del reporte', () {
+  testWidgets(
+    'ACC-APP-06: los niveles siguen disponibles con texto al 130%',
+    (tester) async {
+      await abrir(
+        tester,
+        escalaTexto: 1.3,
+        tamano: const Size(412, 915),
+      );
+
+      expect(tester.takeException(), isNull);
+
+      for (final nivel in ['Tranquilo', 'Moderado', 'Saturado']) {
+        final opcion = find.text(nivel);
+
+        await tester.ensureVisible(opcion);
+        await tester.pumpAndSettle();
+
+        expect(opcion.hitTestable(), findsOneWidget);
+      }
+
+      final enviar = find.text('Enviar reporte');
+
+      await tester.ensureVisible(enviar);
+      await tester.pumpAndSettle();
+
+      expect(enviar.hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'ACC-APP-07: el boton de enviar tiene un area tactil adecuada',
+    (tester) async {
+      await abrir(tester);
+
+      final boton = find.widgetWithText(
+        ElevatedButton,
+        'Enviar reporte',
+      );
+
+      expect(boton, findsOneWidget);
+
+      final tamano = tester.getSize(boton);
+
+      expect(
+        tamano.width,
+        greaterThanOrEqualTo(48),
+        reason: 'El boton debe medir al menos 48 px de ancho',
+      );
+
+      expect(
+        tamano.height,
+        greaterThanOrEqualTo(48),
+        reason: 'El boton debe medir al menos 48 px de alto',
+      );
+    },
+  );
+});
+
+
+
 }

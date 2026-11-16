@@ -429,6 +429,54 @@ void main() {
       await c.close();
     });
 
+
+    test('CB-APP: ignora una pagina antigua al cambiar el filtro', () async {
+      final c = await cargado(
+        _pagina([1], total: 2, totalPaginas: 2),
+      );
+
+      final respuestaAntigua = Completer<Pagina<UsuarioAdmin>>();
+
+      when(
+        () => repo.usuarios(
+          q: any(named: 'q'),
+          status: null,
+          orden: any(named: 'orden'),
+          page: 2,
+          size: any(named: 'size'),
+        ),
+      ).thenAnswer((_) => respuestaAntigua.future);
+
+      final cargaAntigua = c.cargarMas();
+
+      when(
+        () => repo.usuarios(
+          q: any(named: 'q'),
+          status: EstadoCuenta.suspendido,
+          orden: any(named: 'orden'),
+          page: 1,
+          size: any(named: 'size'),
+        ),
+      ).thenAnswer((_) async => _pagina([9]));
+
+      await c.filtrar(EstadoCuenta.suspendido);
+
+      respuestaAntigua.complete(
+        _pagina([2], page: 2, total: 2, totalPaginas: 2),
+      );
+
+      await cargaAntigua;
+
+      final estado = c.state as UsuariosAdminCargado;
+
+      expect(estado.usuarios.map((u) => u.id).toList(), [9]);
+      expect(estado.status, EstadoCuenta.suspendido);
+      expect(estado.cargandoMas, isFalse);
+
+      await c.close();
+    });
+
+
     test('a failure keeps the list and reports an aviso', () async {
       final c = await cargado(_pagina([1], total: 2, totalPaginas: 2));
       when(
