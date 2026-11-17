@@ -46,7 +46,32 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('a failed login shows the error message in a snackbar', (
+  testWidgets('a failed login shows the error message in a banner above '
+      'the form, not in a snackbar', (tester) async {
+    when(() => repo.iniciarSesion(any(), any())).thenThrow(
+      const ApiException(status: 401, message: 'Credenciales inválidas'),
+    );
+    await abrir(tester);
+
+    await enviar(tester);
+
+    final aviso = find.byKey(const ValueKey('aviso-error-login'));
+    expect(aviso, findsOneWidget);
+    expect(
+      find.descendant(of: aviso, matching: find.text('Credenciales inválidas')),
+      findsOneWidget,
+    );
+    expect(find.text('Credenciales inválidas'), findsOneWidget);
+    expect(find.byType(SnackBar), findsNothing);
+    expect(find.text('RUTA /mapa'), findsNothing);
+    // The banner sits above the form.
+    expect(
+      tester.getRect(aviso).bottom,
+      lessThanOrEqualTo(tester.getRect(find.byType(TextFormField).at(0)).top),
+    );
+  });
+
+  testWidgets('a failed login keeps what the user typed in the fields', (
     tester,
   ) async {
     when(() => repo.iniciarSesion(any(), any())).thenThrow(
@@ -56,9 +81,13 @@ void main() {
 
     await enviar(tester);
 
-    expect(find.byKey(const ValueKey('aviso-error-login')), findsOneWidget);
-    expect(find.text('Credenciales inválidas'), findsOneWidget);
-    expect(find.text('RUTA /mapa'), findsNothing);
+    expect(find.text('ana@test.com'), findsOneWidget);
+  });
+
+  testWidgets('no error banner is shown before any attempt', (tester) async {
+    await abrir(tester);
+
+    expect(find.byKey(const ValueKey('aviso-error-login')), findsNothing);
   });
 
   testWidgets('a 429 disables the button while the wait counts down', (
@@ -216,31 +245,33 @@ void main() {
     testWidgets('ACC-APP-02: los campos de acceso tienen etiquetas', (
       tester,
     ) async {
+      final semantica = tester.ensureSemantics();
       await abrir(tester);
 
       expect(find.byType(TextFormField), findsNWidgets(2));
 
-      final decoradores = tester
-          .widgetList<InputDecorator>(
-            find.descendant(
-              of: find.byType(TextFormField),
-              matching: find.byType(InputDecorator),
-            ),
-          )
-          .toList();
-
-      expect(decoradores, hasLength(2));
-
-      for (final decorador in decoradores) {
-        final etiqueta = decorador.decoration.labelText ?? '';
-        final ayuda = decorador.decoration.hintText ?? '';
-
+      const etiquetas = {
+        'campo-correo-login': 'Correo electrónico',
+        'campo-contrasena-login': 'Contraseña',
+      };
+      for (final MapEntry(key: clave, value: etiqueta) in etiquetas.entries) {
+        final campo = find.byKey(Key(clave));
+        final texto = find.text(etiqueta);
+        expect(campo, findsOneWidget);
+        // The label is always visible, above its field.
+        expect(texto, findsOneWidget, reason: 'Falta la etiqueta $etiqueta');
         expect(
-          etiqueta.trim().isNotEmpty || ayuda.trim().isNotEmpty,
-          isTrue,
-          reason: 'El campo necesita una etiqueta descriptiva',
+          tester.getRect(texto).bottom,
+          lessThanOrEqualTo(tester.getRect(campo).top),
+          reason: 'La etiqueta $etiqueta debe ir arriba del campo',
+        );
+        // Screen readers still announce the label with the field.
+        expect(
+          tester.getSemantics(find.byKey(Key(clave))),
+          isSemantics(label: etiqueta, isTextField: true),
         );
       }
+      semantica.dispose();
     });
 
     testWidgets('ACC-APP-03: el boton de login tiene un area tactil adecuada', (
@@ -274,6 +305,52 @@ void main() {
       );
 
       expect(boton.hitTestable(), findsOneWidget);
+    });
+
+    testWidgets('S5: el boton y los enlaces miden al menos 44 x 44', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(412, 915);
+      addTearDown(tester.view.reset);
+      await abrir(tester);
+
+      for (final clave in const [
+        'boton-iniciar-sesion',
+        'enlace-olvidaste-contrasena',
+        'enlace-registrate',
+      ]) {
+        final objetivo = find.byKey(Key(clave));
+        expect(objetivo, findsOneWidget, reason: clave);
+        final tamano = tester.getSize(objetivo);
+        expect(tamano.width, greaterThanOrEqualTo(44), reason: clave);
+        expect(tamano.height, greaterThanOrEqualTo(44), reason: clave);
+      }
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('enlace-olvidaste-contrasena')),
+          matching: find.text('¿Olvidaste tu contraseña?'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('enlace-registrate')),
+          matching: find.textContaining('Regístrate', findRichText: true),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('muestra el subtitulo explicativo bajo el titulo', (
+      tester,
+    ) async {
+      await abrir(tester);
+
+      expect(
+        find.text('Mira qué tan lleno está un lugar antes de salir.'),
+        findsOneWidget,
+      );
     });
   });
 }
