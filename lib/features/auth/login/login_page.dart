@@ -59,9 +59,12 @@ class _LoginViewState extends State<_LoginView> {
           // The session guard sends an ADMIN on to the moderation panel.
           context.go(Rutas.mapa);
         } else if (state is LoginFallido) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.mensaje)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              key: const ValueKey('aviso-error-login'),
+              content: Text(state.mensaje),
+            ),
+          );
         }
       },
       builder: (context, state) {

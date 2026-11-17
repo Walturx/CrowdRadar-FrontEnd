@@ -11,6 +11,7 @@ class AdminLayout extends StatelessWidget {
   Widget build(BuildContext context) => Scaffold(
     body: shell,
     bottomNavigationBar: NavigationBar(
+      key: const ValueKey('nav-admin'),
       selectedIndex: shell.currentIndex,
       onDestinationSelected: (index) =>
           shell.goBranch(index, initialLocation: index == shell.currentIndex),

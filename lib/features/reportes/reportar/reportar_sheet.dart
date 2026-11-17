@@ -130,6 +130,7 @@ class _Formulario extends StatelessWidget {
           ),
         const SizedBox(height: 8),
         BotonPrincipal(
+          key: const Key('boton-enviar-reporte'),
           texto: (fallo?.reintentable ?? false)
               ? 'Reintentar'
               : 'Enviar reporte',

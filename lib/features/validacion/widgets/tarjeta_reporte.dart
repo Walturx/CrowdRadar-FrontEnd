@@ -18,6 +18,7 @@ class TarjetaReporte extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
+    key: const ValueKey('tarjeta-reporte-superficie'),
     child: Padding(
       padding: const EdgeInsets.all(16),
       child: Column(

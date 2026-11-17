@@ -185,7 +185,7 @@ void main() {
       expect(find.text('Reporte enviado'), findsOneWidget);
       expect(
         find.descendant(
-          of: find.byType(SnackBar),
+          of: find.byKey(const ValueKey('aviso-reporte-enviado')),
           matching: find.textContaining(RegExp(r'\+|puntos|karma')),
         ),
         findsNothing,
@@ -206,7 +206,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repo.detallesPedidos, [1]);
-      expect(find.byType(SnackBar), findsNothing);
+      expect(find.byKey(const ValueKey('aviso-reporte-enviado')), findsNothing);
+      expect(find.byKey(const ValueKey('aviso-detalle-lugar')), findsNothing);
     });
 
     testWidgets('dismissing the sheet without sending does not reload', (
@@ -446,13 +447,13 @@ void main() {
     ) async {
       repo = RepoLugarFalso(alObtener: (_) async => _detalle());
       await abrir(tester);
-      expect(find.byIcon(Icons.favorite_border), findsOneWidget);
+      expect(find.byTooltip('Agregar a favoritos'), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.favorite_border));
+      await tester.tap(find.byTooltip('Agregar a favoritos'));
       await tester.pump();
       await tester.pump();
 
-      expect(find.byIcon(Icons.favorite), findsOneWidget);
+      expect(find.byTooltip('Quitar de favoritos'), findsOneWidget);
       expect((await favoritos.listar()).items.single.lugarId, 1);
     });
 
@@ -467,12 +468,12 @@ void main() {
       repo = RepoLugarFalso(alObtener: (_) async => _detalle());
       await abrir(tester);
 
-      await tester.tap(find.byIcon(Icons.favorite_border));
+      await tester.tap(find.byTooltip('Agregar a favoritos'));
       await tester.pump();
       await tester.pump();
 
       expect(find.text('Servidor caído'), findsOneWidget);
-      expect(find.byIcon(Icons.favorite_border), findsOneWidget);
+      expect(find.byTooltip('Agregar a favoritos'), findsOneWidget);
     });
   });
 }

@@ -269,6 +269,7 @@ class _AvisoSinConexion extends StatelessWidget {
               ),
             ),
             IconButton(
+              key: const ValueKey('cerrar-aviso-mapa'),
               icon: const Icon(Icons.close, size: 18, color: Colors.white),
               onPressed: onCerrar,
             ),

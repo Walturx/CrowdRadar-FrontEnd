@@ -144,7 +144,9 @@ void main() {
     testWidgets('confirming calls SesionCubit.cerrarSesion', (tester) async {
       await tocarCerrar(tester);
 
-      await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
+      await tester.tap(
+        find.byKey(const ValueKey('confirmar-accion-confirmar')),
+      );
       await tester.pumpAndSettle();
 
       verify(() => sesion.cerrarSesion()).called(1);

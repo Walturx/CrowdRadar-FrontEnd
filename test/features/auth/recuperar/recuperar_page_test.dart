@@ -30,7 +30,7 @@ void main() {
 
   Future<void> enviar(WidgetTester tester, String correo) async {
     await tester.enterText(find.byType(TextFormField), correo);
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Enviar enlace'));
+    await tester.tap(find.byKey(const Key('boton-enviar-enlace')));
     await tester.pump();
     await tester.pump();
   }
@@ -41,7 +41,10 @@ void main() {
     expect(find.byType(TextFormField), findsOneWidget);
     expect(find.text('Correo electrónico'), findsOneWidget);
     expect(
-      find.widgetWithText(ElevatedButton, 'Enviar enlace'),
+      find.descendant(
+        of: find.byKey(const Key('boton-enviar-enlace')),
+        matching: find.text('Enviar enlace'),
+      ),
       findsOneWidget,
     );
   });

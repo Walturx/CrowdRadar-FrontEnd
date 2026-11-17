@@ -34,8 +34,19 @@ void main() {
     await abrir(tester, ValidacionRepositoryFake());
 
     expect(find.text('Estado de mis reportes'), findsOneWidget);
-    for (final f in ['Todos', 'Validados', 'En validación', 'Rechazados']) {
-      expect(find.widgetWithText(ChoiceChip, f), findsOneWidget);
+    for (final (clave, f) in [
+      ('todos', 'Todos'),
+      ('validados', 'Validados'),
+      ('enValidacion', 'En validación'),
+      ('rechazados', 'Rechazados'),
+    ]) {
+      expect(
+        find.descendant(
+          of: find.byKey(Key('filtro-$clave')),
+          matching: find.text(f),
+        ),
+        findsOneWidget,
+      );
     }
     expect(find.text('Parque Kennedy'), findsOneWidget);
     expect(find.text('2 confirman · 1 rechazan'), findsOneWidget);
@@ -45,7 +56,7 @@ void main() {
   testWidgets('a filter without matches says so', (tester) async {
     await abrir(tester, ValidacionRepositoryFake());
 
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Validados'));
+    await tester.tap(find.byKey(const Key('filtro-validados')));
     await tester.pumpAndSettle();
 
     expect(find.text('Parque Kennedy'), findsNothing);

@@ -19,12 +19,7 @@ import 'json_validacion.dart';
 class _MockRepo extends Mock implements ValidacionRepository {}
 
 /// The row that holds the "¡Gracias por validar!" title.
-Finder _filaGracias() => find
-    .ancestor(
-      of: find.text('¡Gracias por validar!'),
-      matching: find.byType(Row),
-    )
-    .first;
+Finder _filaGracias() => find.byKey(const Key('fila-gracias'));
 
 /// Any tier badge image, or the one at [ruta].
 Finder _insigniaTier([String? ruta]) => find.byWidgetPredicate(

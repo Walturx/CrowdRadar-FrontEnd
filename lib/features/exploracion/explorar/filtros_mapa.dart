@@ -88,7 +88,10 @@ class _Controles extends StatelessWidget {
                   padding: const EdgeInsets.only(left: 8),
                   child: ChoiceChip(
                     key: Key('chip-categoria-${c.categoria?.name}'),
-                    avatar: Text(emojiCategoria(c.categoria)),
+                    avatar: Text(
+                      emojiCategoria(c.categoria),
+                      key: Key('icono-categoria-${c.categoria?.name}'),
+                    ),
                     label: Text(c.etiqueta),
                     selected: c.categoria == estado.categoria,
                     onSelected: (_) => cubit.seleccionarCategoria(c.categoria),

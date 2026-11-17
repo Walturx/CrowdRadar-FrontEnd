@@ -48,7 +48,7 @@ void main() {
   ) async {
     await _abrirAdmin(tester, '/admin/reportes');
 
-    final nav = find.byType(NavigationBar);
+    final nav = find.byKey(const ValueKey('nav-admin'));
     expect(nav, findsOneWidget);
     expect(
       find.descendant(of: nav, matching: find.text('Reportes')),
@@ -65,7 +65,7 @@ void main() {
 
     await tester.tap(
       find.descendant(
-        of: find.byType(NavigationBar),
+        of: find.byKey(const ValueKey('nav-admin')),
         matching: find.text('Usuarios'),
       ),
     );
@@ -111,7 +111,7 @@ void main() {
 
     void expectPanelDeModeracion() {
       expect(find.text('Reportes denunciados'), findsOneWidget);
-      final nav = find.byType(NavigationBar);
+      final nav = find.byKey(const ValueKey('nav-admin'));
       expect(
         find.descendant(of: nav, matching: find.text('Reportes')),
         findsOneWidget,
@@ -150,7 +150,9 @@ void main() {
 
       await tester.tap(find.byTooltip('Cerrar sesión'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
+      await tester.tap(
+        find.byKey(const ValueKey('confirmar-accion-confirmar')),
+      );
       await tester.pumpAndSettle();
 
       expect(SessionService.instance.token, isNull);

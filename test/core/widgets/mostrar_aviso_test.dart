@@ -39,17 +39,17 @@ void main() {
     await tester.tap(find.text('avisar'));
     await tester.pump();
 
-    final fila = find
-        .ancestor(of: find.text('Hola'), matching: find.byType(Row))
-        .first;
+    final aviso = find.byKey(const ValueKey('mostrar-aviso'));
+    final texto = find.descendant(of: aviso, matching: find.text('Hola'));
+    final alLado = find.descendant(of: aviso, matching: find.text('al lado'));
+    expect(texto, findsOneWidget);
+    expect(alLado, findsOneWidget);
+    // Beside: to the right of the text, on the same line.
     expect(
-      find.descendant(of: find.byType(SnackBar), matching: fila),
-      findsOneWidget,
+      tester.getRect(alLado).left,
+      greaterThanOrEqualTo(tester.getRect(texto).right),
     );
-    expect(
-      find.descendant(of: fila, matching: find.text('al lado')),
-      findsOneWidget,
-    );
+    expect(tester.getCenter(alLado).dy, closeTo(tester.getCenter(texto).dy, 1));
   });
 
   testWidgets('a new notice replaces the current one', (tester) async {

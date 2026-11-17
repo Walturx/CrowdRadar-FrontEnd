@@ -229,6 +229,7 @@ class _Fila extends StatelessWidget {
           children: [
             Text(
               emojiCategoria(favorito.categoria),
+              key: Key('icono-categoria-${favorito.categoria?.name}'),
               style: const TextStyle(fontSize: 26),
             ),
             const SizedBox(width: 12),

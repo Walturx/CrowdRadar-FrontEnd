@@ -54,7 +54,7 @@ void main() {
     ]) {
       expect(find.text(etiqueta), findsOneWidget);
     }
-    expect(find.text('🌳'), findsOneWidget);
+    expect(find.byKey(const Key('icono-categoria-parque')), findsOneWidget);
     expect(find.text('Tranquilo'), findsOneWidget);
     expect(find.text('Moderado'), findsOneWidget);
     expect(find.text('Saturado'), findsOneWidget);
@@ -104,16 +104,16 @@ void main() {
 
   testWidgets('the selected chip is marked', (tester) async {
     await abrir(tester, ExploracionRepositoryFake());
-    ChoiceChip chip(String texto) => tester.widget<ChoiceChip>(
-      find.ancestor(of: find.text(texto), matching: find.byType(ChoiceChip)),
-    );
-    expect(chip('Parques').selected, isFalse);
+    bool seleccionado(String texto) => isSemantics(
+      isSelected: true,
+    ).matches(tester.getSemantics(find.text(texto)), {});
+    expect(seleccionado('Parques'), isFalse);
 
     await tester.tap(find.text('Parques'));
     await tester.pump();
 
-    expect(chip('Parques').selected, isTrue);
-    expect(chip('Mercados').selected, isFalse);
+    expect(seleccionado('Parques'), isTrue);
+    expect(seleccionado('Mercados'), isFalse);
   });
 
   testWidgets('a failed categories load offers Reintentar', (tester) async {

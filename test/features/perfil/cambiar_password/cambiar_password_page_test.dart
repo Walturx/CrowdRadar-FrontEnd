@@ -67,7 +67,7 @@ void main() {
   }
 
   Future<void> enviar(WidgetTester tester) async {
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Cambiar contraseña'));
+    await tester.tap(find.byKey(const Key('boton-cambiar-password')));
     await tester.pump();
     await tester.pump();
   }
@@ -80,19 +80,26 @@ void main() {
     expect(campo('campo-password-confirmar'), findsOneWidget);
   });
 
+  /// Requirement rows in [estado] ('cumplido' or 'pendiente').
+  Finder requisitos(String estado) => find.byWidgetPredicate(
+    (w) =>
+        w.key is ValueKey<String> &&
+        (w.key! as ValueKey<String>).value.startsWith('requisito-$estado-'),
+  );
+
   testWidgets('the requirement list reacts to what is typed', (tester) async {
     await abrir(tester);
     expect(find.text('Al menos 8 caracteres'), findsOneWidget);
 
     await tester.enterText(campo('campo-password-nueva'), 'abc');
     await tester.pump();
-    expect(find.byIcon(Icons.check_circle), findsOneWidget); // only the maximum
-    expect(find.byIcon(Icons.radio_button_unchecked), findsNWidgets(3));
+    expect(requisitos('cumplido'), findsOneWidget); // only the maximum
+    expect(requisitos('pendiente'), findsNWidgets(3));
 
     await tester.enterText(campo('campo-password-nueva'), 'Secreta1');
     await tester.pump();
-    expect(find.byIcon(Icons.check_circle), findsNWidgets(4));
-    expect(find.byIcon(Icons.radio_button_unchecked), findsNothing);
+    expect(requisitos('cumplido'), findsNWidgets(4));
+    expect(requisitos('pendiente'), findsNothing);
   });
 
   testWidgets('the byte limit row shows only when it is exceeded', (

@@ -84,7 +84,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byType(ElevatedButton));
+      await tester.tap(find.byType(BotonPrincipal));
       expect(toques, 0);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.text('Guardar'), findsNothing);
@@ -103,7 +103,9 @@ void main() {
 
     await tester.tap(find.byType(PinSaturacion));
     expect(toques, 1);
-    final icono = tester.widget<Icon>(find.byIcon(Icons.location_on));
+    final icono = tester.widget<Icon>(
+      find.byKey(const ValueKey('pin-saturacion-icono')),
+    );
     expect(icono.color, ChipSaturacion.colorDe(NivelSaturacion.saturado));
   });
 }

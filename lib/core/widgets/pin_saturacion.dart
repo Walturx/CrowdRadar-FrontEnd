@@ -24,6 +24,7 @@ class PinSaturacion extends StatelessWidget {
         message: etiqueta ?? '',
         child: Icon(
           Icons.location_on,
+          key: const ValueKey('pin-saturacion-icono'),
           color: ChipSaturacion.colorDe(nivel),
           size: 40,
         ),

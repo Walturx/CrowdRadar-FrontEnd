@@ -67,9 +67,12 @@ class _DetalleView extends StatelessWidget {
           (previo is! DetalleCargado || previo.aviso != actual.aviso),
       listener: (context, state) {
         final aviso = (state as DetalleCargado).aviso!;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(aviso)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            key: const ValueKey('aviso-detalle-lugar'),
+            content: Text(aviso),
+          ),
+        );
       },
       builder: (context, state) => Scaffold(
         appBar: AppBar(
@@ -140,7 +143,12 @@ class _DetalleView extends StatelessWidget {
         (e) => e is! ReportarEnviando,
       );
       if (fin is! ReportarEnviado) return;
-      mensajes.showSnackBar(const SnackBar(content: Text('Reporte enviado')));
+      mensajes.showSnackBar(
+        const SnackBar(
+          key: ValueKey('aviso-reporte-enviado'),
+          content: Text('Reporte enviado'),
+        ),
+      );
       await detalleCubit.refrescar();
     } finally {
       await reportar.close();

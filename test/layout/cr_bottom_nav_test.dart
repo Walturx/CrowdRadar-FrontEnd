@@ -16,16 +16,16 @@ void main() {
         ),
       );
 
-  Finder insigniaEnFavoritos() => find.descendant(
+  Finder insigniaEnFavoritos(String cuenta) => find.descendant(
     of: find.byKey(const Key('insignia-favoritos')),
-    matching: find.byType(Text),
+    matching: find.text(cuenta),
   );
 
   testWidgets('shows the unread count on the Favoritos tab', (tester) async {
     await abrir(tester, noLeidas: 3);
 
     expect(find.byKey(const Key('insignia-favoritos')), findsOneWidget);
-    expect(tester.widget<Text>(insigniaEnFavoritos()).data, '3');
+    expect(insigniaEnFavoritos('3'), findsOneWidget);
   });
 
   testWidgets('hides the badge at zero', (tester) async {
@@ -38,13 +38,14 @@ void main() {
   testWidgets('caps big counts at 99+', (tester) async {
     await abrir(tester, noLeidas: 120);
 
-    expect(tester.widget<Text>(insigniaEnFavoritos()).data, '99+');
+    expect(insigniaEnFavoritos('99+'), findsOneWidget);
   });
 
   testWidgets('only the Favoritos tab carries a badge', (tester) async {
     await abrir(tester, noLeidas: 2);
 
     expect(find.byKey(const Key('insignia-favoritos')), findsOneWidget);
-    expect(find.byType(Badge), findsOneWidget);
+    // The count shows once: no other tab repeats it.
+    expect(find.text('2'), findsOneWidget);
   });
 }

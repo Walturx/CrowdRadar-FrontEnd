@@ -150,6 +150,7 @@ class _Gracias extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              key: const Key('fila-gracias'),
               children: [
                 const Expanded(
                   child: Text(

@@ -61,12 +61,8 @@ void main() {
 
       expect(insignia(), findsOneWidget);
       expect(
-        tester
-            .widget<Text>(
-              find.descendant(of: insignia(), matching: find.byType(Text)),
-            )
-            .data,
-        '1',
+        find.descendant(of: insignia(), matching: find.text('1')),
+        findsOneWidget,
       );
     });
 
@@ -87,12 +83,8 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          tester
-              .widget<Text>(
-                find.descendant(of: insignia(), matching: find.byType(Text)),
-              )
-              .data,
-          '1',
+          find.descendant(of: insignia(), matching: find.text('1')),
+          findsOneWidget,
         );
       },
     );

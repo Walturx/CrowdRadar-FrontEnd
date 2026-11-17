@@ -15,10 +15,12 @@ Future<bool> confirmarAccion(
       content: contenido == null ? null : Text(contenido),
       actions: [
         TextButton(
+          key: const ValueKey('confirmar-accion-cancelar'),
           onPressed: () => Navigator.pop(dialogo, false),
           child: const Text('Cancelar'),
         ),
         TextButton(
+          key: const ValueKey('confirmar-accion-confirmar'),
           onPressed: () => Navigator.pop(dialogo, true),
           child: Text(etiquetaConfirmar),
         ),
