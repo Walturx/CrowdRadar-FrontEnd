@@ -24,7 +24,7 @@ Entrega: `ask-on-risk` (se espera más de 400 líneas: se preguntará la estrate
 
 | ID | Specs | Ruta | Estado | Evidencia / commit |
 |---|---|---|---|---|
-| T1 Documentos: alcance, plan de agentes y decisiones D1–D8 | S4 | inline (orquestador) | en curso: D1–D8 resueltas, falta el alcance del viernes | `c3a1012`, `d7bfd40` |
+| T1 Documentos: alcance, plan de agentes y decisiones D1–D8 | S4 | inline (orquestador) | **hecha** | `c3a1012`, `d7bfd40`, `1d7c513` |
 | T2 Claves y búsquedas estables en las pruebas | S7, S1 | delegado (escritor A, paralelo con T4) | pendiente | |
 | T3 Reloj inyectable | — | — | **cancelada** (D8 = a: datos relativos a la hora real, sin tocar `lib`) | |
 | T4 Capturas de referencia de las 8 pantallas, con fechas relativas a la hora real | S7 | delegado (escritor B, paralelo con T2) | pendiente | |
@@ -70,3 +70,13 @@ Entrega: `ask-on-risk` (se espera más de 400 líneas: se preguntará la estrate
   - D7 = B: alias temporales `@Deprecated` que se borran antes de cerrar.
   - Criterio de cierre: `flutter analyze` sin avisos de obsoletos.
   - Siguiente paso: acordar qué entra hasta el 2026-11-20.
+- **L7 (2026-11-17, textual):** «Todo el ticket para el viernes».
+  - Alcance del viernes: F1 a F5 completas.
+  - Calendario comprimido:
+    - martes 17: F1
+    - miércoles 18: F2 y F3
+    - jueves 19: F4 en paralelo
+    - viernes 20: T6b, T9 y PR
+  - Riesgo aceptado por el usuario: la revisión humana de capturas del viernes es el cuello de botella.
+  - T1 cerrada.
+- **L8 (2026-11-17):** Base de pruebas en la rama, con Flutter 3.47.9: `flutter test` → **1372 pasan, 0 fallan**. Se lanzan T2 y T4 en paralelo.
