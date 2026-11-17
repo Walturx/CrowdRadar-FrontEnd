@@ -73,6 +73,57 @@ void main() {
     expect(find.text('Revisar'), findsNWidgets(3));
   });
 
+  group('redesign (CRO-88 T8-G4)', () {
+    testWidgets('each row shows the level pill, the complaints pill and '
+        'a Revisar button', (tester) async {
+      await abrir(tester, ModeracionRepositoryFake());
+
+      final filas = find.byKey(const ValueKey('denunciado-fila'));
+      expect(filas, findsNWidgets(3));
+      for (var i = 0; i < 3; i++) {
+        final fila = filas.at(i);
+        expect(
+          find.descendant(
+            of: fila,
+            matching: find.byKey(const ValueKey('chip-saturacion')),
+          ),
+          findsOneWidget,
+        );
+        final denuncias = find.descendant(
+          of: fila,
+          matching: find.byKey(const ValueKey('chip-denuncias')),
+        );
+        expect(denuncias, findsOneWidget);
+        expect(
+          find.descendant(
+            of: denuncias,
+            matching: find.textContaining('denuncia'),
+          ),
+          findsOneWidget,
+        );
+        final revisar = find.descendant(
+          of: fila,
+          matching: find.widgetWithText(ElevatedButton, 'Revisar'),
+        );
+        expect(revisar, findsOneWidget);
+        final tam = tester.getSize(revisar);
+        expect(tam.height, greaterThanOrEqualTo(44));
+        expect(tam.width, greaterThanOrEqualTo(44));
+      }
+    });
+
+    testWidgets('the rows share one grouped card', (tester) async {
+      await abrir(tester, ModeracionRepositoryFake());
+
+      // The rows sit flush: the grouped card has no gaps between them.
+      final filas = find.byKey(const ValueKey('denunciado-fila'));
+      expect(
+        tester.getBottomLeft(filas.at(0)).dy,
+        tester.getTopLeft(filas.at(1)).dy,
+      );
+    });
+  });
+
   testWidgets('HU 7.1 c3 an empty queue shows the empty state', (tester) async {
     final repo = ModeracionRepositoryFake();
     for (final r in (await repo.reportesDenunciados()).items) {
