@@ -24,8 +24,8 @@ Widget withoutAnimations(BuildContext context, Widget? child) => MediaQuery(
 /// adjustment (see [_fillPlatformFont]).
 ThemeData get appTheme => _fillPlatformFont(AppTheme.lightTheme);
 
-/// Family a device uses when a TextStyle names none (Android: Roboto).
-const String _platformFont = 'Roboto';
+/// Family a device uses when a TextStyle names none: the app font.
+const String _platformFont = AppTheme.fontFamily;
 
 /// The test engine draws text whose style names no font family with its own
 /// box font, and that cannot be overridden from Dart. Theme styles that

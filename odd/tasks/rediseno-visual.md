@@ -28,9 +28,9 @@ Entrega: `ask-on-risk` → cadena `stacked-to-main`: PRs encadenados hacia `deve
 | T2 Claves y búsquedas estables en las pruebas | S7, S1 | delegado (escritor A, paralelo con T4) | **hecha**: `flutter analyze` sin problemas; sin goldens, 1372 pasan y 0 fallan; en lib solo hay `key:` (17 archivos) | `76c79e8` |
 | T3 Reloj inyectable | — | — | **cancelada** (D8 = a: datos relativos a la hora real, sin tocar `lib`) | |
 | T4 Capturas de referencia de las 8 pantallas, con fechas relativas a la hora real | S7 | delegado (escritor B); el escritor quedó `partial` por falta de memoria y el orquestador lo terminó inline | hecha, **falta la aprobación humana de las 25 capturas**. Verificación: `flutter test test/goldens` ×2 → 25/25; `flutter analyze` sin problemas; `flutter test` → 1397 pasan (1372 + 25), 0 fallan | ver commit T4 |
-| T5 Pruebas de las reglas de diseño (contraste, 44 px, nivel con medidor y texto) | S5 | delegado; después de T2 | pendiente | |
-| T6 Colores, theme e Inter con alias temporales (D7 = B) | S1, S5 | inline | pendiente | |
-| T6b Borrar los alias obsoletos al final de F4 | S1 | inline | pendiente | |
+| T5 Pruebas de las reglas de diseño | S5 | **absorbida**: el contraste está en T6 (`app_colors_test`); «nivel = color + medidor + texto» va como prueba en rojo de T7; los 44 px van en T8 | — | |
+| T6 Colores, theme e Inter con alias temporales (D7 = B) | S1, S5 | inline | **hecha**: primero en rojo (falta de miembros), después en verde (20/20 en `test/theme`); suite sin goldens: 1390 pasan; goldens regenerados con Inter, 25/25 ×2; `flutter analyze` sin problemas | ver commit T6 |
+| T6b Borrar los alias obsoletos al final de F4 | S1 | inline. Criterio: `grep` sin usos de `AppColors.(secondary\|success\|warning\|onPrimaryMuted\|borderNav)` fuera de `app_colors.dart`, porque `flutter_lints` no avisa del uso de miembros obsoletos del mismo paquete (hoy hay 15 usos) | pendiente | |
 | T7 Componentes compartidos: medidor, etiqueta de nivel, pin, íconos de categoría | S5, S3 | inline + verificador; requiere D1 | pendiente | |
 | T8-G1 Inicio de sesión | S6 | delegado (paralelo); requiere D2 | pendiente | |
 | T8-G2 Mapa, detalle, reportar | S6, S3 | delegado (paralelo); requiere D1, D3, D4 | pendiente | |

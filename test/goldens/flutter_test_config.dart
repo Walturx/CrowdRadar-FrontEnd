@@ -13,8 +13,22 @@ import 'package:flutter_test/flutter_test.dart';
 /// warning is printed.
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   TestWidgetsFlutterBinding.ensureInitialized();
+  await _loadAppFonts();
   await _loadSdkFonts();
   await testMain();
+}
+
+/// Inter, the app font bundled under `assets/fonts/inter/` (see pubspec.yaml).
+/// Tests run from the package root, so the path is relative to it.
+Future<void> _loadAppFonts() async {
+  final dir = Directory('assets${Platform.pathSeparator}fonts'
+      '${Platform.pathSeparator}inter');
+  if (!dir.existsSync()) return;
+  final inter = FontLoader('Inter');
+  for (final file in dir.listSync().whereType<File>()) {
+    if (file.path.endsWith('.ttf')) inter.addFont(_bytesOf(file));
+  }
+  await inter.load();
 }
 
 /// Roboto weights and styles the Material text theme can ask for.
