@@ -6,7 +6,7 @@
 - **Plan de trabajo y agentes:** [`plan-agentes.md`](plan-agentes.md)
 - **Seguimiento (ODD):** [`../../odd/tasks/rediseno-visual.md`](../../odd/tasks/rediseno-visual.md)
 
-**Estado:** borrador. No se toca código hasta que las decisiones de la sección 4 estén resueltas o marcadas como "se difiere".
+**Estado:** decisiones D1–D8 resueltas (2026-11-17). Falta acordar qué entra hasta la fecha límite (§5).
 
 ---
 
@@ -61,7 +61,7 @@ Cada decisión necesita respuesta antes de la fase que bloquea. "Recomendación"
 | D4 | ¿Se muestra la nota «Puedes reportar el mismo lugar cada 30 minutos»? | La regla solo vive en el servidor (`REPORTE_EN_ESPERA`) | No escribir «30» en la app; dejarlo para cuando la API lo devuelva | T8-G2 | Walter, 2026-11-17 | **Opción b:** nota sin número, «Puedes volver a reportar este lugar más tarde» |
 | D5 | ¿Se muestran los puntos en la tarjeta del tier? | `tarjeta_tier.dart:6-8` los oculta a propósito; `Usuario.puntos` existe | Decisión de producto; el dato ya está | T8-G4 | Walter, 2026-11-17 | **Sí:** la tarjeta del tier muestra `Usuario.puntos` |
 | D6 | ¿Qué colores usan las escalas de validación y confiabilidad? | `chip_estado_validacion.dart:13-16`, `insignia_confiabilidad.dart:15-18` usan `success`/`warning`/`danger` | Pasarlas a neutros más ícono para no confundirlas con los niveles | T6 | Walter, 2026-11-17 | **Aprobada:** neutros con ícono |
-| D7 | ¿Se mantienen alias para los colores que la paleta borra? | `secondary`, `success`, `warning`, `onPrimaryMuted` y `borderNav` se usan en 11 archivos | Sí: alias marcados como obsoletos, y se migran sus usos en el mismo ticket | T6 | | Pendiente |
+| D7 | ¿Se mantienen alias para los colores que la paleta borra? | `secondary`, `success`, `warning`, `onPrimaryMuted` y `borderNav` se usan en 11 archivos | Sí: alias marcados como obsoletos, y se migran sus usos en el mismo ticket | T6 | Walter, 2026-11-17 | **Opción B:** alias `@Deprecated` (`secondary`→`primary`, `success`→`tranquilo`, `warning`→`moderado`, `borderNav`→`border`; `onPrimaryMuted` se queda hasta quitar los encabezados azules). Cada grupo migra sus usos y los alias se borran antes de cerrar: `flutter analyze` sin avisos de obsoletos |
 | D8 | ¿Cómo se fija la hora en las capturas de referencia? | `haceCuanto(fecha, {DateTime? ahora})` ya acepta la hora (`formato_fecha.dart:2`), pero las pantallas no se la pasan. Las pruebas actuales arman fechas relativas a la hora real (`detalle_lugar_page_test.dart:44`) | a) Datos relativos a la hora real, sin tocar `lib`; pasar a b) (hora controlable desde las pantallas) solo si alguna captura falla de forma intermitente | T4 | Walter, 2026-11-17 | **Opción a:** no se toca `lib`; T3 se cancela |
 
 ## 5. Riesgos conocidos

@@ -24,12 +24,13 @@ Entrega: `ask-on-risk` (se espera más de 400 líneas: se preguntará la estrate
 
 | ID | Specs | Ruta | Estado | Evidencia / commit |
 |---|---|---|---|---|
-| T1 Documentos: alcance, plan de agentes y decisiones D1–D8 | S4 | inline (orquestador) | en curso: D1–D6 y D8 resueltas, falta D7 | `c3a1012` |
+| T1 Documentos: alcance, plan de agentes y decisiones D1–D8 | S4 | inline (orquestador) | en curso: D1–D8 resueltas, falta el alcance del viernes | `c3a1012`, `d7bfd40` |
 | T2 Claves y búsquedas estables en las pruebas | S7, S1 | delegado (escritor A, paralelo con T4) | pendiente | |
 | T3 Reloj inyectable | — | — | **cancelada** (D8 = a: datos relativos a la hora real, sin tocar `lib`) | |
 | T4 Capturas de referencia de las 8 pantallas, con fechas relativas a la hora real | S7 | delegado (escritor B, paralelo con T2) | pendiente | |
 | T5 Pruebas de las reglas de diseño (contraste, 44 px, nivel con medidor y texto) | S5 | delegado; después de T2 | pendiente | |
-| T6 Colores, theme e Inter con alias | S1, S5 | inline; requiere D6, D7 | pendiente | |
+| T6 Colores, theme e Inter con alias temporales (D7 = B) | S1, S5 | inline | pendiente | |
+| T6b Borrar los alias obsoletos al final de F4 | S1 | inline | pendiente | |
 | T7 Componentes compartidos: medidor, etiqueta de nivel, pin, íconos de categoría | S5, S3 | inline + verificador; requiere D1 | pendiente | |
 | T8-G1 Inicio de sesión | S6 | delegado (paralelo); requiere D2 | pendiente | |
 | T8-G2 Mapa, detalle, reportar | S6, S3 | delegado (paralelo); requiere D1, D3, D4 | pendiente | |
@@ -65,3 +66,7 @@ Entrega: `ask-on-risk` (se espera más de 400 líneas: se preguntará la estrate
   - Corrección del orquestador: `haceCuanto()` ya aceptaba `ahora` (`formato_fecha.dart:2`), así que D8 nunca requería cambiar ese archivo.
   - T3 se cancela.
   - Pendiente: D7.
+- **L6 (2026-11-17, textual):** «vamos con B».
+  - D7 = B: alias temporales `@Deprecated` que se borran antes de cerrar.
+  - Criterio de cierre: `flutter analyze` sin avisos de obsoletos.
+  - Siguiente paso: acordar qué entra hasta el 2026-11-20.
