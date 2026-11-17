@@ -37,7 +37,7 @@ En la práctica:
 | Perfil | Iniciales, tarjeta de tier, cuadrícula de datos, lista de acciones | `lib/features/perfil/ver/*` |
 | Moderación | Filas compactas | `lib/features/moderacion/denunciados/*` |
 | Navegación | Píldora activa en la barra inferior | `lib/layout/cr_bottom_nav.dart`, `lib/layout/admin_layout.dart` |
-| Red de seguridad | Claves en las pruebas, reloj inyectable, capturas de referencia, pruebas de accesibilidad | `test/**`, `lib/core/utils/formato_fecha.dart` (ver D8) |
+| Red de seguridad | Claves en las pruebas, capturas de referencia, pruebas de accesibilidad | `test/**` (D8: no se toca `lib`) |
 
 Las pantallas que no aparecen en las láminas (favoritos, alertas, registro, recuperar contraseña, etc.) **solo** reciben los colores y el theme nuevos. Tienen que compilar y verse coherentes, pero no se rediseñan.
 
@@ -55,14 +55,14 @@ Cada decisión necesita respuesta antes de la fase que bloquea. "Recomendación"
 
 | ID | Decisión | Evidencia | Recomendación | Bloquea | Decidió | Resultado |
 |---|---|---|---|---|---|---|
-| D1 | ¿«Sin información» pasa a «Sin reportes», y «Todos» a «Todos los niveles»? | `chip_saturacion.dart:23`, `filtros_mapa.dart:102-121`; unas 40 pruebas buscan los nombres de los niveles | Mantener los textos de hoy (lo pide la regla principal) | T7, T8 | | Pendiente |
-| D2 | ¿El error del login pasa de snackbar a un aviso dentro del formulario? | `login_page.dart:57-73`; `login_page_test.dart:64` | Hacerlo solo en el login, con el mismo mensaje | T8-G1 | | Pendiente |
-| D3 | ¿La leyenda del mapa se integra en los chips de filtro? | `map_page.dart:235-239` muestra «Sin información», que no es un filtro | Mantener una leyenda mínima para «Sin información» | T8-G2 | | Pendiente |
-| D4 | ¿Se muestra la nota «Puedes reportar el mismo lugar cada 30 minutos»? | La regla solo vive en el servidor (`REPORTE_EN_ESPERA`) | No escribir «30» en la app; dejarlo para cuando la API lo devuelva | T8-G2 | | Pendiente |
-| D5 | ¿Se muestran los puntos en la tarjeta del tier? | `tarjeta_tier.dart:6-8` los oculta a propósito; `Usuario.puntos` existe | Decisión de producto; el dato ya está | T8-G4 | | Pendiente |
-| D6 | ¿Qué colores usan las escalas de validación y confiabilidad? | `chip_estado_validacion.dart:13-16`, `insignia_confiabilidad.dart:15-18` usan `success`/`warning`/`danger` | Pasarlas a neutros más ícono para no confundirlas con los niveles | T6 | | Pendiente |
+| D1 | ¿«Sin información» pasa a «Sin reportes», y «Todos» a «Todos los niveles»? | `chip_saturacion.dart:23`, `filtros_mapa.dart:102-121`; unas 40 pruebas buscan los nombres de los niveles | Mantener los textos de hoy (lo pide la regla principal) | T7, T8 | Walter, 2026-11-17 | **Aprobada:** se mantienen «Sin información» y «Todos» |
+| D2 | ¿El error del login pasa de snackbar a un aviso dentro del formulario? | `login_page.dart:57-73`; `login_page_test.dart:64` | Hacerlo solo en el login, con el mismo mensaje | T8-G1 | Walter, 2026-11-17 | **Aprobada:** aviso dentro del formulario, solo en el login |
+| D3 | ¿La leyenda del mapa se integra en los chips de filtro? | `map_page.dart:235-239` muestra «Sin información», que no es un filtro | Mantener una leyenda mínima para «Sin información» | T8-G2 | Walter, 2026-11-17 | **Aprobada:** chips con medidor y una leyenda mínima para «Sin información» |
+| D4 | ¿Se muestra la nota «Puedes reportar el mismo lugar cada 30 minutos»? | La regla solo vive en el servidor (`REPORTE_EN_ESPERA`) | No escribir «30» en la app; dejarlo para cuando la API lo devuelva | T8-G2 | Walter, 2026-11-17 | **Opción b:** nota sin número, «Puedes volver a reportar este lugar más tarde» |
+| D5 | ¿Se muestran los puntos en la tarjeta del tier? | `tarjeta_tier.dart:6-8` los oculta a propósito; `Usuario.puntos` existe | Decisión de producto; el dato ya está | T8-G4 | Walter, 2026-11-17 | **Sí:** la tarjeta del tier muestra `Usuario.puntos` |
+| D6 | ¿Qué colores usan las escalas de validación y confiabilidad? | `chip_estado_validacion.dart:13-16`, `insignia_confiabilidad.dart:15-18` usan `success`/`warning`/`danger` | Pasarlas a neutros más ícono para no confundirlas con los niveles | T6 | Walter, 2026-11-17 | **Aprobada:** neutros con ícono |
 | D7 | ¿Se mantienen alias para los colores que la paleta borra? | `secondary`, `success`, `warning`, `onPrimaryMuted` y `borderNav` se usan en 11 archivos | Sí: alias marcados como obsoletos, y se migran sus usos en el mismo ticket | T6 | | Pendiente |
-| D8 | ¿Se aprueba un reloj inyectable para `haceCuanto()`? | `formato_fecha.dart:3` usa `DateTime.now()`; sin esto las capturas cambian en cada corrida | Sí: un parámetro con valor por defecto, sin cambiar el comportamiento de hoy | T3 | | Pendiente |
+| D8 | ¿Cómo se fija la hora en las capturas de referencia? | `haceCuanto(fecha, {DateTime? ahora})` ya acepta la hora (`formato_fecha.dart:2`), pero las pantallas no se la pasan. Las pruebas actuales arman fechas relativas a la hora real (`detalle_lugar_page_test.dart:44`) | a) Datos relativos a la hora real, sin tocar `lib`; pasar a b) (hora controlable desde las pantallas) solo si alguna captura falla de forma intermitente | T4 | Walter, 2026-11-17 | **Opción a:** no se toca `lib`; T3 se cancela |
 
 ## 5. Riesgos conocidos
 

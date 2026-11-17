@@ -24,10 +24,10 @@ Entrega: `ask-on-risk` (se espera más de 400 líneas: se preguntará la estrate
 
 | ID | Specs | Ruta | Estado | Evidencia / commit |
 |---|---|---|---|---|
-| T1 Documentos: alcance, plan de agentes y decisiones D1–D8 | S4 | inline (orquestador) | en curso: documentos escritos, decisiones pendientes | |
-| T2 Claves y búsquedas estables en las pruebas | S7, S1 | delegado (escritor A, paralelo con T3) | pendiente | |
-| T3 Reloj inyectable para `haceCuanto()` | S7, S2 | delegado (escritor B, paralelo con T2); requiere D8 | pendiente | |
-| T4 Capturas de referencia de las 8 pantallas | S7 | delegado; después de T3 | pendiente | |
+| T1 Documentos: alcance, plan de agentes y decisiones D1–D8 | S4 | inline (orquestador) | en curso: D1–D6 y D8 resueltas, falta D7 | `c3a1012` |
+| T2 Claves y búsquedas estables en las pruebas | S7, S1 | delegado (escritor A, paralelo con T4) | pendiente | |
+| T3 Reloj inyectable | — | — | **cancelada** (D8 = a: datos relativos a la hora real, sin tocar `lib`) | |
+| T4 Capturas de referencia de las 8 pantallas, con fechas relativas a la hora real | S7 | delegado (escritor B, paralelo con T2) | pendiente | |
 | T5 Pruebas de las reglas de diseño (contraste, 44 px, nivel con medidor y texto) | S5 | delegado; después de T2 | pendiente | |
 | T6 Colores, theme e Inter con alias | S1, S5 | inline; requiere D6, D7 | pendiente | |
 | T7 Componentes compartidos: medidor, etiqueta de nivel, pin, íconos de categoría | S5, S3 | inline + verificador; requiere D1 | pendiente | |
@@ -56,3 +56,12 @@ Entrega: `ask-on-risk` (se espera más de 400 líneas: se preguntará la estrate
   - Se copiaron al repositorio la propuesta y las láminas.
   - Riesgo abierto: la fecha del viernes no alcanza para la estimación completa.
   - Siguiente paso: el humano resuelve D1–D8 y el alcance del viernes.
+- **L5 (2026-11-17, decisiones del usuario, textual):** «Sis e muestrna los puntos en D5 D6 ME PARECE BIEN [...] LOS DESDE D1 A D3 APROBADOS» · «Camoscon la B en la D4» · «Vamos con a» (D8).
+  - Resultado:
+    - D1, D2, D3 y D6 aprobadas como se recomendó.
+    - D4 = b: nota sin número.
+    - D5 = sí: se muestran los puntos.
+    - D8 = a: fechas relativas, sin tocar `lib`.
+  - Corrección del orquestador: `haceCuanto()` ya aceptaba `ahora` (`formato_fecha.dart:2`), así que D8 nunca requería cambiar ese archivo.
+  - T3 se cancela.
+  - Pendiente: D7.

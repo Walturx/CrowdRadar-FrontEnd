@@ -16,7 +16,7 @@ Este documento dice quién hace cada fase, en qué orden y cómo le reporta cada
 
 ```text
 F0 Documentos (orquestador)            ── espera D1–D8 del humano
-F1 Red de seguridad                     T2 ∥ T3  →  T4  →  T5
+F1 Red de seguridad                     T2 ∥ T4  →  T5        (T3 cancelada por D8)
 F2 Colores y theme                      T6
 F3 Componentes compartidos              T7  →  verificador
 F4 Pantallas (4 escritores en paralelo) T8-G1 ∥ T8-G2 ∥ T8-G3 ∥ T8-G4  →  suite completa
@@ -26,9 +26,9 @@ F5 Cierre                               T9 verificador + revisión humana de cap
 | Tarea | Fase | Ruta | Por qué esa ruta |
 |---|---|---|---|
 | T1 Documentos y decisiones | F0 | Orquestador | Es planificación, sin código |
-| T2 Claves y búsquedas estables en las pruebas | F1 | Escritor A | En paralelo con T3, sin archivos compartidos |
-| T3 Reloj inyectable | F1 | Escritor B | En paralelo con T2; requiere D8 |
-| T4 Capturas de referencia | F1 | Escritor | Necesita T3 para que las capturas no cambien |
+| T2 Claves y búsquedas estables en las pruebas | F1 | Escritor A | En paralelo con T4, sin archivos compartidos |
+| T3 Reloj inyectable | — | — | Cancelada: D8 = a |
+| T4 Capturas de referencia | F1 | Escritor B | En paralelo con T2; solo archivos nuevos de prueba, con fechas relativas a la hora real |
 | T5 Pruebas de las reglas del diseño | F1 | Escritor | Necesita T2 |
 | T6 Colores, theme e Inter | F2 | Orquestador | Una sola unidad pequeña |
 | T7 Componentes compartidos | F3 | Orquestador + verificador | Lo usan 12 pantallas: riesgo alto |
