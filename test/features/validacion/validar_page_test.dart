@@ -1,11 +1,14 @@
 import 'package:crowdradar/core/location/punto_referencia.dart';
 import 'package:crowdradar/core/map/centro_compartido.dart';
+import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/models/validacion.dart';
 import 'package:crowdradar/core/network/api_exception.dart';
 import 'package:crowdradar/core/network/respuesta_api.dart';
+import 'package:crowdradar/core/widgets/chip_saturacion.dart';
 import 'package:crowdradar/features/validacion/data/validacion_repository.dart';
 import 'package:crowdradar/features/validacion/pendientes/validar_page.dart';
 import 'package:crowdradar/features/validacion/widgets/tarjeta_reporte.dart';
+import 'package:crowdradar/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,7 +68,7 @@ void main() {
 
     expect(find.text('Validar reportes'), findsOneWidget);
     expect(find.text('Parque Kennedy'), findsOneWidget);
-    expect(find.text('400 m'), findsOneWidget);
+    expect(find.text('Parque · 400 m'), findsOneWidget);
     expect(find.text('Saturado'), findsOneWidget);
     expect(find.textContaining('Confiabilidad Alta'), findsOneWidget);
     expect(find.text('Confirmar'), findsOneWidget);
@@ -82,11 +85,11 @@ void main() {
     Finder enTarjeta(Finder f) => find.descendant(of: tarjeta, matching: f);
     expect(enTarjeta(find.byType(EncabezadoReporte)), findsOneWidget);
     expect(enTarjeta(find.text('Ayuda a la comunidad')), findsOneWidget);
-    expect(enTarjeta(find.text('400 m')), findsOneWidget);
+    expect(enTarjeta(find.text('Parque · 400 m')), findsOneWidget);
     expect(
       find.descendant(
-        of: enTarjeta(find.byType(SeccionSaturacion)),
-        matching: find.text('Saturación reportada'),
+        of: enTarjeta(find.byType(PreguntaNivel)),
+        matching: find.text(PreguntaNivel.pregunta),
       ),
       findsOneWidget,
     );
@@ -101,6 +104,149 @@ void main() {
       enTarjeta(find.text('Ver detalle de confiabilidad →')),
       findsOneWidget,
     );
+  });
+
+  group('CRO-88 redesigned card', () {
+    testWidgets('the header shows the category with the distance and a time '
+        'pill', (tester) async {
+      await abrir(tester, ValidacionRepositoryFake());
+
+      expect(find.text('Parque · 400 m'), findsOneWidget);
+      final pildora = find.byKey(const Key('pildora-tiempo'));
+      expect(pildora, findsOneWidget);
+      // The fake report was made just now.
+      expect(
+        find.descendant(of: pildora, matching: find.text('ahora')),
+        findsOneWidget,
+      );
+      final nombre = tester.widget<Text>(find.text('Parque Kennedy'));
+      expect(nombre.style?.fontSize, 24);
+      expect(nombre.style?.fontWeight, FontWeight.w800);
+    });
+
+    testWidgets('the question block asks about now and shows the level with '
+        'its meter and description on the level background', (tester) async {
+      await abrir(tester, ValidacionRepositoryFake());
+
+      final bloque = find.byKey(const Key('pregunta-nivel'));
+      expect(bloque, findsOneWidget);
+      Finder enBloque(Finder f) => find.descendant(of: bloque, matching: f);
+      expect(enBloque(find.text('¿Está así ahora mismo?')), findsOneWidget);
+      expect(enBloque(find.text('Saturado')), findsOneWidget);
+      expect(enBloque(find.text('Lleno, mucha gente')), findsOneWidget);
+      expect(
+        enBloque(find.byKey(const ValueKey('medidor-nivel'))),
+        findsOneWidget,
+      );
+      final nivel = tester.widget<Text>(enBloque(find.text('Saturado')));
+      expect(nivel.style?.fontSize, greaterThanOrEqualTo(24));
+      final caja = tester.widget<Container>(bloque);
+      expect(
+        (caja.decoration! as BoxDecoration).color,
+        ChipSaturacion.bgDe(NivelSaturacion.saturado),
+      );
+    });
+
+    testWidgets('Rechazar and Confirmar keep their texts and carry an icon', (
+      tester,
+    ) async {
+      await abrir(tester, ValidacionRepositoryFake());
+
+      final rechazar = find.byKey(const Key('boton-rechazar'));
+      final confirmar = find.byKey(const Key('boton-confirmar'));
+      expect(
+        find.descendant(of: rechazar, matching: find.text('Rechazar')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: rechazar, matching: find.byIcon(Icons.close)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: confirmar, matching: find.text('Confirmar')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: confirmar, matching: find.byIcon(Icons.check)),
+        findsOneWidget,
+      );
+      final textoRechazar = find.descendant(
+        of: rechazar,
+        matching: find.text('Rechazar'),
+      );
+      final estilo = DefaultTextStyle.of(
+        tester.element(textoRechazar),
+      ).style.merge(tester.widget<Text>(textoRechazar).style);
+      expect(estilo.color, AppColors.danger);
+    });
+
+    for (final (clave, accion) in [
+      ('boton-rechazar', TipoAccionValidacion.rechazar),
+      ('boton-confirmar', TipoAccionValidacion.confirmar),
+    ]) {
+      testWidgets('tapping $clave casts the same vote', (tester) async {
+        registerFallbackValue(TipoAccionValidacion.confirmar);
+        final repo = _MockRepo();
+        when(
+          () => repo.pendientes(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer(
+          (_) async => Pagina(
+            items: [ReportePendiente.fromJson(pendienteJson(id: 31))],
+            page: 1,
+            size: 20,
+            total: 1,
+            totalPaginas: 1,
+          ),
+        );
+        when(() => repo.validar(any(), any())).thenAnswer(
+          (_) async => ResultadoVoto(
+            accion: accion,
+            confiabilidad: const Confiabilidad(
+              porcentaje: 80,
+              nivel: NivelConfiabilidad.alta,
+            ),
+            estadoValidacion: EstadoValidacion.enValidacion,
+          ),
+        );
+        await abrir(tester, repo);
+
+        await tester.tap(find.byKey(Key(clave)));
+        await tester.pump();
+        await tester.pump();
+
+        verify(() => repo.validar(31, accion)).called(1);
+      });
+    }
+
+    testWidgets('S5 every tappable element is at least 44 x 44', (
+      tester,
+    ) async {
+      await abrir(tester, ValidacionRepositoryFake());
+
+      for (final f in [
+        find.byKey(const Key('boton-rechazar')),
+        find.byKey(const Key('boton-confirmar')),
+        find.widgetWithText(TextButton, 'Ver detalle de confiabilidad →'),
+        find.byTooltip('Actualizar'),
+      ]) {
+        final tam = tester.getSize(f);
+        expect(tam.width, greaterThanOrEqualTo(44), reason: '$f');
+        expect(tam.height, greaterThanOrEqualTo(44), reason: '$f');
+      }
+    });
+
+    testWidgets('S8 there is no "1 de N" counter nor a progress bar', (
+      tester,
+    ) async {
+      await abrir(tester, ValidacionRepositoryFake());
+
+      expect(find.textContaining(RegExp(r'^\d+ de \d+$')), findsNothing);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(find.text('2 reportes más por validar'), findsOneWidget);
+    });
   });
 
   group('S25 the author tier on the card', () {
@@ -126,10 +272,13 @@ void main() {
         findsOneWidget,
       );
       final fila = tester.getTopLeft(find.text('Reportado por')).dy;
-      expect(fila, greaterThan(tester.getTopLeft(find.text('400 m')).dy));
       expect(
         fila,
-        lessThan(tester.getTopLeft(find.text('Saturación reportada')).dy),
+        greaterThan(tester.getTopLeft(find.text('Parque · 400 m')).dy),
+      );
+      expect(
+        fila,
+        lessThan(tester.getTopLeft(find.text(PreguntaNivel.pregunta)).dy),
       );
     });
 

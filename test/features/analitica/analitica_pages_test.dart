@@ -115,6 +115,117 @@ void main() {
     });
   });
 
+  group('HistorialPage redesign (CRO-88)', () {
+    testWidgets('the summary counts the hours with reports', (tester) async {
+      await abrir(
+        tester,
+        const HistorialPage(lugarId: _conDatos),
+        repo: _Escasa(),
+      );
+
+      final resumen = find.byKey(const Key('resumen-horas-con-reportes'));
+      expect(resumen, findsOneWidget);
+      expect(
+        find.descendant(of: resumen, matching: find.text('Horas con reportes')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: resumen, matching: find.text('3 de 24')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the 7 day view has no hourly summary', (tester) async {
+      await abrir(tester, const HistorialPage(lugarId: _conDatos));
+
+      await tester.tap(find.text('7 días'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byKey(const Key('resumen-horas-con-reportes')), findsNothing);
+    });
+
+    testWidgets('the Hoy / 7 días tabs mark the selection and are tappable', (
+      tester,
+    ) async {
+      await abrir(tester, const HistorialPage(lugarId: _conDatos));
+
+      final hoy = find.byKey(const Key('pestana-hoy'));
+      final semana = find.byKey(const Key('pestana-7-dias'));
+      expect(
+        find.descendant(of: hoy, matching: find.text('Hoy')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: semana, matching: find.text('7 días')),
+        findsOneWidget,
+      );
+      expect(tester.getSemantics(hoy), isSemantics(isSelected: true));
+      expect(tester.getSemantics(semana), isSemantics(isSelected: false));
+
+      await tester.tap(semana);
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byKey(const Key('barra-saturacion')), findsNWidgets(7));
+      expect(tester.getSemantics(semana), isSemantics(isSelected: true));
+    });
+
+    for (final (clave, titulo, ruta) in [
+      (
+        'fila-comparar-periodos',
+        'Comparar periodos',
+        '/mapa/lugares/1/comparar',
+      ),
+      ('fila-mejor-horario', 'Mejor horario', '/mapa/lugares/1/mejor-horario'),
+    ]) {
+      testWidgets('the "$titulo" row navigates like the old button', (
+        tester,
+      ) async {
+        await abrir(
+          tester,
+          const HistorialPage(lugarId: _conDatos),
+          otras: const [
+            '/mapa/lugares/1/comparar',
+            '/mapa/lugares/1/mejor-horario',
+          ],
+        );
+
+        final fila = find.byKey(Key(clave));
+        expect(
+          find.descendant(of: fila, matching: find.text(titulo)),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: fila, matching: find.byIcon(Icons.chevron_right)),
+          findsOneWidget,
+        );
+        expect(find.widgetWithText(OutlinedButton, titulo), findsNothing);
+
+        await tester.tap(fila);
+        await tester.pumpAndSettle();
+        expect(find.text('RUTA $ruta'), findsOneWidget);
+      });
+    }
+
+    testWidgets('S5 every tappable element is at least 44 x 44', (
+      tester,
+    ) async {
+      await abrir(tester, const HistorialPage(lugarId: _conDatos));
+
+      for (final clave in [
+        'pestana-hoy',
+        'pestana-7-dias',
+        'fila-comparar-periodos',
+        'fila-mejor-horario',
+      ]) {
+        final tam = tester.getSize(find.byKey(Key(clave)));
+        expect(tam.width, greaterThanOrEqualTo(44), reason: clave);
+        expect(tam.height, greaterThanOrEqualTo(44), reason: clave);
+      }
+    });
+  });
+
   group('CompararPage', () {
     testWidgets('discloses demo data when the backend flags it top-level', (
       tester,
@@ -241,4 +352,22 @@ class _CompararDelBackend extends AnaliticaRepositoryFake {
       'sintetico': true,
     });
   }
+}
+
+/// A day with reports only at 9, 13 and 18 h; the other hours come empty.
+class _Escasa extends AnaliticaRepositoryFake {
+  @override
+  Future<SerieSaturacion> historial(
+    int lugarId, {
+    DateTime? desde,
+    DateTime? hasta,
+    AgrupacionHistorial? agrupacion,
+  }) async => SerieSaturacion(
+    puntos: [
+      for (var h = 0; h < 24; h++)
+        const {9, 13, 18}.contains(h)
+            ? PuntoSerie(etiquetaHora(h), 2, muestras: 4)
+            : PuntoSerie(etiquetaHora(h), 0),
+    ],
+  );
 }

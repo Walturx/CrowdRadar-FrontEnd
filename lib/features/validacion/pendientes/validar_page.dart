@@ -7,11 +7,13 @@ import '../../../app/rutas.dart';
 import '../../../core/location/punto_referencia.dart';
 import '../../../core/models/validacion.dart';
 import '../../../core/utils/distancia.dart';
+import '../../../core/utils/formato_fecha.dart';
 import '../../../core/widgets/cargando.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
 import '../../../core/widgets/mostrar_aviso.dart';
 import '../../../theme/app_colors.dart';
+import '../../lugares/categoria_presentacion.dart';
 import '../data/validacion_repository.dart';
 import '../widgets/tarjeta_reporte.dart';
 import '../widgets/tier_compacto.dart';
@@ -53,6 +55,7 @@ class ValidarPage extends StatelessWidget {
             actions: [
               IconButton(
                 tooltip: 'Actualizar',
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                 icon: const Icon(Icons.refresh),
                 onPressed: () => context.read<PendientesCubit>().cargar(),
               ),
@@ -185,39 +188,72 @@ class _TarjetaPendiente extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<PendientesCubit>();
     final distancia = reporte.distanciaMetros;
+    final categoria = etiquetaCategoria(reporte.lugar.categoria);
+    final fecha = reporte.fechaHora;
     return TarjetaReporte(
       children: [
         EncabezadoReporte(
           antetitulo: 'Ayuda a la comunidad',
           lugar: reporte.lugar.nombre,
           subtitulo: distancia == null
-              ? null
-              : formatoDistancia(distancia.toDouble()),
+              ? categoria
+              : '$categoria · ${formatoDistancia(distancia.toDouble())}',
+          estado: fecha == null ? null : PildoraTiempo(haceCuanto(fecha)),
           tierAutor: reporte.tierAutor,
         ),
+        const SizedBox(height: 14),
+        PreguntaNivel(nivel: reporte.nivel),
         const SizedBox(height: 12),
-        SeccionSaturacion(nivel: reporte.nivel),
-        const SizedBox(height: 12),
-        SeccionConfiabilidad(confiabilidad: reporte.confiabilidad),
-        TextButton(
-          onPressed: () => context.push(Rutas.reporteValidar(reporte.id)),
-          child: const Text('Ver detalle de confiabilidad →'),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(14, 12, 6, 4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SeccionConfiabilidad(confiabilidad: reporte.confiabilidad),
+              TextButton(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(44, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                onPressed: () => context.push(Rutas.reporteValidar(reporte.id)),
+                child: const Text('Ver detalle de confiabilidad →'),
+              ),
+            ],
+          ),
         ),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
-              child: OutlinedButton(
+              child: OutlinedButton.icon(
+                key: const Key('boton-rechazar'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.danger,
+                  backgroundColor: AppColors.surface,
+                  side: const BorderSide(
+                    color: AppColors.dangerBorder,
+                    width: 1.5,
+                  ),
+                ),
                 onPressed: () =>
                     cubit.votar(reporte, TipoAccionValidacion.rechazar),
-                child: const Text('Rechazar'),
+                icon: const Icon(Icons.close, size: 19),
+                label: const Text('Rechazar'),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
+                key: const Key('boton-confirmar'),
                 onPressed: () =>
                     cubit.votar(reporte, TipoAccionValidacion.confirmar),
-                child: const Text('Confirmar'),
+                icon: const Icon(Icons.check, size: 19),
+                label: const Text('Confirmar'),
               ),
             ),
           ],
