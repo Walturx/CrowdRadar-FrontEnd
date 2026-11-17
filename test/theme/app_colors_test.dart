@@ -1,6 +1,3 @@
-// The deprecated aliases are exercised on purpose (decision D7).
-// ignore_for_file: deprecated_member_use_from_same_package
-
 import 'dart:math' as math;
 
 import 'package:crowdradar/theme/app_colors.dart';
@@ -68,26 +65,32 @@ void main() {
       });
     }
 
-    test('secondary text is readable on white and on the screen background', () {
-      expect(contrast(AppColors.textMuted, AppColors.surface), greaterThanOrEqualTo(4.5));
-      expect(contrast(AppColors.textMuted, AppColors.bg), greaterThanOrEqualTo(4.5));
-    });
+    test(
+      'secondary text is readable on white and on the screen background',
+      () {
+        expect(
+          contrast(AppColors.textMuted, AppColors.surface),
+          greaterThanOrEqualTo(4.5),
+        );
+        expect(
+          contrast(AppColors.textMuted, AppColors.bg),
+          greaterThanOrEqualTo(4.5),
+        );
+      },
+    );
 
     test('danger text is readable on its background', () {
-      expect(contrast(AppColors.danger, AppColors.dangerBg), greaterThanOrEqualTo(4.5));
+      expect(
+        contrast(AppColors.danger, AppColors.dangerBg),
+        greaterThanOrEqualTo(4.5),
+      );
     });
 
     test('white text is readable on the brand button', () {
-      expect(contrast(Colors.white, AppColors.primary), greaterThanOrEqualTo(4.5));
-    });
-  });
-
-  group('deprecated aliases (decision D7)', () {
-    test('old names point to their replacement in the new palette', () {
-      expect(AppColors.secondary, AppColors.primary);
-      expect(AppColors.success, AppColors.tranquilo);
-      expect(AppColors.warning, AppColors.moderado);
-      expect(AppColors.borderNav, AppColors.border);
+      expect(
+        contrast(Colors.white, AppColors.primary),
+        greaterThanOrEqualTo(4.5),
+      );
     });
   });
 }

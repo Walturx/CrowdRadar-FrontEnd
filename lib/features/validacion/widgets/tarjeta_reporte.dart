@@ -6,6 +6,7 @@ import '../../../core/models/validacion.dart';
 import '../../../core/widgets/chip_saturacion.dart';
 import '../../../core/widgets/medidor_nivel.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_shadows.dart';
 import 'insignia_confiabilidad.dart';
 import 'tier_compacto.dart';
 
@@ -13,11 +14,6 @@ import 'tier_compacto.dart';
 // detail so both screens read as one design and cannot drift apart.
 
 /// `shadow-1` of the design system (cards and chips).
-const List<BoxShadow> _sombra1 = [
-  BoxShadow(color: Color(0x0F0F172A), offset: Offset(0, 1), blurRadius: 2),
-  BoxShadow(color: Color(0x0A0F172A), offset: Offset(0, 1), blurRadius: 1),
-];
-
 /// The card a report sits in: white, radius 20, `line` border and `shadow-1`
 /// (design-system §5).
 class TarjetaReporte extends StatelessWidget {
@@ -33,7 +29,7 @@ class TarjetaReporte extends StatelessWidget {
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(20),
       border: Border.all(color: AppColors.border),
-      boxShadow: _sombra1,
+      boxShadow: AppShadows.card,
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,

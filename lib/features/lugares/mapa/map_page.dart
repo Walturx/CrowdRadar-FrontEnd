@@ -12,13 +12,13 @@ import '../../../core/map/tipos_mapa.dart';
 import '../../../core/widgets/tarjeta_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_shadows.dart';
 import '../../exploracion/explorar/filtros_mapa.dart';
 import '../data/lugar_repository.dart';
 import 'leyenda_saturacion.dart';
 import 'mapa_cubit.dart';
 import 'mapa_state.dart';
 import 'marcadores.dart';
-import 'sombra_flotante.dart';
 
 class MapPage extends StatelessWidget {
   /// Where the camera centre is published for the other tabs.
@@ -160,7 +160,7 @@ class _MapViewState extends State<_MapView> {
                           decoration: BoxDecoration(
                             color: AppColors.surface.withValues(alpha: 0.95),
                             borderRadius: BorderRadius.circular(20),
-                            boxShadow: sombraFlotante,
+                            boxShadow: AppShadows.floating,
                           ),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -281,7 +281,10 @@ class _CampoBusqueda extends StatelessWidget {
   Widget build(BuildContext context) {
     const forma = StadiumBorder();
     return DecoratedBox(
-      decoration: const ShapeDecoration(shape: forma, shadows: sombraFlotante),
+      decoration: const ShapeDecoration(
+        shape: forma,
+        shadows: AppShadows.floating,
+      ),
       child: Material(
         key: const ValueKey('buscador-mapa'),
         color: AppColors.surface,

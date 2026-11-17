@@ -7,6 +7,7 @@ import '../../../core/models/nivel_saturacion.dart';
 import '../../../core/widgets/chip_saturacion.dart';
 import '../../../core/widgets/medidor_nivel.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_shadows.dart';
 import '../../lugares/categoria_presentacion.dart';
 import '../data/exploracion_repository.dart';
 import 'explorar_cubit.dart';
@@ -62,11 +63,6 @@ class FiltrosMapa extends StatelessWidget {
 }
 
 /// `shadow-1` of the design system (section 4): cards and chips.
-const List<BoxShadow> _sombra1 = [
-  BoxShadow(color: Color(0x0F0F172A), offset: Offset(0, 1), blurRadius: 2),
-  BoxShadow(color: Color(0x0A0F172A), offset: Offset(0, 1), blurRadius: 1),
-];
-
 class _Controles extends StatelessWidget {
   final ExplorarCargado estado;
 
@@ -205,7 +201,7 @@ class _ChipFiltro extends StatelessWidget {
             child: DecoratedBox(
               decoration: const ShapeDecoration(
                 shape: forma,
-                shadows: _sombra1,
+                shadows: AppShadows.card,
               ),
               child: Material(
                 color: seleccionado ? colorElegido : AppColors.surface,
@@ -266,7 +262,7 @@ class _Error extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: _sombra1,
+        boxShadow: AppShadows.card,
       ),
       child: Row(
         children: [

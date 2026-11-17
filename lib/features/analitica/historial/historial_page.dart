@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/rutas.dart';
 import '../../../core/models/analitica.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_shadows.dart';
 import '../data/analitica_repository.dart';
 import '../widgets/grafico_barras.dart';
 import '../widgets/vista_analitica.dart';
@@ -44,17 +45,12 @@ class HistorialPage extends StatelessWidget {
 }
 
 /// `shadow-1` of the design system (cards and chips).
-const List<BoxShadow> _sombra1 = [
-  BoxShadow(color: Color(0x0F0F172A), offset: Offset(0, 1), blurRadius: 2),
-  BoxShadow(color: Color(0x0A0F172A), offset: Offset(0, 1), blurRadius: 1),
-];
-
 /// White card of the design system: radius 20, `line` border, `shadow-1`.
 BoxDecoration _decoracionTarjeta() => BoxDecoration(
   color: AppColors.surface,
   borderRadius: BorderRadius.circular(20),
   border: Border.all(color: AppColors.border),
-  boxShadow: _sombra1,
+  boxShadow: AppShadows.card,
 );
 
 /// Hoy / 7 días as a segmented control.
@@ -124,7 +120,7 @@ class _Pestana extends StatelessWidget {
           decoration: elegida
               ? BoxDecoration(
                   borderRadius: BorderRadius.circular(11),
-                  boxShadow: _sombra1,
+                  boxShadow: AppShadows.card,
                 )
               : null,
           child: Text(

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/models/nivel_saturacion.dart';
 import '../../../core/widgets/chip_saturacion.dart';
 import '../../../theme/app_colors.dart';
-import 'sombra_flotante.dart';
+import '../../../theme/app_shadows.dart';
 
 /// Minimal map key (decision D3): the level chips already carry the meter,
 /// so only the gray "Sin información" pins need a key of their own.
@@ -19,7 +19,7 @@ class LeyendaSaturacion extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: sombraFlotante,
+        boxShadow: AppShadows.floating,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

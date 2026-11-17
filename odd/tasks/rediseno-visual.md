@@ -30,12 +30,12 @@ Entrega: `ask-on-risk` → cadena `stacked-to-main`: PRs encadenados hacia `deve
 | T4 Capturas de referencia de las 8 pantallas, con fechas relativas a la hora real | S7 | delegado (escritor B); el escritor quedó `partial` por falta de memoria y el orquestador lo terminó inline | hecha, **falta la aprobación humana de las 25 capturas**. Verificación: `flutter test test/goldens` ×2 → 25/25; `flutter analyze` sin problemas; `flutter test` → 1397 pasan (1372 + 25), 0 fallan | ver commit T4 |
 | T5 Pruebas de las reglas de diseño | S5 | **absorbida**: el contraste está en T6 (`app_colors_test`); «nivel = color + medidor + texto» va como prueba en rojo de T7; los 44 px van en T8 | — | |
 | T6 Colores, theme e Inter con alias temporales (D7 = B) | S1, S5 | inline | **hecha**: primero en rojo (falta de miembros), después en verde (20/20 en `test/theme`); suite sin goldens: 1390 pasan; goldens regenerados con Inter, 25/25 ×2; `flutter analyze` sin problemas | `4375007` |
-| T6b Borrar los alias obsoletos al final de F4 | S1 | inline. Criterio: `grep` sin usos de `AppColors.(secondary\|success\|warning\|onPrimaryMuted\|borderNav)` fuera de `app_colors.dart`, porque `flutter_lints` no avisa del uso de miembros obsoletos del mismo paquete (hoy hay 15 usos) | pendiente | |
+| T6b Borrar los alias, sombras a `lib/theme/app_shadows.dart`, `semanticLabel` en los íconos de categoría restantes | S1, S5 | inline | **hecha**: 0 usos de alias; suite completa 1488/1488; goldens regenerados 25/25 ×2 | ver commit T6b |
 | T7 Componentes compartidos: medidor, etiqueta de nivel, pin, íconos de categoría, escalas neutras (D6) | S5, S3 | delegado (respaldo de contexto: la sesión del orquestador ya es larga) + verificador | escrito; el escritor se trabó una vez y se retomó. RED→GREEN por ítem. Suite: 1443 pasan, 0 fallan; goldens 25/25 ×2 (control del orquestador: 25/25); 10 capturas regeneradas. **Verificador: PASS sin bloqueantes** (S1, S2, S3, S5; suite propia 1443/1443). Sus advertencias pasan a T8 | `e036a73` |
-| T8-G1 Inicio de sesión | S6 | delegado (paralelo); requiere D2 | pendiente | |
-| T8-G2 Mapa, detalle, reportar | S6, S3 | delegado (paralelo); requiere D1, D3, D4 | pendiente | |
-| T8-G3 Validar, historial | S6, S2 | delegado (paralelo) | pendiente | |
-| T8-G4 Perfil, moderación, navegación | S6 | delegado (paralelo); requiere D5 | pendiente | |
+| T8-G1 Inicio de sesión | S6 | delegado (paralelo) | **hecha**: rojo y verde; 15/15 enfocadas | `d850213` |
+| T8-G2 Mapa, detalle, reportar | S6, S3 | delegado (paralelo) | **hecha**: rojo (12) y verde; 203/203 enfocadas | `5896e14` |
+| T8-G3 Validar, historial | S6, S2 | delegado (paralelo) | **hecha**: rojo y verde; 235/235. «Ahora» omitido, porque no hay contrato de zona horaria | `c7607ca` |
+| T8-G4 Perfil, moderación, navegación | S6 | delegado (paralelo); la superficie se amplió a `perfil/widgets/tarjeta_tier.dart` con aprobación del usuario | **hecha**: rojo y verde; 283/283 | `496e1fe` |
 | T9 Verificación final y revisión humana de capturas | S1–S8 | verificador + humano | pendiente | |
 | T10 PR hacia `develop` | — | orquestador; el humano decide el merge | pendiente | |
 
@@ -101,3 +101,9 @@ Entrega: `ask-on-risk` → cadena `stacked-to-main`: PRs encadenados hacia `deve
     - El comentario viejo de `SeccionConfiabilidad`.
   - T8 se lanza con 4 escritores en paralelo. Por L9, cada uno corre solo pruebas enfocadas con `--concurrency=2`, sin la suite completa y sin regenerar capturas. El orquestador corre al final la suite completa y regenera las capturas.
   - T6b se lo queda el orquestador: los alias en `favoritos_page`, `alertas_page` y `estado_vacio`, que no están en ningún grupo.
+- **L11 (2026-11-17):** Cierre de F4 y T6b.
+  - Control de unión: `flutter analyze` sin problemas; suite completa 1488 pasan y 0 fallan (incluye las capturas regeneradas, 25/25 ×2).
+  - El cambio de `analysis_options.yaml` lo hace `flutter analyze` de Flutter 3.47 («Upgrading analysis_options.yaml to exclude build and platform directories»). Queda fuera de los commits y lo decide el usuario.
+  - `pubspec.lock` lo reescribe la resolución automática de `flutter`. Se descarta.
+  - En las capturas, las sombras se ven sin difuminado por `debugDisableShadows`; anotado en `test/goldens/README.md`.
+  - Siguiente paso: revisión de gentle-ai sobre el rango completo, revisión humana de las capturas del «después» y T10 (PR encadenados).

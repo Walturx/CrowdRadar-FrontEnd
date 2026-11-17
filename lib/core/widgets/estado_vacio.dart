@@ -34,7 +34,7 @@ class EstadoVacio extends StatelessWidget {
                 icon,
                 key: const ValueKey('estado-vacio-icono'),
                 size: 40,
-                color: AppColors.secondary,
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 20),

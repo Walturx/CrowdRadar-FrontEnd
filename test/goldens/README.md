@@ -38,3 +38,9 @@ flutter test --update-goldens test/goldens # regenerate baseline/
 - **Platform:** golden comparison is pixel exact and font rasterization
   differs between operating systems. These images were generated on Windows;
   regenerate them on the machine that compares them.
+
+## Shadows
+
+`flutter_test` sets `debugDisableShadows`, so `BoxShadow`s render without blur
+(a hard band under the primary button and the map search). On a device they are
+soft. This is a test-rendering artifact, not a design defect.

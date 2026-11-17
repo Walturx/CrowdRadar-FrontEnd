@@ -14,6 +14,7 @@ import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/etiqueta_seccion.dart';
 import '../../../core/widgets/medidor_nivel.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_shadows.dart';
 import '../../favoritos/data/favorito_repository.dart';
 import '../../reportes/data/reporte_repository.dart';
 import '../../reportes/reportar/reportar_cubit.dart';
@@ -194,7 +195,7 @@ class _Contenido extends StatelessWidget {
           DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
-              boxShadow: _sombraBotonPrincipal,
+              boxShadow: AppShadows.primaryButton,
             ),
             child: ElevatedButton.icon(
               key: const ValueKey('boton-reportar-saturacion'),
@@ -219,16 +220,7 @@ class _Contenido extends StatelessWidget {
 }
 
 /// Brand shadow of the filled primary button (design-system section 4).
-const List<BoxShadow> _sombraBotonPrincipal = [
-  BoxShadow(color: Color(0x471A3C8F), offset: Offset(0, 6), blurRadius: 16),
-];
-
 /// `shadow-1` of the design system (section 4): cards.
-const List<BoxShadow> _sombraTarjeta = [
-  BoxShadow(color: Color(0x0F0F172A), offset: Offset(0, 1), blurRadius: 2),
-  BoxShadow(color: Color(0x0A0F172A), offset: Offset(0, 1), blurRadius: 1),
-];
-
 /// 36 px icon on a `brand-50` box with radius 11 (design-system section 5).
 class _CajaIcono extends StatelessWidget {
   final Widget icono;
@@ -416,7 +408,7 @@ class _GrupoFilas extends StatelessWidget {
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(20),
       border: Border.all(color: AppColors.border),
-      boxShadow: _sombraTarjeta,
+      boxShadow: AppShadows.card,
     ),
     child: Column(
       children: [

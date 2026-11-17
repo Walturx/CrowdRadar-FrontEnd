@@ -32,15 +32,18 @@ void main() {
     expect(shape.side.color, AppColors.border);
   });
 
-  test('text fields have radius 14 and a 1.5 border that turns brand on focus', () {
-    final input = theme.inputDecorationTheme;
-    final enabled = input.enabledBorder! as OutlineInputBorder;
-    final focused = input.focusedBorder! as OutlineInputBorder;
-    expect(enabled.borderRadius, BorderRadius.circular(14));
-    expect(enabled.borderSide.width, 1.5);
-    expect(enabled.borderSide.color, AppColors.border);
-    expect(focused.borderSide.color, AppColors.primary);
-  });
+  test(
+    'text fields have radius 14 and a 1.5 border that turns brand on focus',
+    () {
+      final input = theme.inputDecorationTheme;
+      final enabled = input.enabledBorder! as OutlineInputBorder;
+      final focused = input.focusedBorder! as OutlineInputBorder;
+      expect(enabled.borderRadius, BorderRadius.circular(14));
+      expect(enabled.borderSide.width, 1.5);
+      expect(enabled.borderSide.color, AppColors.border);
+      expect(focused.borderSide.color, AppColors.primary);
+    },
+  );
 
   test('the secondary button has a brand-100 border', () {
     final side = theme.outlinedButtonTheme.style!.side!.resolve({})!;
@@ -64,7 +67,13 @@ void main() {
     );
   });
 
-  test('the admin navigation bar highlights the active item with brand-100', () {
-    expect(theme.navigationBarTheme.indicatorColor, AppColors.primaryContainer);
-  });
+  test(
+    'the admin navigation bar highlights the active item with brand-100',
+    () {
+      expect(
+        theme.navigationBarTheme.indicatorColor,
+        AppColors.primaryContainer,
+      );
+    },
+  );
 }

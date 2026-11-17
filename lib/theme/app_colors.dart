@@ -41,16 +41,4 @@ class AppColors {
   static const Color sinDatos = Color(0xFF5B6B80);
   static const Color sinDatosBg = Color(0xFFF1F5F9);
   static const Color sinDatosDot = Color(0xFF94A3B8);
-
-  // Temporary aliases (decision D7): removed before CRO-88 closes.
-  @Deprecated('Use AppColors.primary')
-  static const Color secondary = primary;
-  @Deprecated('Use AppColors.tranquilo (levels only)')
-  static const Color success = tranquilo;
-  @Deprecated('Use AppColors.moderado (levels only)')
-  static const Color warning = moderado;
-  @Deprecated('Use AppColors.border')
-  static const Color borderNav = border;
-  @Deprecated('The blue header that used it is removed by the redesign')
-  static const Color onPrimaryMuted = Color(0xFFA9C8EC);
 }
