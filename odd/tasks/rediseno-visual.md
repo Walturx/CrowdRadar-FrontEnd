@@ -31,7 +31,7 @@ Entrega: `ask-on-risk` → cadena `stacked-to-main`: PRs encadenados hacia `deve
 | T5 Pruebas de las reglas de diseño | S5 | **absorbida**: el contraste está en T6 (`app_colors_test`); «nivel = color + medidor + texto» va como prueba en rojo de T7; los 44 px van en T8 | — | |
 | T6 Colores, theme e Inter con alias temporales (D7 = B) | S1, S5 | inline | **hecha**: primero en rojo (falta de miembros), después en verde (20/20 en `test/theme`); suite sin goldens: 1390 pasan; goldens regenerados con Inter, 25/25 ×2; `flutter analyze` sin problemas | `4375007` |
 | T6b Borrar los alias obsoletos al final de F4 | S1 | inline. Criterio: `grep` sin usos de `AppColors.(secondary\|success\|warning\|onPrimaryMuted\|borderNav)` fuera de `app_colors.dart`, porque `flutter_lints` no avisa del uso de miembros obsoletos del mismo paquete (hoy hay 15 usos) | pendiente | |
-| T7 Componentes compartidos: medidor, etiqueta de nivel, pin, íconos de categoría, escalas neutras (D6) | S5, S3 | delegado (respaldo de contexto: la sesión del orquestador ya es larga) + verificador | escrito; el escritor se trabó una vez y se retomó. RED→GREEN por ítem. Suite: 1443 pasan, 0 fallan; goldens 25/25 ×2 (control del orquestador: 25/25); 10 capturas regeneradas. **Pendiente: verificador** | ver commit T7 |
+| T7 Componentes compartidos: medidor, etiqueta de nivel, pin, íconos de categoría, escalas neutras (D6) | S5, S3 | delegado (respaldo de contexto: la sesión del orquestador ya es larga) + verificador | escrito; el escritor se trabó una vez y se retomó. RED→GREEN por ítem. Suite: 1443 pasan, 0 fallan; goldens 25/25 ×2 (control del orquestador: 25/25); 10 capturas regeneradas. **Verificador: PASS sin bloqueantes** (S1, S2, S3, S5; suite propia 1443/1443). Sus advertencias pasan a T8 | `e036a73` |
 | T8-G1 Inicio de sesión | S6 | delegado (paralelo); requiere D2 | pendiente | |
 | T8-G2 Mapa, detalle, reportar | S6, S3 | delegado (paralelo); requiere D1, D3, D4 | pendiente | |
 | T8-G3 Validar, historial | S6, S2 | delegado (paralelo) | pendiente | |
@@ -90,3 +90,14 @@ Entrega: `ask-on-risk` → cadena `stacked-to-main`: PRs encadenados hacia `deve
     - No correr `flutter test` en paralelo desde dos escritores en el mismo repositorio.
     - El historial de 7 días queda sin captura, porque el fake depende del día de la semana.
     - Los emojis salen como cajas, porque el SDK no trae fuente de emojis.
+- **L10 (2026-11-17):** Avances del día.
+  - T6 en `4375007`.
+  - T7 en `e036a73`, con el verificador en PASS.
+  - Advertencias del verificador que van a T8:
+    - Íconos de categoría sin `semanticLabel`.
+    - Ícono del encabezado del detalle: 36 px con caja `brand-50`.
+    - `MedidorNivel.escala` para el medidor grande del detalle.
+    - El filtro «Moderad/o» se parte en dos líneas.
+    - El comentario viejo de `SeccionConfiabilidad`.
+  - T8 se lanza con 4 escritores en paralelo. Por L9, cada uno corre solo pruebas enfocadas con `--concurrency=2`, sin la suite completa y sin regenerar capturas. El orquestador corre al final la suite completa y regenera las capturas.
+  - T6b se lo queda el orquestador: los alias en `favoritos_page`, `alertas_page` y `estado_vacio`, que no están en ningún grupo.
