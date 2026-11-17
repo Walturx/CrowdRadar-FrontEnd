@@ -6,10 +6,11 @@ import 'package:go_router/go_router.dart';
 
 import 'golden_harness.dart';
 
-/// Plain stand-in for a tab's screen, so the image is about the bar.
+/// Labelled stand-in for a tab's screen: these captures are about the bar,
+/// and each real screen has its own golden file.
 Widget _tab(String name) => Scaffold(
   appBar: AppBar(title: Text(name)),
-  body: const SizedBox.expand(),
+  body: Center(child: Text('Tab placeholder: $name')),
 );
 
 void main() {
@@ -27,17 +28,25 @@ void main() {
           builder: withoutAnimations,
           home: Scaffold(
             body: _tab(name),
-            bottomNavigationBar: CrBottomNav(
-              currentIndex: index,
-              onTap: (_) {},
-              alertasNoLeidas: 3,
+            // Golden captures stop at the nearest RepaintBoundary, so the bar
+            // gets its own to crop the image to it.
+            bottomNavigationBar: RepaintBoundary(
+              child: CrBottomNav(
+                currentIndex: index,
+                onTap: (_) {},
+                alertasNoLeidas: 3,
+              ),
             ),
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      await matchBaseline('nav_principal_${name.toLowerCase()}');
+      // The tab bodies are stand-ins, so only the bar is captured.
+      await matchBaselineOf(
+        find.byType(CrBottomNav),
+        'nav_principal_${name.toLowerCase()}',
+      );
     });
   }
 
@@ -76,6 +85,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(name), findsWidgets);
+      // AdminLayout owns its NavigationBar, so this capture is the full
+      // screen; the tab body is a labelled stand-in, not a real page.
       await matchBaseline('nav_admin_${name.toLowerCase()}');
     });
   }

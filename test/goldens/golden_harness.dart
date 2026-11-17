@@ -91,3 +91,8 @@ Future<void> matchBaseline(String name) => expectLater(
   find.byType(MaterialApp),
   matchesGoldenFile('baseline/$name.png'),
 );
+
+/// Same as [matchBaseline], but crops the image to [finder], for captures
+/// that are about one component (for example the bottom navigation bar).
+Future<void> matchBaselineOf(Finder finder, String name) =>
+    expectLater(finder, matchesGoldenFile('baseline/$name.png'));
