@@ -270,6 +270,83 @@ void main() {
     expect(resultado, isNull);
   });
 
+  group('redesigned options (design-system §5)', () {
+    testWidgets('each option shows its meter, label and description', (
+      tester,
+    ) async {
+      await abrir(tester);
+
+      for (final (clave, etiqueta, descripcion) in [
+        ('tranquilo', 'Tranquilo', 'Hay espacio, poca gente'),
+        ('moderado', 'Moderado', 'Algo concurrido'),
+        ('saturado', 'Saturado', 'Lleno, mucha gente'),
+      ]) {
+        final opcion = find.byKey(Key('opcion-nivel-$clave'));
+        expect(opcion, findsOneWidget);
+        for (final buscado in [
+          find.text(etiqueta),
+          find.text(descripcion),
+          find.byKey(const ValueKey('medidor-nivel')),
+        ]) {
+          expect(
+            find.descendant(of: opcion, matching: buscado),
+            findsOneWidget,
+            reason: '$clave: $buscado',
+          );
+        }
+        expect(
+          tester.getSize(opcion).height,
+          greaterThanOrEqualTo(44),
+          reason: 'S5: 44 px touch target',
+        );
+      }
+    });
+
+    testWidgets('only the selected option shows the check', (tester) async {
+      await abrir(tester);
+      final check = find.byKey(const ValueKey('check-opcion-nivel'));
+      expect(check, findsNothing);
+
+      await tester.tap(find.text('Moderado'));
+      await tester.pump();
+
+      expect(check, findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('opcion-nivel-moderado')),
+          matching: check,
+        ),
+        findsOneWidget,
+      );
+      expect(
+        isSemantics(isSelected: true).matches(
+          tester.getSemantics(find.byKey(const Key('opcion-nivel-moderado'))),
+          {},
+        ),
+        isTrue,
+      );
+    });
+
+    testWidgets('a note says the place can be reported again later (D4)', (
+      tester,
+    ) async {
+      await abrir(tester);
+
+      expect(
+        find.text('Puedes volver a reportar este lugar más tarde'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('30'), findsNothing);
+      final nota = tester.getTopLeft(
+        find.text('Puedes volver a reportar este lugar más tarde'),
+      );
+      final boton = tester.getTopLeft(
+        find.byKey(const Key('boton-enviar-reporte')),
+      );
+      expect(nota.dy, lessThan(boton.dy), reason: 'above the button');
+    });
+  });
+
   group('CRO-85: accesibilidad del reporte', () {
     testWidgets(
       'ACC-APP-06: los niveles siguen disponibles con texto al 130%',

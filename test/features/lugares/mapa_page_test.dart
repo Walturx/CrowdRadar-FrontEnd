@@ -14,7 +14,6 @@ import 'package:crowdradar/core/widgets/pin_saturacion.dart';
 import 'package:crowdradar/features/exploracion/data/exploracion_repository.dart';
 import 'package:crowdradar/features/lugares/buscar/buscar_lugar_page.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
-import 'package:crowdradar/features/lugares/mapa/leyenda_saturacion.dart';
 import 'package:crowdradar/features/lugares/mapa/map_page.dart';
 import 'package:crowdradar/features/lugares/mapa/marcadores.dart';
 import 'package:flutter/material.dart';
@@ -73,6 +72,8 @@ class _MapaFalso implements MapaAdapter {
     this.eventos = eventos;
     return Column(
       key: const ValueKey('mapa-falso'),
+      // Centred: the search and filters float over the top of the map.
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         for (final m in marcadores)
           PinSaturacion(
@@ -426,17 +427,54 @@ void main() {
       expect(find.byKey(const ValueKey('tarjeta-error')), findsNothing);
     });
 
-    testWidgets('the legend names the three levels', (tester) async {
+    testWidgets('the level chips are the legend; «Sin información» keeps a key '
+        '(D3)', (tester) async {
       repo = RepoLugarFalso();
       await abrir(tester);
 
-      final leyenda = find.byType(LeyendaSaturacion);
-      for (final nivel in ['Tranquilo', 'Moderado', 'Saturado']) {
+      for (final (clave, nivel) in [
+        ('tranquilo', 'Tranquilo'),
+        ('moderado', 'Moderado'),
+        ('saturado', 'Saturado'),
+      ]) {
+        final chip = find.byKey(Key('chip-nivel-$clave'));
         expect(
-          find.descendant(of: leyenda, matching: find.text(nivel)),
+          find.descendant(of: chip, matching: find.text(nivel)),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: chip,
+            matching: find.byKey(const ValueKey('medidor-nivel')),
+          ),
           findsOneWidget,
         );
       }
+
+      final leyenda = find.byKey(const ValueKey('leyenda-sin-informacion'));
+      expect(
+        find.descendant(of: leyenda, matching: find.text('Sin información')),
+        findsOneWidget,
+      );
+      expect(leyenda.hitTestable(), findsOneWidget, reason: 'visible on top');
+    });
+
+    testWidgets('the map fills the screen and the search floats over it', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso();
+      await abrir(tester);
+
+      final mapa = tester.getRect(find.byKey(const ValueKey('mapa-falso')));
+      final pantalla = Offset.zero & tester.view.physicalSize;
+      expect(mapa.top, 0, reason: 'no header above the map');
+      expect(mapa.height, pantalla.height / tester.view.devicePixelRatio);
+
+      final buscador = find.byKey(const ValueKey('buscador-mapa'));
+      expect(mapa.overlaps(tester.getRect(buscador)), isTrue);
+      expect(buscador.hitTestable(), findsOneWidget);
+      expect(tester.getSize(buscador).height, greaterThanOrEqualTo(44));
+      expect(find.text('Tu zona'), findsNothing);
     });
   });
 

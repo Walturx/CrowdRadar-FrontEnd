@@ -120,6 +120,90 @@ void main() {
     expect(seleccionado('Mercados'), isFalse);
   });
 
+  group('level chips (design-system §5, D1, D3)', () {
+    testWidgets('each level chip carries its meter and its label', (
+      tester,
+    ) async {
+      await abrir(tester, ExploracionRepositoryFake());
+
+      for (final (clave, etiqueta) in [
+        ('tranquilo', 'Tranquilo'),
+        ('moderado', 'Moderado'),
+        ('saturado', 'Saturado'),
+      ]) {
+        final chip = find.byKey(Key('chip-nivel-$clave'));
+        expect(chip, findsOneWidget);
+        expect(
+          find.descendant(of: chip, matching: find.text(etiqueta)),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: chip,
+            matching: find.byKey(const ValueKey('medidor-nivel')),
+          ),
+          findsOneWidget,
+          reason: 'the level chips are the map legend',
+        );
+      }
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('chip-nivel-todos')),
+          matching: find.text('Todos'),
+        ),
+        findsOneWidget,
+        reason: 'D1: the text stays «Todos»',
+      );
+      expect(find.text('Todos los niveles'), findsNothing);
+    });
+
+    testWidgets('«Moderado» fits on one line on a narrow phone', (
+      tester,
+    ) async {
+      await abrir(tester, ExploracionRepositoryFake());
+      tester.view.physicalSize = const Size(360, 800);
+      await tester.pump();
+
+      final alto = tester.getSize(find.text('Moderado')).height;
+      expect(alto, lessThan(24), reason: 'one line, not «Moderad/o»');
+    });
+
+    testWidgets('the selected level chip is marked', (tester) async {
+      await abrir(tester, ExploracionRepositoryFake());
+      bool seleccionado(Key clave) => isSemantics(
+        isSelected: true,
+      ).matches(tester.getSemantics(find.byKey(clave)), {});
+
+      expect(seleccionado(const Key('chip-nivel-todos')), isTrue);
+      expect(seleccionado(const Key('chip-nivel-saturado')), isFalse);
+
+      await tester.tap(find.text('Saturado'));
+      await tester.pump();
+
+      expect(seleccionado(const Key('chip-nivel-saturado')), isTrue);
+      expect(seleccionado(const Key('chip-nivel-todos')), isFalse);
+    });
+
+    testWidgets('every filter chip is at least 44 px tall to touch', (
+      tester,
+    ) async {
+      await abrir(tester, ExploracionRepositoryFake());
+
+      for (final clave in [
+        'chip-categoria-todos',
+        'chip-categoria-parque',
+        'chip-nivel-todos',
+        'chip-nivel-tranquilo',
+        'chip-nivel-moderado',
+        'chip-nivel-saturado',
+      ]) {
+        final tamano = tester.getSize(find.byKey(Key(clave)));
+        expect(tamano.height, greaterThanOrEqualTo(44), reason: clave);
+        expect(tamano.width, greaterThanOrEqualTo(44), reason: clave);
+      }
+    });
+  });
+
   testWidgets('a failed categories load offers Reintentar', (tester) async {
     final repo = _Intermitente();
     await abrir(tester, repo);
