@@ -1,7 +1,7 @@
 # rediseno-visual (CRO-88)
 
 Objetivo: aplicar el rediseño visual de `docs/rediseno/design-system.md` sin cambiar la lógica. Rama: `feat/cro-88-rediseno-visual`.
-Entrega: `ask-on-risk` (se espera más de 400 líneas: se preguntará la estrategia de cadena antes del primer PR). Pruebas: `flutter test`, `flutter analyze`.
+Entrega: `ask-on-risk` → cadena `stacked-to-main`: PRs encadenados hacia `develop`, cortes por fase; el armado se hace al final (decisión del usuario, 2026-11-17). Pruebas: `flutter test`, `flutter analyze`.
 
 ## Specs
 
@@ -25,9 +25,9 @@ Entrega: `ask-on-risk` (se espera más de 400 líneas: se preguntará la estrate
 | ID | Specs | Ruta | Estado | Evidencia / commit |
 |---|---|---|---|---|
 | T1 Documentos: alcance, plan de agentes y decisiones D1–D8 | S4 | inline (orquestador) | **hecha** | `c3a1012`, `d7bfd40`, `1d7c513` |
-| T2 Claves y búsquedas estables en las pruebas | S7, S1 | delegado (escritor A, paralelo con T4) | pendiente | |
+| T2 Claves y búsquedas estables en las pruebas | S7, S1 | delegado (escritor A, paralelo con T4) | **hecha**: `flutter analyze` sin problemas; sin goldens, 1372 pasan y 0 fallan; en lib solo hay `key:` (17 archivos) | `76c79e8` |
 | T3 Reloj inyectable | — | — | **cancelada** (D8 = a: datos relativos a la hora real, sin tocar `lib`) | |
-| T4 Capturas de referencia de las 8 pantallas, con fechas relativas a la hora real | S7 | delegado (escritor B, paralelo con T2) | pendiente | |
+| T4 Capturas de referencia de las 8 pantallas, con fechas relativas a la hora real | S7 | delegado (escritor B); el escritor quedó `partial` por falta de memoria y el orquestador lo terminó inline | hecha, **falta la aprobación humana de las 25 capturas**. Verificación: `flutter test test/goldens` ×2 → 25/25; `flutter analyze` sin problemas; `flutter test` → 1397 pasan (1372 + 25), 0 fallan | ver commit T4 |
 | T5 Pruebas de las reglas de diseño (contraste, 44 px, nivel con medidor y texto) | S5 | delegado; después de T2 | pendiente | |
 | T6 Colores, theme e Inter con alias temporales (D7 = B) | S1, S5 | inline | pendiente | |
 | T6b Borrar los alias obsoletos al final de F4 | S1 | inline | pendiente | |
@@ -80,3 +80,13 @@ Entrega: `ask-on-risk` (se espera más de 400 líneas: se preguntará la estrate
   - Riesgo aceptado por el usuario: la revisión humana de capturas del viernes es el cuello de botella.
   - T1 cerrada.
 - **L8 (2026-11-17):** Base de pruebas en la rama, con Flutter 3.47.9: `flutter test` → **1372 pasan, 0 fallan**. Se lanzan T2 y T4 en paralelo.
+- **L9 (2026-11-17):** Cierre de T2 y T4.
+  - T2 hecha en `76c79e8`.
+  - T4 volvió `partial`: la corrida murió por falta de memoria con dos escritores corriendo `flutter` a la vez. El orquestador terminó T4:
+    - Corrigió `perfil_golden_test.dart` con `scrollUntilVisible`, porque la lista se construye a medida que se desplaza.
+    - Generó las 5 capturas de perfil que faltaban y verificó todo.
+  - Se descartaron cambios fuera de las superficies permitidas: `analysis_options.yaml` (excluía `build/`, `android/` e `ios/`) y `pubspec.lock` (subía `intl` y `matcher`).
+  - Lecciones:
+    - No correr `flutter test` en paralelo desde dos escritores en el mismo repositorio.
+    - El historial de 7 días queda sin captura, porque el fake depende del día de la semana.
+    - Los emojis salen como cajas, porque el SDK no trae fuente de emojis.
