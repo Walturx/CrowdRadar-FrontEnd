@@ -227,10 +227,10 @@ class _Fila extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            Text(
-              emojiCategoria(favorito.categoria),
+            Icon(
+              iconoCategoria(favorito.categoria),
               key: Key('icono-categoria-${favorito.categoria?.name}'),
-              style: const TextStyle(fontSize: 26),
+              size: 20,
             ),
             const SizedBox(width: 12),
             Expanded(

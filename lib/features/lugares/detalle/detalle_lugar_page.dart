@@ -182,10 +182,7 @@ class _Contenido extends StatelessWidget {
         secciones: [
           Row(
             children: [
-              Text(
-                emojiCategoria(detalle.categoria),
-                style: const TextStyle(fontSize: 36),
-              ),
+              Icon(iconoCategoria(detalle.categoria), size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

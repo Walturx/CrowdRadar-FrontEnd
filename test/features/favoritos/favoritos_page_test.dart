@@ -51,6 +51,12 @@ void main() {
     expect(find.text('Mercado de Surquillo'), findsOneWidget);
     expect(find.text('Parque Reducto'), findsOneWidget);
     expect(find.byKey(const Key('icono-categoria-parque')), findsNWidgets(2));
+    expect(
+      tester
+          .widgetList<Icon>(find.byKey(const Key('icono-categoria-parque')))
+          .map((i) => i.icon),
+      everyElement(Icons.park_outlined),
+    );
     expect(find.text('Mercado'), findsOneWidget);
     expect(find.text('Tranquilo'), findsOneWidget);
     expect(find.text('Saturado'), findsOneWidget);

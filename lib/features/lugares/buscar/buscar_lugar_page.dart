@@ -114,10 +114,7 @@ class _Lista extends StatelessWidget {
             itemBuilder: (context, i) {
               final l = lugares[i];
               return ListTile(
-                leading: Text(
-                  emojiCategoria(l.categoria),
-                  style: const TextStyle(fontSize: 28),
-                ),
+                leading: Icon(iconoCategoria(l.categoria), size: 20),
                 title: Text(l.nombre),
                 subtitle: Text(
                   subtituloLugar(

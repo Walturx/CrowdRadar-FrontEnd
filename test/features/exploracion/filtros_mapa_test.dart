@@ -38,7 +38,7 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('shows Todos first, then the server categories with emoji', (
+  testWidgets('shows Todos first, then the server categories with icons', (
     tester,
   ) async {
     await abrir(tester, ExploracionRepositoryFake());
@@ -55,6 +55,10 @@ void main() {
       expect(find.text(etiqueta), findsOneWidget);
     }
     expect(find.byKey(const Key('icono-categoria-parque')), findsOneWidget);
+    expect(
+      tester.widget<Icon>(find.byKey(const Key('icono-categoria-parque'))).icon,
+      Icons.park_outlined,
+    );
     expect(find.text('Tranquilo'), findsOneWidget);
     expect(find.text('Moderado'), findsOneWidget);
     expect(find.text('Saturado'), findsOneWidget);
