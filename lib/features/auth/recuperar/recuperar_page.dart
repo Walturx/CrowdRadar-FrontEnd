@@ -99,6 +99,7 @@ class _Formulario extends StatelessWidget {
       ),
       const SizedBox(height: 24),
       BotonConEspera(
+        key: const Key('boton-enviar-enlace'),
         texto: 'Enviar enlace',
         cargando: enviando,
         segundos: espera,

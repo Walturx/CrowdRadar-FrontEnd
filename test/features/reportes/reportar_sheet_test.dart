@@ -30,7 +30,6 @@ void main() {
   late ReporteRepository repo;
   bool? resultado;
 
-  
   Future<void> abrir(
     WidgetTester tester, {
     double escalaTexto = 1.0,
@@ -48,9 +47,9 @@ void main() {
         child: MaterialApp(
           builder: (context, child) {
             return MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                textScaler: TextScaler.linear(escalaTexto),
-              ),
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(escalaTexto)),
               child: child!,
             );
           },
@@ -77,7 +76,6 @@ void main() {
     await tester.tap(find.text('abrir'));
     await tester.pumpAndSettle();
   }
-
 
   late ReporteRepositoryFake fake;
 
@@ -211,10 +209,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Tu cuenta está suspendida'), findsOneWidget);
-    final enviar = tester.widget<ElevatedButton>(
-      find.widgetWithText(ElevatedButton, 'Enviar reporte'),
+    final enviar = find.byKey(const Key('boton-enviar-reporte'));
+    expect(
+      find.descendant(of: enviar, matching: find.text('Enviar reporte')),
+      findsOneWidget,
     );
-    expect(enviar.onPressed, isNull);
+    expect(
+      isSemantics(isEnabled: true).matches(tester.getSemantics(enviar), {}),
+      isFalse,
+    );
 
     await tester.tap(find.text('Cerrar'));
     await tester.pumpAndSettle();
@@ -267,67 +270,137 @@ void main() {
     expect(resultado, isNull);
   });
 
-
-group('CRO-85: accesibilidad del reporte', () {
-  testWidgets(
-    'ACC-APP-06: los niveles siguen disponibles con texto al 130%',
-    (tester) async {
-      await abrir(
-        tester,
-        escalaTexto: 1.3,
-        tamano: const Size(412, 915),
-      );
-
-      expect(tester.takeException(), isNull);
-
-      for (final nivel in ['Tranquilo', 'Moderado', 'Saturado']) {
-        final opcion = find.text(nivel);
-
-        await tester.ensureVisible(opcion);
-        await tester.pumpAndSettle();
-
-        expect(opcion.hitTestable(), findsOneWidget);
-      }
-
-      final enviar = find.text('Enviar reporte');
-
-      await tester.ensureVisible(enviar);
-      await tester.pumpAndSettle();
-
-      expect(enviar.hitTestable(), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets(
-    'ACC-APP-07: el boton de enviar tiene un area tactil adecuada',
-    (tester) async {
+  group('redesigned options (design-system §5)', () {
+    testWidgets('each option shows its meter, label and description', (
+      tester,
+    ) async {
       await abrir(tester);
 
-      final boton = find.widgetWithText(
-        ElevatedButton,
-        'Enviar reporte',
+      for (final (clave, etiqueta, descripcion) in [
+        ('tranquilo', 'Tranquilo', 'Hay espacio, poca gente'),
+        ('moderado', 'Moderado', 'Algo concurrido'),
+        ('saturado', 'Saturado', 'Lleno, mucha gente'),
+      ]) {
+        final opcion = find.byKey(Key('opcion-nivel-$clave'));
+        expect(opcion, findsOneWidget);
+        for (final buscado in [
+          find.text(etiqueta),
+          find.text(descripcion),
+          find.byKey(const ValueKey('medidor-nivel')),
+        ]) {
+          expect(
+            find.descendant(of: opcion, matching: buscado),
+            findsOneWidget,
+            reason: '$clave: $buscado',
+          );
+        }
+        expect(
+          tester.getSize(opcion).height,
+          greaterThanOrEqualTo(44),
+          reason: 'S5: 44 px touch target',
+        );
+      }
+    });
+
+    testWidgets('only the selected option shows the check', (tester) async {
+      await abrir(tester);
+      final check = find.byKey(const ValueKey('check-opcion-nivel'));
+      expect(check, findsNothing);
+
+      await tester.tap(find.text('Moderado'));
+      await tester.pump();
+
+      expect(check, findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('opcion-nivel-moderado')),
+          matching: check,
+        ),
+        findsOneWidget,
       );
+      expect(
+        isSemantics(isSelected: true).matches(
+          tester.getSemantics(find.byKey(const Key('opcion-nivel-moderado'))),
+          {},
+        ),
+        isTrue,
+      );
+    });
 
-      expect(boton, findsOneWidget);
-
-      final tamano = tester.getSize(boton);
+    testWidgets('a note says the place can be reported again later (D4)', (
+      tester,
+    ) async {
+      await abrir(tester);
 
       expect(
-        tamano.width,
-        greaterThanOrEqualTo(48),
-        reason: 'El boton debe medir al menos 48 px de ancho',
+        find.text('Puedes volver a reportar este lugar más tarde'),
+        findsOneWidget,
       );
-
-      expect(
-        tamano.height,
-        greaterThanOrEqualTo(48),
-        reason: 'El boton debe medir al menos 48 px de alto',
+      expect(find.textContaining('30'), findsNothing);
+      final nota = tester.getTopLeft(
+        find.text('Puedes volver a reportar este lugar más tarde'),
       );
-    },
-  );
-});
+      final boton = tester.getTopLeft(
+        find.byKey(const Key('boton-enviar-reporte')),
+      );
+      expect(nota.dy, lessThan(boton.dy), reason: 'above the button');
+    });
+  });
 
+  group('CRO-85: accesibilidad del reporte', () {
+    testWidgets(
+      'ACC-APP-06: los niveles siguen disponibles con texto al 130%',
+      (tester) async {
+        await abrir(tester, escalaTexto: 1.3, tamano: const Size(412, 915));
 
+        expect(tester.takeException(), isNull);
 
+        for (final nivel in ['Tranquilo', 'Moderado', 'Saturado']) {
+          final opcion = find.text(nivel);
+
+          await tester.ensureVisible(opcion);
+          await tester.pumpAndSettle();
+
+          expect(opcion.hitTestable(), findsOneWidget);
+        }
+
+        final enviar = find.text('Enviar reporte');
+
+        await tester.ensureVisible(enviar);
+        await tester.pumpAndSettle();
+
+        expect(enviar.hitTestable(), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'ACC-APP-07: el boton de enviar tiene un area tactil adecuada',
+      (tester) async {
+        await abrir(tester);
+
+        final boton = find.byKey(const Key('boton-enviar-reporte'));
+        expect(
+          find.descendant(of: boton, matching: find.text('Enviar reporte')),
+          findsOneWidget,
+        );
+
+        expect(boton, findsOneWidget);
+
+        final tamano = tester.getSize(boton);
+
+        expect(
+          tamano.width,
+          greaterThanOrEqualTo(48),
+          reason: 'El boton debe medir al menos 48 px de ancho',
+        );
+
+        expect(
+          tamano.height,
+          greaterThanOrEqualTo(48),
+          reason: 'El boton debe medir al menos 48 px de alto',
+        );
+      },
+    );
+  });
 }

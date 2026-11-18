@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/models/nivel_saturacion.dart';
 import '../../../core/widgets/boton_principal.dart';
 import '../../../core/widgets/chip_saturacion.dart';
+import '../../../core/widgets/medidor_nivel.dart';
 import '../../../theme/app_colors.dart';
 import '../data/reporte_repository.dart';
 import 'reportar_cubit.dart';
@@ -29,6 +30,12 @@ Future<bool?> mostrarReportarSheet(
   final resultado = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
+    // design-system section 5: radius 28 on top over a 45 % ink scrim.
+    backgroundColor: AppColors.surface,
+    barrierColor: const Color(0x730F172A),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    ),
     builder: (_) => ReportarSheet(
       cubit: reportar,
       lugarNombre: lugarNombre,
@@ -42,11 +49,16 @@ Future<bool?> mostrarReportarSheet(
 /// HU 4.1: choose Tranquilo / Moderado / Saturado and send the report. It only
 /// renders the [cubit]'s state; whoever created the cubit owns and closes it.
 class ReportarSheet extends StatelessWidget {
-  static const Map<NivelSaturacion, String> _descripciones = {
-    NivelSaturacion.tranquilo: 'Hay espacio, poca gente',
-    NivelSaturacion.moderado: 'Algo concurrido',
-    NivelSaturacion.saturado: 'Lleno, mucha gente',
-  };
+  /// Levels a user can report ("Sin información" is not a choice).
+  static const List<NivelSaturacion> _niveles = [
+    NivelSaturacion.tranquilo,
+    NivelSaturacion.moderado,
+    NivelSaturacion.saturado,
+  ];
+
+  /// D4: the wait between reports lives only on the server, so no number.
+  static const String notaReporte =
+      'Puedes volver a reportar este lugar más tarde';
 
   final ReportarCubit cubit;
   final String lugarNombre;
@@ -68,7 +80,7 @@ class ReportarSheet extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           20,
-          20,
+          10,
           20,
           20 + MediaQuery.viewInsetsOf(context).bottom,
         ),
@@ -107,12 +119,22 @@ class _Formulario extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const _Asa(),
+        const SizedBox(height: 14),
         const Text(
           '¿Qué tan lleno está?',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            fontSize: 21,
+            fontWeight: FontWeight.w800,
+            height: 1.25,
+            color: AppColors.text,
+          ),
         ),
-        Text(lugarNombre, style: const TextStyle(color: AppColors.textMuted)),
-        const SizedBox(height: 12),
+        Text(
+          lugarNombre,
+          style: const TextStyle(fontSize: 14, color: AppColors.textMuted),
+        ),
+        const SizedBox(height: 14),
         if (_error != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -121,15 +143,28 @@ class _Formulario extends StatelessWidget {
               style: const TextStyle(color: AppColors.danger),
             ),
           ),
-        for (final e in ReportarSheet._descripciones.entries)
+        for (final nivel in ReportarSheet._niveles)
           _Opcion(
-            nivel: e.key,
-            descripcion: e.value,
-            seleccionada: state.nivel == e.key,
-            onTap: enviando ? null : () => cubit.seleccionarNivel(e.key),
+            nivel: nivel,
+            seleccionada: state.nivel == nivel,
+            onTap: enviando ? null : () => cubit.seleccionarNivel(nivel),
           ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 2),
+        const Row(
+          children: [
+            Icon(Icons.info_outline, size: 16, color: AppColors.textMuted),
+            SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                ReportarSheet.notaReporte,
+                style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
         BotonPrincipal(
+          key: const Key('boton-enviar-reporte'),
           texto: (fallo?.reintentable ?? false)
               ? 'Reintentar'
               : 'Enviar reporte',
@@ -146,67 +181,152 @@ class _Formulario extends StatelessWidget {
   }
 }
 
+/// Handle of the sheet: 40 x 4 px (design-system section 5).
+class _Asa extends StatelessWidget {
+  const _Asa();
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Container(
+      width: 40,
+      height: 4,
+      decoration: BoxDecoration(
+        color: AppColors.border,
+        borderRadius: BorderRadius.circular(2),
+      ),
+    ),
+  );
+}
+
+/// One level option: a meter tile, the level name and description, and a
+/// radio circle. Chosen, its border takes the level `dot` color with a 4 px
+/// halo and the circle shows a check.
 class _Opcion extends StatelessWidget {
+  static const double _radio = 16;
+
   final NivelSaturacion nivel;
-  final String descripcion;
   final bool seleccionada;
   final VoidCallback? onTap;
 
   const _Opcion({
     required this.nivel,
-    required this.descripcion,
     required this.seleccionada,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = ChipSaturacion.colorDe(nivel);
-    return Semantics(
-      selected: seleccionada,
-      button: true,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
+    final dot = ChipSaturacion.colorDe(nivel);
+    final forma = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(_radio),
+      side: BorderSide(
+        color: seleccionada ? dot : AppColors.border,
+        width: 1.5,
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Semantics(
+        key: Key('opcion-nivel-${nivel.name}'),
+        container: true,
+        selected: seleccionada,
+        button: true,
+        child: DecoratedBox(
           decoration: BoxDecoration(
-            color: seleccionada ? color.withValues(alpha: 0.12) : null,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: seleccionada ? color : AppColors.border,
-              width: seleccionada ? 2 : 1,
-            ),
+            borderRadius: BorderRadius.circular(_radio),
+            boxShadow: [
+              if (seleccionada)
+                BoxShadow(color: dot.withValues(alpha: 0.22), spreadRadius: 4),
+            ],
           ),
-          child: Row(
-            children: [
-              CircleAvatar(radius: 6, backgroundColor: color),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: Material(
+            color: seleccionada
+                ? ChipSaturacion.bgDe(nivel).withValues(alpha: 0.5)
+                : AppColors.surface,
+            shape: forma,
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
                   children: [
-                    Text(
-                      ChipSaturacion.etiquetaDe(nivel),
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    Text(
-                      descripcion,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textMuted,
+                    Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: ChipSaturacion.bgDe(nivel),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: MedidorNivel(
+                        nivel: nivel,
+                        color: ChipSaturacion.fgDe(nivel),
                       ),
                     ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            ChipSaturacion.etiquetaDe(nivel),
+                            style: const TextStyle(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.text,
+                            ),
+                          ),
+                          Text(
+                            ChipSaturacion.descripcionDe(nivel),
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    _Circulo(seleccionada: seleccionada, color: dot),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+/// Radio circle of an option; chosen, it is filled with a check.
+class _Circulo extends StatelessWidget {
+  final bool seleccionada;
+  final Color color;
+
+  const _Circulo({required this.seleccionada, required this.color});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 22,
+    height: 22,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: seleccionada ? color : null,
+      border: seleccionada
+          ? null
+          : Border.all(color: AppColors.iconMuted, width: 1.5),
+    ),
+    child: seleccionada
+        ? const Icon(
+            Icons.check,
+            key: ValueKey('check-opcion-nivel'),
+            size: 15,
+            color: AppColors.surface,
+          )
+        : null,
+  );
 }
 
 class _Exito extends StatelessWidget {

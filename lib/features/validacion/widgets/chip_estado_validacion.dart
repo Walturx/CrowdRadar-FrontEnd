@@ -10,11 +10,13 @@ class ChipEstadoValidacion extends StatelessWidget {
 
   const ChipEstadoValidacion({super.key, required this.estado});
 
-  static Color colorDe(EstadoValidacion estado) => switch (estado) {
-    EstadoValidacion.validado => AppColors.success,
-    EstadoValidacion.enValidacion => AppColors.warning,
-    EstadoValidacion.rechazado => AppColors.danger,
-    EstadoValidacion.sinValidaciones => AppColors.textMuted,
+  /// Each estado is told apart by its icon; the colors stay neutral because
+  /// green, amber and red belong to saturation levels (decision D6).
+  static IconData iconoDe(EstadoValidacion estado) => switch (estado) {
+    EstadoValidacion.validado => Icons.check_circle_outline,
+    EstadoValidacion.enValidacion => Icons.hourglass_empty,
+    EstadoValidacion.rechazado => Icons.cancel_outlined,
+    EstadoValidacion.sinValidaciones => Icons.remove_circle_outline,
   };
 
   static String etiquetaDe(EstadoValidacion estado) => switch (estado) {
@@ -26,20 +28,33 @@ class ChipEstadoValidacion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = colorDe(estado);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: AppColors.sinDatosBg,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        etiquetaDe(estado),
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            iconoDe(estado),
+            key: const ValueKey('icono-estado-validacion'),
+            size: 14,
+            color: AppColors.textSecondary,
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              etiquetaDe(estado),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

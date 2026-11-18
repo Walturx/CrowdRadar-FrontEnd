@@ -97,7 +97,10 @@ void main() {
       await abrir(tester, 101);
 
       expect(find.byType(TarjetaReporte), findsOneWidget);
-      expect(enTarjeta(find.byType(Card)), findsOneWidget);
+      expect(
+        enTarjeta(find.byKey(const ValueKey('tarjeta-reporte-superficie'))),
+        findsOneWidget,
+      );
       expect(enTarjeta(find.byType(EncabezadoReporte)), findsOneWidget);
       expect(enTarjeta(find.text('Parque Kennedy')), findsOneWidget);
       expect(

@@ -4,6 +4,10 @@ import '../../../core/models/moderacion.dart';
 import '../../../theme/app_colors.dart';
 
 /// Account status of a user: "Activo" or "Suspendido" (HU 7.2 / 7.4).
+///
+/// Activo is the success state (green text with a green dot); Suspendido is a
+/// system error state (danger on dangerBg with a block icon), design-system
+/// §2.3.
 class ChipEstadoCuenta extends StatelessWidget {
   final EstadoCuenta estado;
 
@@ -12,20 +16,46 @@ class ChipEstadoCuenta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final suspendido = estado == EstadoCuenta.suspendido;
-    final color = suspendido ? AppColors.danger : AppColors.success;
+    final color = suspendido ? AppColors.danger : AppColors.tranquilo;
     return Container(
+      key: const ValueKey('chip-estado-cuenta'),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: suspendido ? AppColors.dangerBg : null,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        suspendido ? 'Suspendido' : 'Activo',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (suspendido)
+            const Icon(
+              Icons.block,
+              key: ValueKey('icono-estado-cuenta'),
+              size: 14,
+              color: AppColors.danger,
+            )
+          else
+            Container(
+              key: const ValueKey('punto-estado-cuenta'),
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: AppColors.tranquiloDot,
+                shape: BoxShape.circle,
+              ),
+            ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              suspendido ? 'Suspendido' : 'Activo',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

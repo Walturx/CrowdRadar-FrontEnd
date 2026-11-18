@@ -184,7 +184,9 @@ void main() {
 
       await tester.tap(find.text('Cerrar sesión'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
+      await tester.tap(
+        find.byKey(const ValueKey('confirmar-accion-confirmar')),
+      );
       await tester.pumpAndSettle();
 
       // The fake needs a live session to accept the DELETE, so an empty list
@@ -228,7 +230,9 @@ void main() {
 
       await tester.tap(find.text('Cerrar sesión'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
+      await tester.tap(
+        find.byKey(const ValueKey('confirmar-accion-confirmar')),
+      );
       await tester.pumpAndSettle();
 
       expect(grabadoras.borrados, 1);
@@ -319,11 +323,8 @@ void main() {
 
     Finder insignia() => find.byKey(const Key('insignia-favoritos'));
 
-    String? cuentaInsignia(WidgetTester tester) => tester
-        .widget<Text>(
-          find.descendant(of: insignia(), matching: find.byType(Text)),
-        )
-        .data;
+    Finder cuentaInsignia(String cuenta) =>
+        find.descendant(of: insignia(), matching: find.text(cuenta));
 
     Future<void> recibir(WidgetTester tester, MensajePrimerPlano m) async {
       receptor.mensajes.add(m);
@@ -339,7 +340,7 @@ void main() {
 
       expect(find.text('Alerta de saturación'), findsOneWidget);
       expect(find.text('Parque Kennedy ahora está Saturado.'), findsOneWidget);
-      await tester.tap(find.widgetWithText(SnackBarAction, 'Ver'));
+      await tester.tap(find.text('Ver'));
       await tester.pumpAndSettle();
 
       expect(find.text('Av. Larco 345, Miraflores'), findsOneWidget);
@@ -349,13 +350,13 @@ void main() {
       tester,
     ) async {
       await abrir(tester);
-      expect(cuentaInsignia(tester), '1');
+      expect(cuentaInsignia('1'), findsOneWidget);
       // The backend stored the alert before sending the push.
       alertas().emitir(2, NivelSaturacion.tranquilo, NivelSaturacion.saturado);
 
       await recibir(tester, alerta);
 
-      expect(cuentaInsignia(tester), '2');
+      expect(cuentaInsignia('2'), findsOneWidget);
     });
 
     testWidgets('without a lugarId the notice has no Ver action', (
@@ -370,7 +371,7 @@ void main() {
 
       expect(find.text('Aviso'), findsOneWidget);
       expect(find.text('Sin lugar'), findsOneWidget);
-      expect(find.byType(SnackBarAction), findsNothing);
+      expect(find.text('Ver'), findsNothing);
     });
 
     testWidgets('without a session nothing is shown', (tester) async {

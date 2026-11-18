@@ -12,6 +12,8 @@ import 'package:crowdradar/features/favoritos/data/favorito_repository.dart';
 import 'package:crowdradar/features/lugares/data/lugar_repository.dart';
 import 'package:crowdradar/features/lugares/detalle/detalle_lugar_page.dart';
 import 'package:crowdradar/features/reportes/data/reporte_repository.dart';
+import 'package:crowdradar/theme/app_colors.dart';
+import 'package:crowdradar/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,6 +89,7 @@ void main() {
           RepositoryProvider<ReporteRepository>.value(value: reportes),
         ],
         child: MaterialApp(
+          theme: AppTheme.lightTheme,
           home: DetalleLugarPage(lugarId: 1, origenDistancia: centro),
         ),
       ),
@@ -185,7 +188,7 @@ void main() {
       expect(find.text('Reporte enviado'), findsOneWidget);
       expect(
         find.descendant(
-          of: find.byType(SnackBar),
+          of: find.byKey(const ValueKey('aviso-reporte-enviado')),
           matching: find.textContaining(RegExp(r'\+|puntos|karma')),
         ),
         findsNothing,
@@ -206,7 +209,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repo.detallesPedidos, [1]);
-      expect(find.byType(SnackBar), findsNothing);
+      expect(find.byKey(const ValueKey('aviso-reporte-enviado')), findsNothing);
+      expect(find.byKey(const ValueKey('aviso-detalle-lugar')), findsNothing);
     });
 
     testWidgets('dismissing the sheet without sending does not reload', (
@@ -297,6 +301,86 @@ void main() {
       expect(find.text('Parque · 315 m'), findsOneWidget);
       expect(find.text('Moderado'), findsOneWidget);
       expect(find.text('Actualizado hace 5 min · 18 reportes'), findsOneWidget);
+    });
+
+    testWidgets('the big level card shows label, meter, description, '
+        'freshness and reports', (tester) async {
+      repo = RepoLugarFalso(alObtener: (_) async => _detalle());
+      await abrir(tester);
+
+      final tarjeta = find.byKey(const ValueKey('tarjeta-nivel'));
+      expect(tarjeta, findsOneWidget);
+      for (final texto in [
+        'SATURACIÓN AHORA',
+        'Moderado',
+        'Algo concurrido',
+        'Actualizado hace 5 min · 18 reportes',
+      ]) {
+        expect(
+          find.descendant(of: tarjeta, matching: find.text(texto)),
+          findsOneWidget,
+          reason: texto,
+        );
+      }
+      final medidor = find.descendant(
+        of: tarjeta,
+        matching: find.byKey(const ValueKey('medidor-nivel')),
+      );
+      expect(medidor, findsOneWidget);
+      expect(tester.getSize(medidor).height, closeTo(34, 0.5));
+      expect(find.text('En vivo'), findsNothing);
+    });
+
+    testWidgets('«Reportar saturación» is the primary filled button and '
+        '«Ver historial» the outlined one', (tester) async {
+      repo = RepoLugarFalso(alObtener: (_) async => _detalle());
+      await abrir(tester);
+
+      Material fondo(String clave) => tester.widget<Material>(
+        find
+            .descendant(
+              of: find.byKey(ValueKey(clave)),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+      final reportar = find.byKey(const ValueKey('boton-reportar-saturacion'));
+      expect(
+        find.descendant(
+          of: reportar,
+          matching: find.text('Reportar saturación'),
+        ),
+        findsOneWidget,
+      );
+      expect(fondo('boton-reportar-saturacion').color, AppColors.primary);
+
+      final historial = find.byKey(const ValueKey('boton-ver-historial'));
+      expect(
+        find.descendant(of: historial, matching: find.text('Ver historial')),
+        findsOneWidget,
+      );
+      final materialHistorial = fondo('boton-ver-historial');
+      expect(materialHistorial.color, AppColors.surface);
+      expect(
+        (materialHistorial.shape! as OutlinedBorder).side.width,
+        greaterThan(0),
+      );
+      expect(
+        tester.getTopLeft(reportar).dy,
+        lessThan(tester.getTopLeft(historial).dy),
+      );
+    });
+
+    testWidgets('the header icon names the category for screen readers', (
+      tester,
+    ) async {
+      repo = RepoLugarFalso(alObtener: (_) async => _detalle());
+      await abrir(tester);
+
+      final icono = find.byKey(const ValueKey('icono-categoria-detalle'));
+      expect(tester.widget<Icon>(icono).semanticLabel, 'Parque');
+      final caja = find.byKey(const ValueKey('caja-icono-categoria-detalle'));
+      expect(tester.getSize(caja), const Size(36, 36));
     });
 
     testWidgets('the information block lists the address, not name/category', (
@@ -446,13 +530,13 @@ void main() {
     ) async {
       repo = RepoLugarFalso(alObtener: (_) async => _detalle());
       await abrir(tester);
-      expect(find.byIcon(Icons.favorite_border), findsOneWidget);
+      expect(find.byTooltip('Agregar a favoritos'), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.favorite_border));
+      await tester.tap(find.byTooltip('Agregar a favoritos'));
       await tester.pump();
       await tester.pump();
 
-      expect(find.byIcon(Icons.favorite), findsOneWidget);
+      expect(find.byTooltip('Quitar de favoritos'), findsOneWidget);
       expect((await favoritos.listar()).items.single.lugarId, 1);
     });
 
@@ -467,12 +551,12 @@ void main() {
       repo = RepoLugarFalso(alObtener: (_) async => _detalle());
       await abrir(tester);
 
-      await tester.tap(find.byIcon(Icons.favorite_border));
+      await tester.tap(find.byTooltip('Agregar a favoritos'));
       await tester.pump();
       await tester.pump();
 
       expect(find.text('Servidor caído'), findsOneWidget);
-      expect(find.byIcon(Icons.favorite_border), findsOneWidget);
+      expect(find.byTooltip('Agregar a favoritos'), findsOneWidget);
     });
   });
 }

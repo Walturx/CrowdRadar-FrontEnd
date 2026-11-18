@@ -63,6 +63,7 @@ class _Lista extends StatelessWidget {
             children: [
               for (final f in FiltroEstadoValidacion.values)
                 ChoiceChip(
+                  key: Key('filtro-${f.name}'),
                   label: Text(f.etiqueta),
                   selected: estado.filtro == f,
                   onSelected: (_) =>

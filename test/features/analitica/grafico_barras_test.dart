@@ -1,5 +1,8 @@
 import 'package:crowdradar/core/models/analitica.dart';
+import 'package:crowdradar/core/models/nivel_saturacion.dart';
+import 'package:crowdradar/core/widgets/chip_saturacion.dart';
 import 'package:crowdradar/features/analitica/widgets/grafico_barras.dart';
+import 'package:crowdradar/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -37,11 +40,11 @@ void main() {
 
       final rects = barras(tester);
       expect(rects, hasLength(24));
-      final conAltura = [
+      final conReportes = [
         for (var i = 0; i < rects.length; i++)
-          if (rects[i].height > 0) i,
+          if (rects[i].height > GraficoBarras.altoSinReportes) i,
       ];
-      expect(conAltura, [15]);
+      expect(conReportes, [15]);
       final ancho = tester.getSize(find.byType(GraficoBarras)).width;
       expect(
         rects[15].center.dx,
@@ -49,6 +52,77 @@ void main() {
       );
     },
   );
+
+  /// The decoration of every bar, left to right.
+  List<BoxDecoration> decoraciones(WidgetTester tester) => [
+    for (final c in tester.widgetList<Container>(
+      find.byKey(const Key('barra-saturacion')),
+    ))
+      c.decoration! as BoxDecoration,
+  ];
+
+  testWidgets('CRO-88 an hour without reports is a 6 px stub in the border '
+      'color', (tester) async {
+    await dibujar(
+      tester,
+      GraficoBarras(
+        puntos: _franjas({15: const PuntoSerie('15:00', 2, muestras: 5)}),
+      ),
+    );
+
+    final rects = barras(tester);
+    final deco = decoraciones(tester);
+    for (var i = 0; i < 24; i++) {
+      if (i == 15) continue;
+      expect(rects[i].height, 6, reason: 'slot $i');
+      expect(deco[i].color, AppColors.border, reason: 'slot $i');
+    }
+  });
+
+  testWidgets('CRO-88 an hour with reports uses the level dot color and a '
+      'rounded top', (tester) async {
+    await dibujar(
+      tester,
+      GraficoBarras(
+        puntos: _franjas({
+          9: const PuntoSerie('09:00', 1, muestras: 3),
+          12: const PuntoSerie('12:00', 2, muestras: 5),
+          15: const PuntoSerie('15:00', 3, muestras: 8),
+        }),
+      ),
+    );
+
+    final deco = decoraciones(tester);
+    expect(deco[9].color, ChipSaturacion.colorDe(NivelSaturacion.tranquilo));
+    expect(deco[12].color, ChipSaturacion.colorDe(NivelSaturacion.moderado));
+    expect(deco[15].color, ChipSaturacion.colorDe(NivelSaturacion.saturado));
+    expect(
+      deco[15].borderRadius,
+      const BorderRadius.vertical(top: Radius.circular(4)),
+    );
+  });
+
+  testWidgets('CRO-88 the legend uses 10 px squares beside each level name', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: LeyendaBarras())),
+    );
+
+    for (final nivel in [
+      NivelSaturacion.tranquilo,
+      NivelSaturacion.moderado,
+      NivelSaturacion.saturado,
+    ]) {
+      final cuadro = find.byKey(ValueKey('leyenda-cuadro-${nivel.name}'));
+      expect(tester.getSize(cuadro), const Size(10, 10));
+      expect(
+        (tester.widget<Container>(cuadro).decoration! as BoxDecoration).color,
+        ChipSaturacion.colorDe(nivel),
+      );
+      expect(find.text(ChipSaturacion.etiquetaDe(nivel)), findsOneWidget);
+    }
+  });
 
   testWidgets('an empty slot says it has no reports instead of a 0.0 level', (
     tester,
@@ -138,7 +212,7 @@ void main() {
 
       final rects = barras(tester);
       expect(rects, hasLength(7));
-      expect(rects[5].height, 0);
+      expect(rects[5].height, GraficoBarras.altoSinReportes);
       expect(find.byTooltip('2026-10-06: sin reportes'), findsOneWidget);
       expect(find.text('2026-10-01'), findsOneWidget);
       expect(find.text('2026-10-07'), findsOneWidget);

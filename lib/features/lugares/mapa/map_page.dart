@@ -12,6 +12,7 @@ import '../../../core/map/tipos_mapa.dart';
 import '../../../core/widgets/tarjeta_error.dart';
 import '../../../core/widgets/estado_vacio.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_shadows.dart';
 import '../../exploracion/explorar/filtros_mapa.dart';
 import '../data/lugar_repository.dart';
 import 'leyenda_saturacion.dart';
@@ -111,48 +112,10 @@ class _MapViewState extends State<_MapView> {
   Widget build(BuildContext context) {
     final cubit = context.read<MapaCubit>();
     return Scaffold(
-      body: Column(
+      // Full-screen map; the search, the filters and the banner float on top.
+      body: Stack(
         children: [
-          Container(
-            width: double.infinity,
-            color: AppColors.primary,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Tu zona',
-                      style: TextStyle(
-                        color: AppColors.onPrimaryMuted,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Lima, Perú',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 19,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _CampoBusqueda(onTap: _abrirBusqueda),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          FiltrosMapa(
-            alCambiar: (categoria, nivel) =>
-                cubit.aplicarFiltros(categoria: categoria, nivel: nivel),
-          ),
-          Expanded(
+          Positioned.fill(
             child: BlocConsumer<MapaCubit, MapaState>(
               listenWhen: (_, actual) => actual is! MapaError,
               listener: (_, _) {
@@ -196,7 +159,8 @@ class _MapViewState extends State<_MapView> {
                           margin: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
                             color: AppColors.surface.withValues(alpha: 0.95),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: AppShadows.floating,
                           ),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -211,11 +175,17 @@ class _MapViewState extends State<_MapView> {
                         ),
                       ),
                     ),
+                  // Under the error card, which covers it while shown.
+                  const Positioned(
+                    left: 16,
+                    bottom: 16,
+                    child: LeyendaSaturacion(),
+                  ),
                   if (state is MapaError && !_errorDescartado)
                     Positioned(
-                      left: 12,
-                      right: 12,
-                      bottom: 12,
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
                       child: TarjetaError(
                         titulo: _tituloError,
                         mensaje: state.mensaje,
@@ -223,20 +193,37 @@ class _MapViewState extends State<_MapView> {
                         onCerrar: () => setState(() => _errorDescartado = true),
                       ),
                     ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                    child: _CampoBusqueda(onTap: _abrirBusqueda),
+                  ),
+                  FiltrosMapa(
+                    alCambiar: (categoria, nivel) => cubit.aplicarFiltros(
+                      categoria: categoria,
+                      nivel: nivel,
+                    ),
+                  ),
                   if (_avisoVisible)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                       child: _AvisoSinConexion(
                         onCerrar: () => setState(() => _avisoVisible = false),
                       ),
                     ),
-                  const Positioned(
-                    left: 12,
-                    bottom: 12,
-                    child: LeyendaSaturacion(),
-                  ),
                 ],
               ),
             ),
@@ -255,9 +242,10 @@ class _AvisoSinConexion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.warning,
+      color: AppColors.text,
+      borderRadius: BorderRadius.circular(14),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.only(left: 14),
         child: Row(
           children: [
             const Icon(Icons.wifi_off, size: 18, color: Colors.white),
@@ -269,6 +257,7 @@ class _AvisoSinConexion extends StatelessWidget {
               ),
             ),
             IconButton(
+              key: const ValueKey('cerrar-aviso-mapa'),
               icon: const Icon(Icons.close, size: 18, color: Colors.white),
               onPressed: onCerrar,
             ),
@@ -279,30 +268,48 @@ class _AvisoSinConexion extends StatelessWidget {
   }
 }
 
+/// Floating search pill (design-system sections 4 and 5): 48 px high,
+/// white, with `shadow-2`. It opens the search screen.
 class _CampoBusqueda extends StatelessWidget {
+  static const double _alto = 48;
+
   final VoidCallback onTap;
 
   const _CampoBusqueda({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: Row(
-            children: [
-              Icon(Icons.search, color: AppColors.textMuted),
-              SizedBox(width: 8),
-              Text(
-                'Buscar lugares',
-                style: TextStyle(color: AppColors.textMuted),
+    const forma = StadiumBorder();
+    return DecoratedBox(
+      decoration: const ShapeDecoration(
+        shape: forma,
+        shadows: AppShadows.floating,
+      ),
+      child: Material(
+        key: const ValueKey('buscador-mapa'),
+        color: AppColors.surface,
+        shape: forma,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: const SizedBox(
+            height: _alto,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Icon(Icons.search, color: AppColors.textMuted, size: 20),
+                  SizedBox(width: 10),
+                  Text(
+                    'Buscar lugares',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 15.5,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

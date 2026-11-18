@@ -31,7 +31,12 @@ void main() {
 
     expect(find.text('¿Seguro?'), findsOneWidget);
     expect(find.text('Se pierde todo'), findsOneWidget);
-    await tester.tap(find.widgetWithText(TextButton, 'Borrar'));
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const ValueKey('confirmar-accion-confirmar')),
+        matching: find.text('Borrar'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(resultado, isTrue);
@@ -42,7 +47,12 @@ void main() {
   ) async {
     await abrir(tester);
 
-    await tester.tap(find.widgetWithText(TextButton, 'Cancelar'));
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const ValueKey('confirmar-accion-cancelar')),
+        matching: find.text('Cancelar'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(resultado, isFalse);

@@ -12,7 +12,9 @@ import '../../../core/widgets/cargando.dart';
 import '../../../core/widgets/chip_saturacion.dart';
 import '../../../core/widgets/estado_error.dart';
 import '../../../core/widgets/etiqueta_seccion.dart';
+import '../../../core/widgets/medidor_nivel.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_shadows.dart';
 import '../../favoritos/data/favorito_repository.dart';
 import '../../reportes/data/reporte_repository.dart';
 import '../../reportes/reportar/reportar_cubit.dart';
@@ -67,17 +69,19 @@ class _DetalleView extends StatelessWidget {
           (previo is! DetalleCargado || previo.aviso != actual.aviso),
       listener: (context, state) {
         final aviso = (state as DetalleCargado).aviso!;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(aviso)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            key: const ValueKey('aviso-detalle-lugar'),
+            content: Text(aviso),
+          ),
+        );
       },
       builder: (context, state) => Scaffold(
         appBar: AppBar(
-          title: Text(
-            state is DetalleCargado
-                ? state.detalle.nombre
-                : 'Detalle del lugar',
-          ),
+          // Once loaded, the name heads the content instead (design-system).
+          title: state is DetalleCargado
+              ? null
+              : const Text('Detalle del lugar'),
           actions: [
             if (state is DetalleCargado)
               IconButton(
@@ -140,7 +144,12 @@ class _DetalleView extends StatelessWidget {
         (e) => e is! ReportarEnviando,
       );
       if (fin is! ReportarEnviado) return;
-      mensajes.showSnackBar(const SnackBar(content: Text('Reporte enviado')));
+      mensajes.showSnackBar(
+        const SnackBar(
+          key: ValueKey('aviso-reporte-enviado'),
+          content: Text('Reporte enviado'),
+        ),
+      );
       await detalleCubit.refrescar();
     } finally {
       await reportar.close();
@@ -165,73 +174,136 @@ class _Contenido extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final filas = [
+      if (detalle.direccion != null)
+        _Fila(Icons.place_outlined, 'Dirección', detalle.direccion!),
+      if (detalle.horarioAtencion != null)
+        _Fila(Icons.schedule, 'Horario', detalle.horarioAtencion!),
+    ];
     return RefreshIndicator(
       onRefresh: onRefrescar,
       child: ListaPerezosa.secciones(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         // A detail shorter than the screen must still accept the pull gesture.
         physics: const AlwaysScrollableScrollPhysics(),
         secciones: [
-          Row(
-            children: [
-              Text(
-                emojiCategoria(detalle.categoria),
-                style: const TextStyle(fontSize: 36),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      detalle.nombre,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      subtituloLugar(
-                        detalle.categoria,
-                        detalle.latitud,
-                        detalle.longitud,
-                        origenDistancia,
-                      ),
-                      style: const TextStyle(color: AppColors.textMuted),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          _Encabezado(detalle, origenDistancia),
+          const SizedBox(height: 16),
+          _TarjetaNivel(detalle.saturacion),
+          const SizedBox(height: 16),
+          // The one primary action of the screen (design-system section 1).
+          DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: AppShadows.primaryButton,
+            ),
+            child: ElevatedButton.icon(
+              key: const ValueKey('boton-reportar-saturacion'),
+              onPressed: onReportar,
+              icon: const Icon(Icons.campaign_outlined, size: 19),
+              label: const Text('Reportar saturación'),
+            ),
           ),
-          const EtiquetaSeccion('SATURACIÓN AHORA'),
-          _BloqueSaturacion(detalle.saturacion),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           OutlinedButton.icon(
-            onPressed: onReportar,
-            icon: const Icon(Icons.campaign_outlined),
-            label: const Text('Reportar saturación'),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
+            key: const ValueKey('boton-ver-historial'),
             onPressed: () => context.push(Rutas.historial(detalle.id)),
-            icon: const Icon(Icons.bar_chart),
+            icon: const Icon(Icons.bar_chart, size: 19),
             label: const Text('Ver historial'),
           ),
           const EtiquetaSeccion('INFORMACIÓN'),
-          if (detalle.direccion != null) _Fila('Dirección', detalle.direccion!),
-          if (detalle.horarioAtencion != null)
-            _Fila('Horario', detalle.horarioAtencion!),
+          if (filas.isNotEmpty) _GrupoFilas(filas),
         ],
       ),
     );
   }
 }
 
-class _BloqueSaturacion extends StatelessWidget {
+/// Brand shadow of the filled primary button (design-system section 4).
+/// `shadow-1` of the design system (section 4): cards.
+/// 36 px icon on a `brand-50` box with radius 11 (design-system section 5).
+class _CajaIcono extends StatelessWidget {
+  final Widget icono;
+
+  const _CajaIcono(this.icono, {super.key});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 36,
+    height: 36,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: AppColors.primarySoft,
+      borderRadius: BorderRadius.circular(11),
+    ),
+    child: IconTheme.merge(
+      data: const IconThemeData(size: 18, color: AppColors.primary),
+      child: icono,
+    ),
+  );
+}
+
+/// Category icon, name (24/800) and "categoría · distancia".
+class _Encabezado extends StatelessWidget {
+  final LugarDetalle detalle;
+  final PuntoGeografico? origenDistancia;
+
+  const _Encabezado(this.detalle, this.origenDistancia);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _CajaIcono(
+          key: const ValueKey('caja-icono-categoria-detalle'),
+          Icon(
+            iconoCategoria(detalle.categoria),
+            key: const ValueKey('icono-categoria-detalle'),
+            size: 20,
+            semanticLabel: etiquetaCategoria(detalle.categoria),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                detalle.nombre,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.48,
+                  height: 1.2,
+                  color: AppColors.text,
+                ),
+              ),
+              Text(
+                subtituloLugar(
+                  detalle.categoria,
+                  detalle.latitud,
+                  detalle.longitud,
+                  origenDistancia,
+                ),
+                style: const TextStyle(
+                  fontSize: 14.5,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The big level card (design-system section 7): the level comes first, with
+/// its meter, its description, how fresh it is and how many reports back it.
+class _TarjetaNivel extends StatelessWidget {
   final SaturacionLugar saturacion;
 
-  const _BloqueSaturacion(this.saturacion);
+  const _TarjetaNivel(this.saturacion);
 
   String get _actualizacion {
     final n = saturacion.reportesRecientes;
@@ -244,54 +316,153 @@ class _BloqueSaturacion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sinInformacion = saturacion.nivel == NivelSaturacion.sinInformacion;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: ChipSaturacion(nivel: saturacion.nivel),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          sinInformacion
-              ? (saturacion.mensaje ?? DetalleLugarPage.mensajeSinInformacion)
-              : _actualizacion,
-          style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-        ),
-      ],
+    final nivel = saturacion.nivel;
+    final sinInformacion = nivel == NivelSaturacion.sinInformacion;
+    final fg = ChipSaturacion.fgDe(nivel);
+    return Container(
+      key: const ValueKey('tarjeta-nivel'),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: ChipSaturacion.bgDe(nivel),
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'SATURACIÓN AHORA',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.72,
+              color: fg,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              MedidorNivel(nivel: nivel, color: fg, escala: 34 / 14),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  ChipSaturacion.etiquetaDe(nivel),
+                  style: TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -1.02,
+                    height: 1.0,
+                    color: fg,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            sinInformacion
+                ? (saturacion.mensaje ?? DetalleLugarPage.mensajeSinInformacion)
+                : ChipSaturacion.descripcionDe(nivel),
+            style: TextStyle(
+              fontSize: 15.5,
+              fontWeight: FontWeight.w500,
+              color: fg,
+            ),
+          ),
+          if (!sinInformacion) ...[
+            const SizedBox(height: 14),
+            Divider(height: 1, color: fg.withValues(alpha: 0.15)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.schedule, size: 16, color: fg),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    _actualizacion,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                      color: fg,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
 
-class _Fila extends StatelessWidget {
-  final String etiqueta;
-  final String valor;
+/// White card holding the information rows, separated by hairlines.
+class _GrupoFilas extends StatelessWidget {
+  final List<_Fila> filas;
 
-  const _Fila(this.etiqueta, this.valor);
+  const _GrupoFilas(this.filas);
 
   @override
   Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.only(bottom: 8),
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
     decoration: BoxDecoration(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(20),
       border: Border.all(color: AppColors.border),
+      boxShadow: AppShadows.card,
     ),
     child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          etiqueta,
-          style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          valor,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        ),
+        for (var i = 0; i < filas.length; i++) ...[
+          if (i > 0)
+            const Divider(height: 1, indent: 62, color: AppColors.border),
+          filas[i],
+        ],
       ],
+    ),
+  );
+}
+
+class _Fila extends StatelessWidget {
+  final IconData icono;
+  final String etiqueta;
+  final String valor;
+
+  const _Fila(this.icono, this.etiqueta, this.valor);
+
+  @override
+  Widget build(BuildContext context) => ConstrainedBox(
+    constraints: const BoxConstraints(minHeight: 56),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          _CajaIcono(Icon(icono)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  etiqueta,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  valor,
+                  style: const TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }

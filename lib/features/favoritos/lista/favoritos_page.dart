@@ -227,9 +227,11 @@ class _Fila extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            Text(
-              emojiCategoria(favorito.categoria),
-              style: const TextStyle(fontSize: 26),
+            Icon(
+              iconoCategoria(favorito.categoria),
+              key: Key('icono-categoria-${favorito.categoria?.name}'),
+              size: 20,
+              semanticLabel: etiquetaCategoria(favorito.categoria),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -262,7 +264,7 @@ class _Fila extends StatelessWidget {
                     ? Icons.notifications_active
                     : Icons.notifications_off_outlined,
                 color: favorito.alertasActivadas
-                    ? AppColors.secondary
+                    ? AppColors.primary
                     : AppColors.textMuted,
               ),
               onPressed: ocupado ? null : () => cubit.alternarAlertas(id),

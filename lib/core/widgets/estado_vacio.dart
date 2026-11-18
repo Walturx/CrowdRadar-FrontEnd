@@ -30,7 +30,12 @@ class EstadoVacio extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.border, width: 1.5),
               ),
-              child: Icon(icon, size: 40, color: AppColors.secondary),
+              child: Icon(
+                icon,
+                key: const ValueKey('estado-vacio-icono'),
+                size: 40,
+                color: AppColors.primary,
+              ),
             ),
             const SizedBox(height: 20),
             Text(

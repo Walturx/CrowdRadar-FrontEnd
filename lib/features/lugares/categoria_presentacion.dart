@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../../core/map/tipos_mapa.dart';
 import '../../core/models/categoria_lugar.dart';
 import '../../core/utils/distancia.dart';
@@ -13,14 +15,16 @@ String etiquetaCategoria(CategoriaLugar? categoria) => switch (categoria) {
   null => 'Lugar',
 };
 
-String emojiCategoria(CategoriaLugar? categoria) => switch (categoria) {
-  CategoriaLugar.parque => '🌳',
-  CategoriaLugar.centroComercial => '🛍️',
-  CategoriaLugar.mercado => '🧺',
-  CategoriaLugar.transporte => '🚌',
-  CategoriaLugar.plaza => '⛲',
-  CategoriaLugar.playa => '🏖️',
-  null => '📍',
+/// Outlined Material icon of a place category (design-system §6, no emoji);
+/// unknown categories read as a generic place.
+IconData iconoCategoria(CategoriaLugar? categoria) => switch (categoria) {
+  CategoriaLugar.parque => Icons.park_outlined,
+  CategoriaLugar.centroComercial => Icons.shopping_bag_outlined,
+  CategoriaLugar.mercado => Icons.storefront_outlined,
+  CategoriaLugar.transporte => Icons.directions_bus_outlined,
+  CategoriaLugar.plaza => Icons.account_balance_outlined,
+  CategoriaLugar.playa => Icons.beach_access_outlined,
+  null => Icons.place_outlined,
 };
 
 /// "Parque · 315 m": the category, plus the distance from [centro] when known.

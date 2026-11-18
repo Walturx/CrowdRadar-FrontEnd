@@ -46,3 +46,6 @@ app.*.map.json
 
 # SDD local tooling
 .atl/
+
+# Golden test diff output (generated on failure)
+test/goldens/failures/
