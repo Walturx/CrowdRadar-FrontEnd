@@ -14,6 +14,7 @@ void mostrarAviso(
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
+        key: const ValueKey('mostrar-aviso'),
         content: alLado == null
             ? Text(texto)
             : Row(

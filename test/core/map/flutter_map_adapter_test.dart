@@ -7,6 +7,7 @@ import 'package:crowdradar/core/map/tipos_mapa.dart';
 import 'package:crowdradar/core/models/nivel_saturacion.dart';
 import 'package:crowdradar/core/network/cliente_http_factory.dart';
 import 'package:crowdradar/core/widgets/pin_saturacion.dart';
+import 'package:crowdradar/theme/app_colors.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -134,6 +135,23 @@ void main() {
     await _montar(tester, adapter, ubicacionUsuario: _centro);
 
     expect(find.byKey(const ValueKey('ubicacion-usuario')), findsOneWidget);
+  });
+
+  testWidgets('a pin tip and the user location sit on their coordinate', (
+    tester,
+  ) async {
+    await _montar(tester, adapter, ubicacionUsuario: _centro);
+
+    // Marker 1 and the user are both at the map centre.
+    final centroMapa = tester.getCenter(find.byType(FlutterMap));
+    final pin = tester.getRect(find.byKey(const ValueKey('marcador-1')));
+    expect(pin.bottomCenter, centroMapa);
+    expect(pin.size, const Size(PinSaturacion.ancho, PinSaturacion.alto));
+    final ubicacion = find.byKey(const ValueKey('ubicacion-usuario'));
+    expect(tester.getCenter(ubicacion), centroMapa);
+    final halo =
+        tester.widget<Container>(ubicacion).decoration! as BoxDecoration;
+    expect(halo.color, AppColors.userLocation.withValues(alpha: 0.18));
   });
 
   testWidgets('camera movement reports the visible bounds', (tester) async {

@@ -50,7 +50,13 @@ void main() {
     expect(find.text('Parque Kennedy'), findsOneWidget);
     expect(find.text('Mercado de Surquillo'), findsOneWidget);
     expect(find.text('Parque Reducto'), findsOneWidget);
-    expect(find.text('🌳'), findsNWidgets(2));
+    expect(find.byKey(const Key('icono-categoria-parque')), findsNWidgets(2));
+    expect(
+      tester
+          .widgetList<Icon>(find.byKey(const Key('icono-categoria-parque')))
+          .map((i) => i.icon),
+      everyElement(Icons.park_outlined),
+    );
     expect(find.text('Mercado'), findsOneWidget);
     expect(find.text('Tranquilo'), findsOneWidget);
     expect(find.text('Saturado'), findsOneWidget);
@@ -190,40 +196,33 @@ void main() {
       expect((await repo.listar()).items, hasLength(2));
     });
 
-    
-    
-    testWidgets(
-      'Deshacer after the page is gone does not throw (R3-803)',
-      (tester) async {
-        final repo = await conFavoritos([1, 2]);
-        await abrir(tester, repo);
+    testWidgets('Deshacer after the page is gone does not throw (R3-803)', (
+      tester,
+    ) async {
+      final repo = await conFavoritos([1, 2]);
+      await abrir(tester, repo);
 
-        // Eliminar un favorito.
-        await tester.tap(find.byKey(const Key('eliminar-1')));
-        await tester.pumpAndSettle();
+      // Eliminar un favorito.
+      await tester.tap(find.byKey(const Key('eliminar-1')));
+      await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Eliminar'));
-        await tester.pumpAndSettle();
+      await tester.tap(find.text('Eliminar'));
+      await tester.pumpAndSettle();
 
-        // Comprobamos que aparece la acción Deshacer.
-        expect(find.text('Deshacer'), findsOneWidget);
+      // Comprobamos que aparece la acción Deshacer.
+      expect(find.text('Deshacer'), findsOneWidget);
 
-        // El usuario abandona la pantalla de favoritos.
-        GoRouter.of(
-          tester.element(find.byType(Scaffold).first),
-        ).go('/mapa');
+      // El usuario abandona la pantalla de favoritos.
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/mapa');
 
-        await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
 
-        // La aplicación no debe lanzar excepciones.
-        expect(tester.takeException(), isNull);
+      // La aplicación no debe lanzar excepciones.
+      expect(tester.takeException(), isNull);
 
-        // La nueva pantalla debe mostrarse correctamente.
-        expect(find.text('RUTA /mapa'), findsOneWidget);
-      },
-    );
-
-
+      // La nueva pantalla debe mostrarse correctamente.
+      expect(find.text('RUTA /mapa'), findsOneWidget);
+    });
 
     testWidgets('removing the last one shows the empty state', (tester) async {
       await abrir(tester, await conFavoritos([1]));

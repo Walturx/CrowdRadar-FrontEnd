@@ -12,11 +12,13 @@ class InsigniaConfiabilidad extends StatelessWidget {
 
   const InsigniaConfiabilidad({super.key, required this.confiabilidad});
 
-  static Color colorDe(NivelConfiabilidad nivel) => switch (nivel) {
-    NivelConfiabilidad.alta => AppColors.success,
-    NivelConfiabilidad.media => AppColors.warning,
-    NivelConfiabilidad.baja => AppColors.danger,
-    NivelConfiabilidad.insuficiente => AppColors.textMuted,
+  /// Each nivel is told apart by its icon; the colors stay neutral because
+  /// green, amber and red belong to saturation levels (decision D6).
+  static IconData iconoDe(NivelConfiabilidad nivel) => switch (nivel) {
+    NivelConfiabilidad.alta => Icons.verified_user_outlined,
+    NivelConfiabilidad.media => Icons.shield_outlined,
+    NivelConfiabilidad.baja => Icons.gpp_maybe_outlined,
+    NivelConfiabilidad.insuficiente => Icons.hourglass_empty,
   };
 
   static String etiquetaDe(NivelConfiabilidad nivel) => switch (nivel) {
@@ -28,24 +30,32 @@ class InsigniaConfiabilidad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = colorDe(confiabilidad.nivel);
     final porcentaje = confiabilidad.porcentaje;
     return Wrap(
       spacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
+        Icon(
+          iconoDe(confiabilidad.nivel),
+          key: const ValueKey('icono-confiabilidad'),
+          size: 20,
+          color: AppColors.textSecondary,
+        ),
         if (porcentaje != null)
           Text(
             '${porcentaje.round()}%',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: color,
+              color: AppColors.text,
             ),
           ),
         Text(
           etiquetaDe(confiabilidad.nivel),
-          style: TextStyle(fontWeight: FontWeight.w600, color: color),
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: AppColors.textSecondary,
+          ),
         ),
       ],
     );

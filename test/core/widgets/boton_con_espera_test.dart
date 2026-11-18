@@ -9,6 +9,7 @@ void main() {
   Widget app(int? segundos) => MaterialApp(
     home: Scaffold(
       body: BotonConEspera(
+        key: const ValueKey('boton-enviar'),
         texto: 'Enviar',
         segundos: segundos,
         onPressed: () => toques++,
@@ -16,8 +17,9 @@ void main() {
     ),
   );
 
-  Finder boton() => find.byType(ElevatedButton);
-  bool habilitado(WidgetTester t) => t.widget<ElevatedButton>(boton()).enabled;
+  Finder boton() => find.byKey(const ValueKey('boton-enviar'));
+  bool habilitado(WidgetTester t) =>
+      isSemantics(isEnabled: true).matches(t.getSemantics(boton()), {});
 
   testWidgets('without a wait it is a normal enabled button', (tester) async {
     await tester.pumpWidget(app(null));

@@ -7,6 +7,7 @@ import 'package:crowdradar/core/session/sesion_state.dart';
 import 'package:crowdradar/features/perfil/data/perfil_repository.dart';
 import 'package:crowdradar/features/perfil/ver/profile_page.dart';
 import 'package:crowdradar/features/perfil/widgets/tarjeta_tier.dart';
+import 'package:crowdradar/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -144,10 +145,120 @@ void main() {
     testWidgets('confirming calls SesionCubit.cerrarSesion', (tester) async {
       await tocarCerrar(tester);
 
-      await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
+      await tester.tap(
+        find.byKey(const ValueKey('confirmar-accion-confirmar')),
+      );
       await tester.pumpAndSettle();
 
       verify(() => sesion.cerrarSesion()).called(1);
+    });
+  });
+
+  group('redesign (CRO-88 T8-G4)', () {
+    final acciones = find.byKey(const ValueKey('perfil-acciones'));
+    final info = find.byKey(const ValueKey('perfil-info'));
+
+    /// Height of the tappable area that holds [texto].
+    double altoTocable(WidgetTester tester, Finder texto) => tester
+        .getSize(find.ancestor(of: texto, matching: find.byType(InkWell)).first)
+        .height;
+
+    testWidgets('the header shows a 52 px initials avatar, no blue band', (
+      tester,
+    ) async {
+      when(() => repo.obtener()).thenAnswer((_) async => _usuario);
+      await abrir(tester);
+
+      final avatar = find.byKey(const ValueKey('perfil-avatar'));
+      expect(tester.getSize(avatar), const Size(52, 52));
+      expect(
+        find.descendant(of: avatar, matching: find.text('AP')),
+        findsOneWidget,
+      );
+      expect(find.text('Ana Paz'), findsOneWidget);
+      expect(find.text('ana@test.com'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is Container && w.color == AppColors.primary,
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('the info grid lays the cards in two columns', (tester) async {
+      when(() => repo.obtener()).thenAnswer(
+        (_) async => _usuario.copyWith(rol: 'USUARIO', status: 'ACTIVO'),
+      );
+      await abrir(tester);
+
+      for (final texto in [
+        'Teléfono',
+        '999999999',
+        'Distrito',
+        'Miraflores',
+        'Rol',
+        'USUARIO',
+        'Estado',
+        'ACTIVO',
+      ]) {
+        expect(
+          find.descendant(of: info, matching: find.text(texto)),
+          findsOneWidget,
+        );
+      }
+      expect(
+        tester.getTopLeft(find.text('Teléfono')).dy,
+        tester.getTopLeft(find.text('Distrito')).dy,
+      );
+      expect(
+        tester.getTopLeft(find.text('Rol')).dy,
+        tester.getTopLeft(find.text('Estado')).dy,
+      );
+    });
+
+    testWidgets('Estado keeps its text with the account status dot', (
+      tester,
+    ) async {
+      when(
+        () => repo.obtener(),
+      ).thenAnswer((_) async => _usuario.copyWith(status: 'ACTIVO'));
+      await abrir(tester);
+
+      expect(
+        find.descendant(
+          of: info,
+          matching: find.byKey(const ValueKey('punto-estado-cuenta')),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the actions are rows of one card, each at least 56 high', (
+      tester,
+    ) async {
+      when(() => repo.obtener()).thenAnswer((_) async => _usuario);
+      await abrir(tester);
+
+      for (final texto in [
+        'Editar perfil',
+        'Mis reportes',
+        'Cambiar contraseña',
+        'Acerca de',
+      ]) {
+        final fila = find.descendant(of: acciones, matching: find.text(texto));
+        expect(fila, findsOneWidget);
+        expect(altoTocable(tester, fila), greaterThanOrEqualTo(56));
+      }
+    });
+
+    testWidgets('Cerrar sesión is its own danger row', (tester) async {
+      when(() => repo.obtener()).thenAnswer((_) async => _usuario);
+      await abrir(tester);
+
+      final cerrar = find.text('Cerrar sesión');
+      expect(find.descendant(of: acciones, matching: cerrar), findsNothing);
+      expect(tester.widget<Text>(cerrar).style?.color, AppColors.danger);
+      expect(altoTocable(tester, cerrar), greaterThanOrEqualTo(56));
     });
   });
 
@@ -197,9 +308,7 @@ void main() {
       });
     }
 
-    testWidgets('S13 shows neither karma nor the points number', (
-      tester,
-    ) async {
+    testWidgets('D5 shows the points but no karma', (tester) async {
       when(() => repo.obtener()).thenAnswer(
         (_) async =>
             _usuario.copyWith(puntos: 1280, tier: TierUsuario.crowdRoyalty),
@@ -210,7 +319,8 @@ void main() {
         find.textContaining(RegExp('karma', caseSensitive: false)),
         findsNothing,
       );
-      expect(find.textContaining('1280'), findsNothing);
+      expect(enTarjeta('1280'), findsOneWidget);
+      expect(enTarjeta('puntos'), findsOneWidget);
     });
 
     testWidgets('a user without tier data shows Crowd Baby', (tester) async {

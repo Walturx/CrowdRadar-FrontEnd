@@ -57,21 +57,17 @@ void main() {
       await tester.ensureVisible(find.text('Cerrar sesión'));
       await tester.tap(find.text('Cerrar sesión'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
+      await tester.tap(
+        find.byKey(const ValueKey('confirmar-accion-confirmar')),
+      );
       await tester.pumpAndSettle();
 
       expect(sesion.token, isNull);
-      expect(
-        find.widgetWithText(ElevatedButton, 'Iniciar sesión'),
-        findsOneWidget,
-      );
+      expect(find.byKey(const Key('boton-iniciar-sesion')), findsOneWidget);
       // Going back must not return to a protected screen.
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
-      expect(
-        find.widgetWithText(ElevatedButton, 'Iniciar sesión'),
-        findsOneWidget,
-      );
+      expect(find.byKey(const Key('boton-iniciar-sesion')), findsOneWidget);
     },
   );
 
@@ -83,10 +79,7 @@ void main() {
       await tester.runAsync(() => sesion.expirar(MotivoCierre.sesionExpirada));
       await tester.pumpAndSettle();
 
-      expect(
-        find.widgetWithText(ElevatedButton, 'Iniciar sesión'),
-        findsOneWidget,
-      );
+      expect(find.byKey(const Key('boton-iniciar-sesion')), findsOneWidget);
       expect(find.text('Tu sesión terminó'), findsOneWidget);
     },
   );

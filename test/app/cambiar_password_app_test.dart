@@ -62,7 +62,7 @@ void main() {
       find.byKey(const Key('campo-password-confirmar')),
       'Nueva1234',
     );
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Cambiar contraseña'));
+    await tester.tap(find.byKey(const Key('boton-cambiar-password')));
     // Deterministic: the fake answers instantly; let the navigation and the
     // snack bar entrance run without waiting for the notice to expire.
     await tester.pump();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../theme/app_colors.dart';
 import '../network/cliente_http_factory.dart';
 import '../widgets/pin_saturacion.dart';
 import 'mapa_adapter.dart';
@@ -21,9 +22,9 @@ class FlutterMapAdapter implements MapaAdapter {
   /// TextSourceAttribution prepends the copyright sign itself.
   static const String atribucion = 'OpenStreetMap contributors';
   static const double zoomPorDefecto = 13;
-  static const double _tamanoMarcador = 40;
-  static const double _tamanoUbicacion = 20;
-  static const Color _colorUbicacion = Colors.blue;
+  static const double _tamanoUbicacion = 28;
+  static const double _puntoUbicacion = 14;
+  static const double _alfaHaloUbicacion = 0.18;
 
   /// Upper bound of the on-disk tile cache.
   static const int tamanoMaximoCache = 200 * 1024 * 1024;
@@ -125,8 +126,10 @@ class FlutterMapAdapter implements MapaAdapter {
             for (final m in marcadores)
               Marker(
                 point: LatLng(m.latitud, m.longitud),
-                width: _tamanoMarcador,
-                height: _tamanoMarcador,
+                width: PinSaturacion.ancho,
+                height: PinSaturacion.alto,
+                // The pin's tip is its bottom centre: keep it on the point.
+                alignment: Alignment.topCenter,
                 child: PinSaturacion(
                   key: ValueKey('marcador-${m.lugarId}'),
                   nivel: m.nivel,
@@ -142,12 +145,7 @@ class FlutterMapAdapter implements MapaAdapter {
                 ),
                 width: _tamanoUbicacion,
                 height: _tamanoUbicacion,
-                child: const Icon(
-                  Icons.circle,
-                  key: ValueKey('ubicacion-usuario'),
-                  color: _colorUbicacion,
-                  size: _tamanoUbicacion,
-                ),
+                child: const _PuntoUbicacion(),
               ),
           ],
         ),
@@ -174,6 +172,34 @@ class FlutterMapAdapter implements MapaAdapter {
       e is MapEventFlingAnimationEnd ||
       e is MapEventDoubleTapZoomEnd ||
       e is MapEventScrollWheelZoom;
+}
+
+/// The user's location: a blue dot with a white border on an 18 % halo.
+class _PuntoUbicacion extends StatelessWidget {
+  const _PuntoUbicacion();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const ValueKey('ubicacion-usuario'),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.userLocation.withValues(
+          alpha: FlutterMapAdapter._alfaHaloUbicacion,
+        ),
+      ),
+      child: Container(
+        width: FlutterMapAdapter._puntoUbicacion,
+        height: FlutterMapAdapter._puntoUbicacion,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.userLocation,
+          border: Border.all(color: Colors.white, width: 2),
+        ),
+      ),
+    );
+  }
 }
 
 /// Calls [alCargar] once its tile has loaded without error.

@@ -1,0 +1,109 @@
+# rediseno-visual (CRO-88)
+
+Objetivo: aplicar el rediseño visual de `docs/rediseno/design-system.md` sin cambiar la lógica. Rama: `feat/cro-88-rediseno-visual`.
+Entrega: `ask-on-risk` → cadena `stacked-to-main`: PRs encadenados hacia `develop`, cortes por fase; el armado se hace al final (decisión del usuario, 2026-11-17). Pruebas: `flutter test`, `flutter analyze`.
+
+## Specs
+
+- **S1. Regla principal.** «Cambia cómo se ve la app, pero no lo que hace. Se mantienen las mismas pantallas, los mismos datos, las mismas acciones y los mismos textos de botones.» (`design-system.md`)
+- **S2. Rediseño limpio.** El usuario pidió: «si se puede hacer un rebranding limipio sin que nada depneda de que una funcion sea correcta». No cambian cubits, estados, repositorios, modelos, rutas ni servicios, salvo lo aprobado en `docs/rediseno/alcance.md` §4.
+- **S3. El mapa se queda.** El usuario dijo: «creo q lo del mapa se queda asi pq es la libreria que estamos usando». `flutter_map` y sus tiles no cambian; solo los pines y lo que flota encima.
+- **S4. Primero los documentos.** El usuario pidió: «Primero empecemos con los documentos antes de siquiera empezar a tocar codigo apra determinar alcance que agente hara todo y como se lo comunicaran al orquestador». No se escribe código hasta cerrar T1.
+- **S5. Lista de control del diseño** (`design-system.md` §9, textual):
+  - «El texto tiene un contraste de al menos 4,5:1 (el texto grande de 24 px o más, al menos 3:1).»
+  - «Ningún nivel depende solo del color: siempre lleva el medidor y el texto.»
+  - «Los elementos tocables miden al menos 44 × 44 px y están separados al menos 8 px.»
+  - «No hay emojis como íconos.»
+  - «Los textos de los botones son los mismos de hoy.»
+  - «`flutter test` pasa completo.»
+- **S6. Pantallas** (`design-system.md` §7): inicio de sesión, mapa, detalle del lugar, reportar, validar, historial, perfil y moderación, más la barra inferior. Cada una como en `docs/rediseno/lamina-1-pantallas.png`, dentro de lo que permitan las decisiones D1–D8.
+- **S7. Red de seguridad antes del estilo.** Antes de cambiar estilos existen las capturas de referencia de cada pantalla, y las pruebas usan claves en lugar de tipos de widget o íconos (criterio de CRO-88).
+- **S8. Fuera de alcance:** el círculo que agrupa lugares, el progreso «1 de 7», el logo y el ícono de la app (`alcance.md` §3).
+
+## Tasks
+
+| ID | Specs | Ruta | Estado | Evidencia / commit |
+|---|---|---|---|---|
+| T1 Documentos: alcance, plan de agentes y decisiones D1–D8 | S4 | inline (orquestador) | **hecha** | `c3a1012`, `d7bfd40`, `1d7c513` |
+| T2 Claves y búsquedas estables en las pruebas | S7, S1 | delegado (escritor A, paralelo con T4) | **hecha**: `flutter analyze` sin problemas; sin goldens, 1372 pasan y 0 fallan; en lib solo hay `key:` (17 archivos) | `76c79e8` |
+| T3 Reloj inyectable | — | — | **cancelada** (D8 = a: datos relativos a la hora real, sin tocar `lib`) | |
+| T4 Capturas de referencia de las 8 pantallas, con fechas relativas a la hora real | S7 | delegado (escritor B); el escritor quedó `partial` por falta de memoria y el orquestador lo terminó inline | hecha, **falta la aprobación humana de las 25 capturas**. Verificación: `flutter test test/goldens` ×2 → 25/25; `flutter analyze` sin problemas; `flutter test` → 1397 pasan (1372 + 25), 0 fallan | ver commit T4 |
+| T5 Pruebas de las reglas de diseño | S5 | **absorbida**: el contraste está en T6 (`app_colors_test`); «nivel = color + medidor + texto» va como prueba en rojo de T7; los 44 px van en T8 | — | |
+| T6 Colores, theme e Inter con alias temporales (D7 = B) | S1, S5 | inline | **hecha**: primero en rojo (falta de miembros), después en verde (20/20 en `test/theme`); suite sin goldens: 1390 pasan; goldens regenerados con Inter, 25/25 ×2; `flutter analyze` sin problemas | `4375007` |
+| T6b Borrar los alias, sombras a `lib/theme/app_shadows.dart`, `semanticLabel` en los íconos de categoría restantes | S1, S5 | inline | **hecha**: 0 usos de alias; suite completa 1488/1488; goldens regenerados 25/25 ×2 | ver commit T6b |
+| T7 Componentes compartidos: medidor, etiqueta de nivel, pin, íconos de categoría, escalas neutras (D6) | S5, S3 | delegado (respaldo de contexto: la sesión del orquestador ya es larga) + verificador | escrito; el escritor se trabó una vez y se retomó. RED→GREEN por ítem. Suite: 1443 pasan, 0 fallan; goldens 25/25 ×2 (control del orquestador: 25/25); 10 capturas regeneradas. **Verificador: PASS sin bloqueantes** (S1, S2, S3, S5; suite propia 1443/1443). Sus advertencias pasan a T8 | `e036a73` |
+| T8-G1 Inicio de sesión | S6 | delegado (paralelo) | **hecha**: rojo y verde; 15/15 enfocadas | `d850213` |
+| T8-G2 Mapa, detalle, reportar | S6, S3 | delegado (paralelo) | **hecha**: rojo (12) y verde; 203/203 enfocadas | `5896e14` |
+| T8-G3 Validar, historial | S6, S2 | delegado (paralelo) | **hecha**: rojo y verde; 235/235. «Ahora» omitido, porque no hay contrato de zona horaria | `c7607ca` |
+| T8-G4 Perfil, moderación, navegación | S6 | delegado (paralelo); la superficie se amplió a `perfil/widgets/tarjeta_tier.dart` con aprobación del usuario | **hecha**: rojo y verde; 283/283 | `496e1fe` |
+| T9 Verificación final y revisión humana de capturas | S1–S8 | verificador + humano | pendiente | |
+| T10 PR hacia `develop` | — | orquestador; el humano decide el merge | pendiente | |
+
+## Log
+
+- **L1 (2026-11-17, pedido original, textual):** «C:\Users\Usuario\Downloads\DESIGN-SYSTEM.md Quiero que ejecutes subagentes de opus para poder hacer un discovery de una especie de rebrandign para el producto. Hagamos el discovery viendo al estimacion de carga laboral en hacer todo el cambio del front end que podria tocar modulos que no deberia y en si si se puede hacer un rebranding limipio sin que nada depneda de que una funcion sea correcta. Usa las buenas practicas que tenemos en ODD para poder hacer esto te dejo imagenes que me dieron para el rebraning [Image #2] [Image #3] aunq creo q lo del mapa se queda asi pq es la libreria que estamos usando . Empieza con la investigacion»
+- **L2 (2026-11-17):** El discovery (3 exploradores Opus de solo lectura) concluyó:
+  - El rediseño es viable sin tocar la lógica.
+  - Toca entre 30 y 40 archivos, no 4, porque hay cero `Theme.of`.
+  - Unas 690 pruebas de lógica no se ven afectadas, y unas 460 pruebas de pantalla son frágiles.
+  - No hay capturas de referencia.
+  - Hay 8 decisiones abiertas.
+  - La estimación es de 13 a 17 días de una persona.
+- **L3 (2026-11-17, textual):** «Armate un ticket en el linear de crowd radar metele lo que deberia hacer y crea un nueva rama con todo lo que tenemos actualmente en develop par aque puedas trabajar ahi. Primero empecemos con los documentos antes de siquiera empezar a tocar codigo apra determinar alcance que agente hara todo y como se lo comunicaran al orquestador»
+- **L4 (2026-11-17):**
+  - Se creó CRO-88: 8 puntos, responsable Walter, fecha límite 2026-11-20.
+  - Se creó la rama `feat/cro-88-rediseno-visual` desde `develop` @ `12e14d4`, sincronizada con el remoto.
+  - Se escribieron `docs/rediseno/alcance.md` y `docs/rediseno/plan-agentes.md`.
+  - Se copiaron al repositorio la propuesta y las láminas.
+  - Riesgo abierto: la fecha del viernes no alcanza para la estimación completa.
+  - Siguiente paso: el humano resuelve D1–D8 y el alcance del viernes.
+- **L5 (2026-11-17, decisiones del usuario, textual):** «Sis e muestrna los puntos en D5 D6 ME PARECE BIEN [...] LOS DESDE D1 A D3 APROBADOS» · «Camoscon la B en la D4» · «Vamos con a» (D8).
+  - Resultado:
+    - D1, D2, D3 y D6 aprobadas como se recomendó.
+    - D4 = b: nota sin número.
+    - D5 = sí: se muestran los puntos.
+    - D8 = a: fechas relativas, sin tocar `lib`.
+  - Corrección del orquestador: `haceCuanto()` ya aceptaba `ahora` (`formato_fecha.dart:2`), así que D8 nunca requería cambiar ese archivo.
+  - T3 se cancela.
+  - Pendiente: D7.
+- **L6 (2026-11-17, textual):** «vamos con B».
+  - D7 = B: alias temporales `@Deprecated` que se borran antes de cerrar.
+  - Criterio de cierre: `flutter analyze` sin avisos de obsoletos.
+  - Siguiente paso: acordar qué entra hasta el 2026-11-20.
+- **L7 (2026-11-17, textual):** «Todo el ticket para el viernes».
+  - Alcance del viernes: F1 a F5 completas.
+  - Calendario comprimido:
+    - martes 17: F1
+    - miércoles 18: F2 y F3
+    - jueves 19: F4 en paralelo
+    - viernes 20: T6b, T9 y PR
+  - Riesgo aceptado por el usuario: la revisión humana de capturas del viernes es el cuello de botella.
+  - T1 cerrada.
+- **L8 (2026-11-17):** Base de pruebas en la rama, con Flutter 3.47.9: `flutter test` → **1372 pasan, 0 fallan**. Se lanzan T2 y T4 en paralelo.
+- **L9 (2026-11-17):** Cierre de T2 y T4.
+  - T2 hecha en `76c79e8`.
+  - T4 volvió `partial`: la corrida murió por falta de memoria con dos escritores corriendo `flutter` a la vez. El orquestador terminó T4:
+    - Corrigió `perfil_golden_test.dart` con `scrollUntilVisible`, porque la lista se construye a medida que se desplaza.
+    - Generó las 5 capturas de perfil que faltaban y verificó todo.
+  - Se descartaron cambios fuera de las superficies permitidas: `analysis_options.yaml` (excluía `build/`, `android/` e `ios/`) y `pubspec.lock` (subía `intl` y `matcher`).
+  - Lecciones:
+    - No correr `flutter test` en paralelo desde dos escritores en el mismo repositorio.
+    - El historial de 7 días queda sin captura, porque el fake depende del día de la semana.
+    - Los emojis salen como cajas, porque el SDK no trae fuente de emojis.
+- **L10 (2026-11-17):** Avances del día.
+  - T6 en `4375007`.
+  - T7 en `e036a73`, con el verificador en PASS.
+  - Advertencias del verificador que van a T8:
+    - Íconos de categoría sin `semanticLabel`.
+    - Ícono del encabezado del detalle: 36 px con caja `brand-50`.
+    - `MedidorNivel.escala` para el medidor grande del detalle.
+    - El filtro «Moderad/o» se parte en dos líneas.
+    - El comentario viejo de `SeccionConfiabilidad`.
+  - T8 se lanza con 4 escritores en paralelo. Por L9, cada uno corre solo pruebas enfocadas con `--concurrency=2`, sin la suite completa y sin regenerar capturas. El orquestador corre al final la suite completa y regenera las capturas.
+  - T6b se lo queda el orquestador: los alias en `favoritos_page`, `alertas_page` y `estado_vacio`, que no están en ningún grupo.
+- **L11 (2026-11-17):** Cierre de F4 y T6b.
+  - Control de unión: `flutter analyze` sin problemas; suite completa 1488 pasan y 0 fallan (incluye las capturas regeneradas, 25/25 ×2).
+  - El cambio de `analysis_options.yaml` lo hace `flutter analyze` de Flutter 3.47 («Upgrading analysis_options.yaml to exclude build and platform directories»). Queda fuera de los commits y lo decide el usuario.
+  - `pubspec.lock` lo reescribe la resolución automática de `flutter`. Se descarta.
+  - En las capturas, las sombras se ven sin difuminado por `debugDisableShadows`; anotado en `test/goldens/README.md`.
+  - Siguiente paso: revisión de gentle-ai sobre el rango completo, revisión humana de las capturas del «después» y T10 (PR encadenados).

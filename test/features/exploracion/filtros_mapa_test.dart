@@ -38,7 +38,7 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('shows Todos first, then the server categories with emoji', (
+  testWidgets('shows Todos first, then the server categories with icons', (
     tester,
   ) async {
     await abrir(tester, ExploracionRepositoryFake());
@@ -54,7 +54,11 @@ void main() {
     ]) {
       expect(find.text(etiqueta), findsOneWidget);
     }
-    expect(find.text('🌳'), findsOneWidget);
+    expect(find.byKey(const Key('icono-categoria-parque')), findsOneWidget);
+    expect(
+      tester.widget<Icon>(find.byKey(const Key('icono-categoria-parque'))).icon,
+      Icons.park_outlined,
+    );
     expect(find.text('Tranquilo'), findsOneWidget);
     expect(find.text('Moderado'), findsOneWidget);
     expect(find.text('Saturado'), findsOneWidget);
@@ -104,16 +108,100 @@ void main() {
 
   testWidgets('the selected chip is marked', (tester) async {
     await abrir(tester, ExploracionRepositoryFake());
-    ChoiceChip chip(String texto) => tester.widget<ChoiceChip>(
-      find.ancestor(of: find.text(texto), matching: find.byType(ChoiceChip)),
-    );
-    expect(chip('Parques').selected, isFalse);
+    bool seleccionado(String texto) => isSemantics(
+      isSelected: true,
+    ).matches(tester.getSemantics(find.text(texto)), {});
+    expect(seleccionado('Parques'), isFalse);
 
     await tester.tap(find.text('Parques'));
     await tester.pump();
 
-    expect(chip('Parques').selected, isTrue);
-    expect(chip('Mercados').selected, isFalse);
+    expect(seleccionado('Parques'), isTrue);
+    expect(seleccionado('Mercados'), isFalse);
+  });
+
+  group('level chips (design-system §5, D1, D3)', () {
+    testWidgets('each level chip carries its meter and its label', (
+      tester,
+    ) async {
+      await abrir(tester, ExploracionRepositoryFake());
+
+      for (final (clave, etiqueta) in [
+        ('tranquilo', 'Tranquilo'),
+        ('moderado', 'Moderado'),
+        ('saturado', 'Saturado'),
+      ]) {
+        final chip = find.byKey(Key('chip-nivel-$clave'));
+        expect(chip, findsOneWidget);
+        expect(
+          find.descendant(of: chip, matching: find.text(etiqueta)),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: chip,
+            matching: find.byKey(const ValueKey('medidor-nivel')),
+          ),
+          findsOneWidget,
+          reason: 'the level chips are the map legend',
+        );
+      }
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('chip-nivel-todos')),
+          matching: find.text('Todos'),
+        ),
+        findsOneWidget,
+        reason: 'D1: the text stays «Todos»',
+      );
+      expect(find.text('Todos los niveles'), findsNothing);
+    });
+
+    testWidgets('«Moderado» fits on one line on a narrow phone', (
+      tester,
+    ) async {
+      await abrir(tester, ExploracionRepositoryFake());
+      tester.view.physicalSize = const Size(360, 800);
+      await tester.pump();
+
+      final alto = tester.getSize(find.text('Moderado')).height;
+      expect(alto, lessThan(24), reason: 'one line, not «Moderad/o»');
+    });
+
+    testWidgets('the selected level chip is marked', (tester) async {
+      await abrir(tester, ExploracionRepositoryFake());
+      bool seleccionado(Key clave) => isSemantics(
+        isSelected: true,
+      ).matches(tester.getSemantics(find.byKey(clave)), {});
+
+      expect(seleccionado(const Key('chip-nivel-todos')), isTrue);
+      expect(seleccionado(const Key('chip-nivel-saturado')), isFalse);
+
+      await tester.tap(find.text('Saturado'));
+      await tester.pump();
+
+      expect(seleccionado(const Key('chip-nivel-saturado')), isTrue);
+      expect(seleccionado(const Key('chip-nivel-todos')), isFalse);
+    });
+
+    testWidgets('every filter chip is at least 44 px tall to touch', (
+      tester,
+    ) async {
+      await abrir(tester, ExploracionRepositoryFake());
+
+      for (final clave in [
+        'chip-categoria-todos',
+        'chip-categoria-parque',
+        'chip-nivel-todos',
+        'chip-nivel-tranquilo',
+        'chip-nivel-moderado',
+        'chip-nivel-saturado',
+      ]) {
+        final tamano = tester.getSize(find.byKey(Key(clave)));
+        expect(tamano.height, greaterThanOrEqualTo(44), reason: clave);
+        expect(tamano.width, greaterThanOrEqualTo(44), reason: clave);
+      }
+    });
   });
 
   testWidgets('a failed categories load offers Reintentar', (tester) async {

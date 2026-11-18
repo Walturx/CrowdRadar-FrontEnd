@@ -28,6 +28,13 @@ void main() {
   }
 
   final dialogo = find.byType(AlertDialog);
+  final botonConfirmar = find.descendant(
+    of: dialogo,
+    matching: find.text('Confirmar'),
+  );
+  bool confirmarHabilitado(WidgetTester tester) => isSemantics(
+    isEnabled: true,
+  ).matches(tester.getSemantics(botonConfirmar), {});
 
   testWidgets('HU 7.2 c3 shows name, email, status and report counters', (
     tester,
@@ -57,12 +64,8 @@ void main() {
     expect(find.text('7 días'), findsOneWidget);
     expect(find.text('30 días'), findsOneWidget);
     expect(find.text('Cancelar'), findsOneWidget);
-    expect(
-      tester
-          .widget<TextButton>(find.widgetWithText(TextButton, 'Confirmar'))
-          .onPressed,
-      isNull,
-    );
+    expect(botonConfirmar, findsOneWidget);
+    expect(confirmarHabilitado(tester), isFalse);
   });
 
   testWidgets('the motivo field is labelled just "Motivo"', (tester) async {
@@ -113,27 +116,24 @@ void main() {
     await abrir(tester, idCarlos);
     await tester.tap(find.text('Suspender usuario'));
     await tester.pumpAndSettle();
-    VoidCallback? confirmar() => tester
-        .widget<TextButton>(find.widgetWithText(TextButton, 'Confirmar'))
-        .onPressed;
 
     await tester.tap(find.text('7 días'));
     await tester.pump();
-    expect(confirmar(), isNull);
+    expect(confirmarHabilitado(tester), isFalse);
 
     await tester.enterText(
       find.descendant(of: dialogo, matching: find.byType(TextField)),
       'corto',
     );
     await tester.pump();
-    expect(confirmar(), isNull);
+    expect(confirmarHabilitado(tester), isFalse);
 
     await tester.enterText(
       find.descendant(of: dialogo, matching: find.byType(TextField)),
       'Reportes fraudulentos reiterados',
     );
     await tester.pump();
-    expect(confirmar(), isNotNull);
+    expect(confirmarHabilitado(tester), isTrue);
   });
 
   testWidgets('HU 7.3 c2 confirming suspends the account and says so', (
@@ -149,7 +149,7 @@ void main() {
       'Reportes fraudulentos reiterados',
     );
     await tester.pump();
-    await tester.tap(find.widgetWithText(TextButton, 'Confirmar'));
+    await tester.tap(botonConfirmar);
     await tester.pumpAndSettle();
 
     expect(dialogo, findsNothing);

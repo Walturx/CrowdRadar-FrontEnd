@@ -124,6 +124,7 @@ class _CambiarPasswordViewState extends State<_CambiarPasswordView> {
               ],
               const SizedBox(height: 24),
               BotonConEspera(
+                key: const Key('boton-cambiar-password'),
                 texto: 'Cambiar contraseña',
                 cargando: state is CambiarPasswordEnviando,
                 segundos: state is CambiarPasswordFallido
@@ -154,6 +155,11 @@ class _ListaRequisitos extends StatelessWidget {
           // The byte limit is a rare edge: shown only once exceeded.
           if (r != RequisitoPassword.maximoBytes || incumplidos.contains(r))
             Row(
+              key: Key(
+                incumplidos.contains(r)
+                    ? 'requisito-pendiente-${r.name}'
+                    : 'requisito-cumplido-${r.name}',
+              ),
               children: [
                 Icon(
                   incumplidos.contains(r)

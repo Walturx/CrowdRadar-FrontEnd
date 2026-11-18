@@ -19,14 +19,12 @@ void main() {
       ),
     );
 
-    final padding = tester.widget<Padding>(
-      find
-          .ancestor(
-            of: find.text('SIN RESULTADOS'),
-            matching: find.byType(Padding),
-          )
-          .first,
-    );
-    expect(padding.padding, relleno);
+    // The caption fills the screen, so the text sits inset by [relleno].
+    final caja = tester.getRect(find.byType(EtiquetaSeccion));
+    final texto = tester.getRect(find.text('SIN RESULTADOS'));
+    expect(texto.left - caja.left, 16);
+    expect(texto.top - caja.top, 12);
+    expect(caja.right - texto.right, 16);
+    expect(caja.bottom - texto.bottom, 4);
   });
 }

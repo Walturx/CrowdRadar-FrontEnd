@@ -54,15 +54,10 @@ class _LoginViewState extends State<_LoginView> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<LoginCubit, LoginState>(
+      listenWhen: (_, state) => state is LoginExitoso,
       listener: (context, state) {
-        if (state is LoginExitoso) {
-          // The session guard sends an ADMIN on to the moderation panel.
-          context.go(Rutas.mapa);
-        } else if (state is LoginFallido) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.mensaje)));
-        }
+        // The session guard sends an ADMIN on to the moderation panel.
+        context.go(Rutas.mapa);
       },
       builder: (context, state) {
         if (state is LoginEnviando) {
@@ -71,6 +66,9 @@ class _LoginViewState extends State<_LoginView> {
             body: Cargando(),
           );
         }
+
+        // An API error shows above the form instead of in a snackbar.
+        final error = state is LoginFallido ? state.mensaje : null;
 
         return Scaffold(
           backgroundColor: AppColors.bg,
@@ -100,49 +98,74 @@ class _LoginViewState extends State<_LoginView> {
                               semanticLabel: 'CrowdRadar',
                             ),
                           ),
-                          const SizedBox(height: 32),
-                          const Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Iniciar sesión',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.text,
-                              ),
+                          const SizedBox(height: 28),
+                          const Text(
+                            'Iniciar sesión',
+                            style: TextStyle(
+                              fontSize: 27,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.675,
+                              height: 1.2,
+                              color: AppColors.text,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Mira qué tan lleno está un lugar antes de salir.',
+                            style: TextStyle(
+                              fontSize: 14.5,
+                              height: 1.45,
+                              color: AppColors.textMuted,
                             ),
                           ),
                           const SizedBox(height: 20),
-                          TextFormField(
-                            controller: _emailCtrl,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: const InputDecoration(
-                              labelText: 'Correo electrónico',
+                          if (error != null) ...[
+                            _AvisoError(mensaje: error),
+                            const SizedBox(height: 16),
+                          ],
+                          _CampoConEtiqueta(
+                            etiqueta: 'Correo electrónico',
+                            campo: TextFormField(
+                              key: const Key('campo-correo-login'),
+                              controller: _emailCtrl,
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: _decoracion(
+                                Icons.mail_outline,
+                                conError: error != null,
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Ingresa tu correo';
+                                }
+                                return Validadores.correo(value);
+                              },
                             ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Ingresa tu correo';
-                              }
-                              return Validadores.correo(value);
-                            },
                           ),
                           const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _passwordCtrl,
-                            obscureText: true,
-                            decoration: const InputDecoration(
-                              labelText: 'Contraseña',
+                          _CampoConEtiqueta(
+                            etiqueta: 'Contraseña',
+                            campo: TextFormField(
+                              key: const Key('campo-contrasena-login'),
+                              controller: _passwordCtrl,
+                              obscureText: true,
+                              decoration: _decoracion(
+                                Icons.lock_outline,
+                                conError: error != null,
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Ingresa tu contraseña';
+                                }
+                                return null;
+                              },
                             ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Ingresa tu contraseña';
-                              }
-                              return null;
-                            },
                           ),
+                          const SizedBox(height: 4),
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
+                              key: const Key('enlace-olvidaste-contrasena'),
+                              style: _estiloEnlace,
                               onPressed: () => context.push(Rutas.recuperar),
                               child: const Text('¿Olvidaste tu contraseña?'),
                             ),
@@ -156,9 +179,11 @@ class _LoginViewState extends State<_LoginView> {
                                 : null,
                             onPressed: () => _onLogin(context),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 8),
                           Center(
                             child: TextButton(
+                              key: const Key('enlace-registrate'),
+                              style: _estiloEnlace,
                               onPressed: () => context.push(Rutas.registro),
                               child: Text.rich(
                                 TextSpan(
@@ -191,6 +216,108 @@ class _LoginViewState extends State<_LoginView> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Error look of the fields while an API error is shown (design-system §5).
+const _bordeCampoError = Color(0xFFF3A6A6);
+const _fondoCampoError = Color(0xFFFFFBFB);
+
+/// Text links keep a touch target of at least 44 × 44 (design-system §1).
+final _estiloEnlace = TextButton.styleFrom(minimumSize: const Size(44, 44));
+
+InputDecoration _decoracion(IconData icono, {required bool conError}) {
+  OutlineInputBorder borde(Color color) => OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: BorderSide(color: color, width: 1.5),
+  );
+
+  return InputDecoration(
+    constraints: const BoxConstraints(minHeight: 54),
+    prefixIcon: Icon(icono, size: 19, color: AppColors.iconMuted),
+    fillColor: conError ? _fondoCampoError : null,
+    enabledBorder: conError ? borde(_bordeCampoError) : null,
+  );
+}
+
+/// A field with its label always visible above it. The label and the field
+/// are merged into one semantics node so screen readers announce the label
+/// together with the field.
+class _CampoConEtiqueta extends StatelessWidget {
+  final String etiqueta;
+  final Widget campo;
+
+  const _CampoConEtiqueta({required this.etiqueta, required this.campo});
+
+  @override
+  Widget build(BuildContext context) {
+    return MergeSemantics(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            etiqueta,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              height: 1.3,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          campo,
+        ],
+      ),
+    );
+  }
+}
+
+/// API error shown above the form, with the same message the snackbar used
+/// to show.
+class _AvisoError extends StatelessWidget {
+  final String mensaje;
+
+  const _AvisoError({required this.mensaje});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        key: const ValueKey('aviso-error-login'),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.dangerBg,
+          border: Border.all(color: AppColors.dangerBorder),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 1),
+              child: Icon(
+                Icons.info_outline,
+                size: 18,
+                color: AppColors.danger,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                mensaje,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  height: 1.4,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.danger,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -14,7 +14,9 @@ void main() {
       ),
     );
 
-    expect(find.byIcon(Icons.favorite_border), findsOneWidget);
+    final icono = find.byKey(const ValueKey('estado-vacio-icono'));
+    expect(icono, findsOneWidget);
+    expect(tester.widget<Icon>(icono).icon, Icons.favorite_border);
     expect(find.text('Título'), findsOneWidget);
     expect(find.text('Detalle'), findsOneWidget);
   });
