@@ -118,6 +118,21 @@ first build downloads Gradle 8.14 and can take several minutes.
 Cleartext HTTP is allowed in the Android **debug** manifest only, so these
 URLs work with `flutter run`, not with a release build.
 
+### Test credentials
+
+Neither repository ships an account or a password: they are created on the
+machine that runs the system.
+
+| Account | Created by | Sign in with |
+|---|---|---|
+| Administrator (moderation area) | The backend seed of step 7.2 | `ADMIN_EMAIL` and `ADMIN_PASSWORD` from the backend `.env` |
+| Citizen | "Regístrate" on the sign-in screen | the email and password you choose (8 to 64 characters, an uppercase letter and a digit) |
+
+For the class demo (synthetic analytics history, the "account does not exist"
+sign-in message, validation with 3 votes) start the backend with its demo
+overlay: see "Demo setup" in the
+[backend README](https://github.com/Walturx/CrowdRadar-Backend#demo-setup).
+
 ### Troubleshooting
 
 | Symptom | Fix |
